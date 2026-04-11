@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Appointment Agent{% endblock %}
+{% block page_title %}🏥 Appointment Agent — Medical Scheduling{% endblock %}
+
+{% block content %}
+<div x-data="apptApp()" x-init="init()">
+
+  <!-- Config Banner -->
+  <div class="card mb-4">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
+        <div style="font-size:28px">🏥</div>
+        <div>
+          <div style="font-weight:700;font-size:15px">Appointment Agent</div>
+          <div class="text-sm text-muted">Schedule, manage & remind patients via WhatsApp</div>
+        </div>
+        <label class="toggle" style="margin-left:8px">
+          <input type="checkbox" x-model="cfg.enabled" @change="saveCfg()">
+          <span class="slider"></span>
+        </label>
+        <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
+      </div>
+      <button @click="showAdd=true" class="btn btn-p">+ New Appointment</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid g4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f5f3ff">📋</div>
+      <div><div class="stat-val" x-text="appointments.length">{{ appointments|length }}</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fffbeb">🕐</div>
+      <div>
+        <div class="stat-val" style="color:var(--amber)" x-text="appointments.filter(a=>a.status==='scheduled').length">0</div>
+        <div class="stat-lbl">Scheduled</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4">✅</div>
+      <div>
+        <div class="stat-val" style="color:#22c55e" x-text="appointments.filter(a=>a.status==='completed').length">0</div>
+        <div class="stat-lbl">Completed</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">📅</div>
+      <div>
+        <div class="stat-val" style="font-size:18px;color:var(--blue)" x-text="todayCount">0</div>
+        <div class="stat-lbl">Today</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Table -->
+  <div class="card mb-4">
+    <div class="section-header">
+      <h3>Appointments</h3>
+      <div style="display:flex;gap:8px">
+        <select x-model="filter" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none">
+          <option value="all">All</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>Phone</th><th>Doctor</th><th>Type</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <template x-for="a in filteredAppts" :key="a.id">
+            <tr>
+              <td style="font-weight:600" x-text="a.patient_name"></td>
+              <td class="text-sm text-muted" x-text="a.patient_phone"></td>
+              <td x-text="a.doctor || '—'"></td>
+              <td><span class="badge bb" x-text="a.appt_type"></span></td>
+              <td>
+                <div style="font-weight:600" x-text="a.appt_date"></div>
+                <div class="text-xs text-muted" x-text="a.appt_time"></div>
+              </td>
+              <td>
+                <span class="badge"
+                  :class="a.status==='scheduled'?'ba':a.status==='completed'?'bg':'br'"
+                  x-text="a.status"></span>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button @click="remind(a)" class="btn btn-p btn-xs">💬 Remind</button>
+                  <button @click="editAppt(a)" class="btn btn-o btn-xs">Edit</button>
+                  <template x-if="a.status==='scheduled'">
+                    <button @click="markDone(a)" class="btn btn-b btn-xs">✓ Done</button>
+                  </template>
+                  <button @click="deleteAppt(a.id)" class="btn btn-d btn-xs">✕</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+          <template x-if="filteredAppts.length===0">
+            <tr><td colspan="7" class="empty"><div class="empty-icon">🏥</div><p>No appointments yet</p></td></tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="overlay" x-show="showAdd || editTarget" x-transition @click.self="closeModal()">
+    <div class="modal modal-lg" @click.stop>
+      <div class="modal-hd">
+        <h3 x-text="editTarget ? 'Edit Appointment' : 'New Appointment'"></h3>
+        <button class="modal-close" @click="closeModal()">✕</button>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Patient Name *</label>
+          <input x-model="form.patient_name" placeholder="Full name">
+        </div>
+        <div class="fg">
+          <label>WhatsApp Phone *</label>
+          <input x-model="form.patient_phone" placeholder="+91 9876543210">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Doctor Name</label>
+          <input x-model="form.doctor" placeholder="Dr. Name">
+        </div>
+        <div class="fg">
+          <label>Appointment Type</label>
+          <select x-model="form.appt_type">
+            <option>General</option>
+            <option>Consultation</option>
+            <option>Follow-up</option>
+            <option>Surgery</option>
+            <option>Dental</option>
+            <option>Eye</option>
+            <option>Cardiology</option>
+            <option>Orthopedic</option>
+            <option>Neurology</option>
+            <option>Pediatrics</option>
+            <option>Lab Test</option>
+            <option>Scan / X-Ray</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Date *</label>
+          <input type="date" x-model="form.appt_date">
+        </div>
+        <div class="fg">
+          <label>Time *</label>
+          <input type="time" x-model="form.appt_time">
+        </div>
+      </div>
+      <template x-if="editTarget">
+        <div class="fg">
+          <label>Status</label>
+          <select x-model="form.status">
+            <option value="scheduled">Scheduled</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </template>
+      <div class="fg">
+        <label>Notes</label>
+        <textarea x-model="form.notes" placeholder="Any special instructions or notes…"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button @click="closeModal()" class="btn btn-o">Cancel</button>
+        <button @click="saveAppt(false)" class="btn btn-o">Save</button>
+        <button @click="saveAppt(true)" class="btn btn-p">💾 Save & Send Reminder</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function apptApp() {
+  return {
+    appointments: {{ appointments|tojson }},
+    cfg: {{ cfg|tojson }},
+    showAdd: false, editTarget: null, filter: 'all',
+    form: {patient_name:'',patient_phone:'',doctor:'',appt_type:'General',appt_date:'',appt_time:'',notes:'',status:'scheduled'},
+
+    init() {},
+
+    get filteredAppts() {
+      if (this.filter==='all') return this.appointments;
+      return this.appointments.filter(a=>a.status===this.filter);
+    },
+    get todayCount() {
+      const t = new Date().toISOString().split('T')[0];
+      return this.appointments.filter(a=>a.appt_date===t&&a.status==='scheduled').length;
+    },
+
+    async saveCfg() {
+      await api('POST','/api/agent/appointment',{enabled:this.cfg.enabled?1:0,wa_number:this.cfg.wa_number||'',notes:''});
+    },
+    editAppt(a) { this.editTarget=a; this.form={...a}; },
+    closeModal() { this.showAdd=false; this.editTarget=null; this.form={patient_name:'',patient_phone:'',doctor:'',appt_type:'General',appt_date:'',appt_time:'',notes:'',status:'scheduled'}; },
+
+    async saveAppt(sendReminder) {
+      if (!this.form.patient_name||!this.form.patient_phone||!this.form.appt_date||!this.form.appt_time) {
+        toast('Name, phone, date & time are required',false); return;
+      }
+      const method = this.editTarget ? 'PUT' : 'POST';
+      const url = this.editTarget ? '/api/appointments/'+this.editTarget.id : '/api/appointments';
+      const data = await api(method, url, this.form);
+      if (data.id) {
+        if (this.editTarget) { const idx=this.appointments.findIndex(a=>a.id===data.id); if(idx>=0)this.appointments[idx]=data; }
+        else this.appointments.unshift(data);
+        toast(this.editTarget?'Updated':'Appointment added');
+        const newId = data.id; this.closeModal();
+        if (sendReminder) this.remindById(newId);
+      } else toast(data.error||'Error',false);
+    },
+
+    async remind(a) {
+      toast('Sending reminder to '+a.patient_name+'...');
+      const data = await api('POST','/api/appointments/'+a.id+'/remind');
+      if (data.error) toast(data.error,false); else toast('Reminder sent!');
+    },
+    async remindById(id) {
+      const data = await api('POST','/api/appointments/'+id+'/remind');
+      if (!data.error) toast('Reminder sent!');
+    },
+    async markDone(a) {
+      const data = await api('PUT','/api/appointments/'+a.id,{...a,status:'completed'});
+      if (data.id) { const idx=this.appointments.findIndex(ap=>ap.id===a.id); if(idx>=0)this.appointments[idx]=data; toast('Marked as completed'); }
+    },
+    async deleteAppt(id) {
+      if (!confirm('Delete this appointment?')) return;
+      const data = await api('DELETE','/api/appointments/'+id);
+      if (data.status==='deleted') { this.appointments=this.appointments.filter(a=>a.id!==id); toast('Deleted'); }
+    }
+  }
+}
+
+</script>
+{% endblock %}

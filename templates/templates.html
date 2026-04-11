@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template Builder · WhatsApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#00e676;--gd:#00c853;--gx:#00a040;
+  --gg:rgba(0,230,118,.15);--gg2:rgba(0,230,118,.07);--gg3:rgba(0,230,118,.04);
+  --bg:#040a0c;--s1:#091214;--s2:#0f1e21;--s3:#162829;
+  --bd:rgba(0,230,118,.12);--bd2:rgba(0,230,118,.22);
+  --text:#e0f2e9;--sub:#7aab8a;--muted:#3d6347;
+  --red:#ff4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+
+/* BG */
+.bg-fx{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.bg-grid{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(0,230,118,.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,230,118,.025) 1px,transparent 1px);
+  background-size:48px 48px;}
+.bg-glow1{position:absolute;width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,200,83,.06) 0%,transparent 65%);
+  top:-200px;right:-100px;}
+.bg-glow2{position:absolute;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,150,60,.04) 0%,transparent 65%);
+  bottom:-150px;left:-100px;}
+
+/* ── TOP NAV ── */
+.nav{position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;
+  background:rgba(4,10,12,.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--bd);}
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-logo{width:36px;height:36px;border-radius:11px;
+  background:linear-gradient(135deg,var(--g),var(--gx));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(0,230,118,.3);font-size:18px;}
+.nav-title{font-size:17px;font-weight:700;letter-spacing:-.3px;}
+.nav-title span{color:var(--g);}
+.nav-links{display:flex;gap:6px;}
+.nav-link{padding:8px 16px;border-radius:9px;font-size:13px;font-weight:500;
+  color:var(--sub);text-decoration:none;transition:all .2s;border:1px solid transparent;}
+.nav-link:hover{color:var(--text);background:var(--gg2);border-color:var(--bd);}
+.nav-link.active{color:var(--g);background:var(--gg);border-color:var(--bd2);}
+
+/* ── PAGE ── */
+.page{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:32px 24px 60px;}
+.page-header{margin-bottom:32px;}
+.page-title{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+.page-title span{color:var(--g);}
+.page-sub{font-size:14px;color:var(--sub);}
+
+/* ── GRID ── */
+.grid{display:grid;grid-template-columns:320px 1fr 340px;gap:20px;align-items:start;}
+@media(max-width:1100px){.grid{grid-template-columns:280px 1fr 300px;}}
+@media(max-width:860px){.grid{grid-template-columns:1fr;}}
+
+/* ── CARD ── */
+.card{background:linear-gradient(145deg,var(--s1),rgba(4,10,12,.9));
+  border:1px solid var(--bd);border-radius:18px;overflow:hidden;
+  box-shadow:0 4px 32px rgba(0,0,0,.4);}
+.card-header{padding:18px 20px 16px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.card-title .ico{width:28px;height:28px;border-radius:8px;
+  background:var(--gg);border:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:center;font-size:13px;}
+.card-body{padding:16px 20px;}
+
+/* ── TEMPLATE LIST ── */
+.tpl-list{display:flex;flex-direction:column;gap:8px;}
+.tpl-item{padding:12px 14px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--bd);background:var(--gg3);
+  transition:all .2s;position:relative;}
+.tpl-item:hover{background:var(--gg2);border-color:var(--bd2);}
+.tpl-item.active{background:var(--gg);border-color:var(--g);
+  box-shadow:0 0 0 1px rgba(0,230,118,.1);}
+.tpl-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--g);border-radius:0 3px 3px 0;}
+.tpl-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+.tpl-preview{font-size:11.5px;color:var(--sub);line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tpl-meta{font-size:10.5px;color:var(--muted);margin-top:5px;display:flex;gap:8px;align-items:center;}
+.tpl-tag{padding:2px 7px;border-radius:99px;background:var(--gg);
+  color:var(--g);font-size:10px;font-weight:600;}
+.tpl-empty{text-align:center;padding:32px 16px;color:var(--sub);}
+.tpl-empty .eico{font-size:32px;margin-bottom:10px;opacity:.4;}
+.tpl-empty p{font-size:13px;line-height:1.6;}
+
+/* ── FORM ── */
+.field{margin-bottom:18px;}
+.field:last-child{margin-bottom:0;}
+.lbl{display:block;font-size:11.5px;font-weight:600;color:var(--sub);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;}
+.lbl span{color:var(--g);margin-left:4px;font-weight:400;text-transform:none;letter-spacing:0;}
+
+input[type=text],textarea,select{
+  width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:11px;
+  padding:11px 14px;color:var(--text);font-size:13.5px;font-family:'Inter',sans-serif;
+  transition:all .2s;outline:none;
+}
+textarea{min-height:110px;resize:vertical;line-height:1.5;}
+input:focus,textarea:focus,select:focus{
+  border-color:var(--g);background:var(--s3);
+  box-shadow:0 0 0 3px rgba(0,230,118,.07);}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+select option{background:var(--s2);}
+
+.hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;}
+.hint code{font-family:'JetBrains Mono',monospace;color:var(--g);
+  background:rgba(0,230,118,.08);padding:1px 5px;border-radius:4px;font-size:11px;}
+
+/* ── BUTTONS ROW ── */
+.btns-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.btn-row{display:flex;align-items:center;gap:8px;
+  background:var(--s2);border:1px solid var(--bd);border-radius:11px;padding:10px 12px;}
+.btn-row select,.btn-row input{flex:1;background:transparent;border:none;
+  padding:0;box-shadow:none;font-size:13px;}
+.btn-row select:focus,.btn-row input:focus{background:transparent;box-shadow:none;border:none;}
+.btn-row .del-btn{width:28px;height:28px;border-radius:8px;background:rgba(255,68,68,.12);
+  border:1px solid rgba(255,68,68,.2);color:#ff7070;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;
+  transition:all .15s;}
+.btn-row .del-btn:hover{background:rgba(255,68,68,.22);}
+.add-btn-row{display:flex;gap:8px;}
+.add-btn{padding:8px 14px;border-radius:9px;border:1px solid var(--bd);
+  background:var(--gg2);color:var(--sub);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+.add-btn:hover{background:var(--gg);border-color:var(--bd2);color:var(--g);}
+
+/* ── ACTION BUTTONS ── */
+.actions{display:flex;gap:10px;margin-top:20px;}
+.btn-primary{flex:1;padding:12px;border-radius:11px;border:none;
+  background:linear-gradient(135deg,var(--g),var(--gd));color:#000;
+  font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+  transition:all .2s;letter-spacing:.2px;}
+.btn-primary:hover{box-shadow:0 4px 20px rgba(0,230,118,.35);transform:translateY(-1px);}
+.btn-primary:active{transform:none;}
+.btn-secondary{padding:12px 16px;border-radius:11px;
+  border:1px solid var(--bd);background:var(--gg2);
+  color:var(--sub);font-size:13px;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;white-space:nowrap;}
+.btn-secondary:hover{background:var(--gg);border-color:var(--bd2);color:var(--text);}
+.btn-danger{padding:12px 16px;border-radius:11px;
+  border:1px solid rgba(255,68,68,.2);background:rgba(255,68,68,.07);
+  color:#ff7070;font-size:13px;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;white-space:nowrap;}
+.btn-danger:hover{background:rgba(255,68,68,.15);}
+
+/* ── WHATSAPP PREVIEW ── */
+.preview-panel{position:sticky;top:80px;}
+.phone-frame{
+  background:var(--s1);border:1px solid var(--bd);border-radius:18px;
+  overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5);
+}
+.pf-header{padding:14px 16px;background:rgba(0,230,118,.06);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:10px;}
+.pf-avatar{width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g),var(--gx));
+  display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;font-size:13px;}
+.pf-info .name{font-size:13px;font-weight:600;}
+.pf-info .status{font-size:11px;color:var(--sub);}
+.pf-body{padding:16px;min-height:200px;
+  background:
+    url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='rgba(0,230,118,0.02)' d='M24 24l24 0 0 24-24 0z'/%3E%3C/svg%3E") repeat,
+    var(--bg);
+}
+.pf-empty{display:flex;align-items:center;justify-content:center;height:140px;
+  color:var(--muted);font-size:13px;flex-direction:column;gap:8px;}
+.pf-empty .eico{font-size:28px;opacity:.4;}
+
+/* message bubble in preview */
+.pv-msg{
+  max-width:85%;margin-left:auto;
+  background:linear-gradient(135deg,#0a4a2a,#0d3325);
+  border:1px solid rgba(0,230,118,.18);border-radius:14px;border-bottom-right-radius:3px;
+  overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.3);
+  animation:msgIn .3s cubic-bezier(.25,.46,.45,.94) both;
+}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:none;}}
+
+.pv-header{padding:12px 14px 10px;border-bottom:1px solid rgba(0,230,118,.1);
+  font-weight:600;font-size:14px;color:var(--text);}
+.pv-body{padding:12px 14px;font-size:13.5px;color:var(--text);line-height:1.55;white-space:pre-wrap;}
+.pv-footer{padding:4px 14px 10px;font-size:11.5px;color:var(--sub);}
+.pv-btns{border-top:1px solid rgba(0,230,118,.1);}
+.pv-btn{padding:10px 14px;text-align:center;font-size:13px;font-weight:600;
+  color:var(--g);cursor:pointer;border-top:1px solid rgba(0,230,118,.08);
+  display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;}
+.pv-btn:hover{background:rgba(0,230,118,.07);}
+.pv-btn:first-child{border-top:none;}
+.pv-meta{display:flex;align-items:center;justify-content:flex-end;gap:4px;
+  padding:4px 10px 8px;font-size:10.5px;color:var(--muted);}
+.pv-tick{color:var(--g);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;padding:11px 18px;border-radius:12px;
+  font-size:13px;z-index:9999;max-width:320px;box-shadow:0 6px 24px rgba(0,0,0,.5);
+  display:none;animation:toastIn .25s ease;font-weight:500;}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.toast.ok{background:linear-gradient(135deg,#0d3d20,#0a2918);border:1px solid rgba(0,230,118,.3);color:var(--g);}
+.toast.err{background:linear-gradient(135deg,#3d0d0d,#2a0a0a);border:1px solid rgba(255,68,68,.3);color:#ff7070;}
+
+/* section divider */
+.sect-divider{height:1px;background:var(--bd);margin:20px 0;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="bg-fx"><div class="bg-grid"></div><div class="bg-glow1"></div><div class="bg-glow2"></div></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">💬</div>
+    <div class="nav-title">Whats<span>App</span> <span style="color:var(--sub);font-weight:400">·</span> Studio</div>
+  </div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">🏠 Dashboard</a>
+    <a href="/chat" class="nav-link">💬 Chat</a>
+    <a href="/templates" class="nav-link active">📋 Templates</a>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">Template <span>Builder</span></div>
+    <div class="page-sub">Create reusable message templates with headers, buttons and variable substitution.</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ── COL 1: Template list ── -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="ico">📋</div>
+            Saved Templates
+          </div>
+          <button class="add-btn" onclick="clearForm()" title="New template">+ New</button>
+        </div>
+        <div class="card-body">
+          <div id="tpl-list" class="tpl-list">
+            <div class="tpl-empty"><div class="eico">📄</div><p>No templates yet.<br>Create your first one →</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COL 2: Form ── -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="ico" id="form-mode-icon">✏️</div>
+            <span id="form-mode-label">Create Template</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <input type="hidden" id="tpl-id">
+
+          <div class="field">
+            <label class="lbl" for="tpl-name">Template Name <span>*</span></label>
+            <input type="text" id="tpl-name" placeholder="e.g. Welcome Message" oninput="updatePreview()">
+          </div>
+
+          <div class="sect-divider"></div>
+
+          <div class="field">
+            <label class="lbl" for="header-type">Header</label>
+            <select id="header-type" onchange="toggleHeader()">
+              <option value="none">None</option>
+              <option value="text">Text Header</option>
+            </select>
+          </div>
+
+          <div class="field hidden" id="header-field">
+            <label class="lbl" for="header-value">Header Text</label>
+            <input type="text" id="header-value" placeholder="🎉 Welcome!" oninput="updatePreview()">
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="body">Message Body <span>*</span></label>
+            <textarea id="body" placeholder="Hello {name}, your order #{number} is confirmed!&#10;&#10;We'll notify you when it ships." oninput="updatePreview()"></textarea>
+            <div class="hint">Variables: <code>{name}</code> <code>{number}</code> <code>{date}</code></div>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="footer">Footer</label>
+            <input type="text" id="footer" placeholder="Reply STOP to unsubscribe" oninput="updatePreview()">
+          </div>
+
+          <div class="sect-divider"></div>
+
+          <div class="field">
+            <label class="lbl">Buttons <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">optional</span></label>
+            <div id="buttons" class="btns-list"></div>
+            <div class="add-btn-row">
+              <button class="add-btn" onclick="addBtn('quick_reply')">+ Quick Reply</button>
+              <button class="add-btn" onclick="addBtn('visit_site')">+ Visit Site</button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary" onclick="saveTemplate()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:6px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Template
+            </button>
+            <button class="btn-danger" onclick="deleteTemplate()" title="Delete">🗑</button>
+            <button class="btn-secondary" onclick="clearForm()">New</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COL 3: Preview ── -->
+    <div class="preview-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="ico">👁</div>
+            Live Preview
+          </div>
+          <span style="font-size:11px;color:var(--muted);background:var(--gg2);padding:3px 8px;border-radius:6px;border:1px solid var(--bd)">Auto-updates</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="phone-frame">
+            <div class="pf-header">
+              <div class="pf-avatar">W</div>
+              <div class="pf-info">
+                <div class="name">WhatsApp</div>
+                <div class="status">● Online</div>
+              </div>
+            </div>
+            <div class="pf-body" id="preview-body">
+              <div class="pf-empty">
+                <div class="eico">💬</div>
+                <span>Preview appears here as you type…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let templates=[];
+
+/* ── Helpers ── */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showToast(msg,isErr){
+  const t=document.getElementById('toast');
+  t.className='toast '+(isErr?'err':'ok');
+  t.textContent=msg;t.style.display='block';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',4000);
+}
+
+/* ── Header toggle ── */
+function toggleHeader(){
+  const type=document.getElementById('header-type').value;
+  document.getElementById('header-field').classList.toggle('hidden',type!=='text');
+  updatePreview();
+}
+
+/* ── Buttons ── */
+function addBtn(type,valText='',valUrl=''){
+  const div=document.createElement('div');
+  div.className='btn-row';
+  div.innerHTML=`
+    <select class="btn-type">
+      <option value="quick_reply"${type==='quick_reply'?' selected':''}>Quick Reply</option>
+      <option value="visit_site"${type==='visit_site'?' selected':''}>Visit Site</option>
+    </select>
+    <input type="text" class="btn-text" placeholder="Button label" value="${esc(valText)}">
+    <input type="text" class="btn-url" placeholder="https://example.com" value="${esc(valUrl)}"${type==='visit_site'?'':' style="display:none"'}>
+    <button class="del-btn" title="Remove">✕</button>`;
+  div.querySelector('.del-btn').onclick=()=>{div.remove();updatePreview();};
+  div.querySelector('.btn-type').addEventListener('change',e=>{
+    div.querySelector('.btn-url').style.display=e.target.value==='visit_site'?'block':'none';
+    updatePreview();
+  });
+  div.querySelector('.btn-text').addEventListener('input',updatePreview);
+  div.querySelector('.btn-url').addEventListener('input',updatePreview);
+  document.getElementById('buttons').appendChild(div);
+  updatePreview();
+}
+
+function collectButtons(){
+  return [...document.querySelectorAll('#buttons .btn-row')].map(row=>({
+    type:row.querySelector('.btn-type').value,
+    text:row.querySelector('.btn-text').value.trim(),
+    url:row.querySelector('.btn-url').value.trim()
+  })).filter(b=>b.text&&(b.type!=='visit_site'||b.url));
+}
+
+/* ── Live Preview ── */
+function updatePreview(){
+  const headerType=document.getElementById('header-type').value;
+  const headerVal=document.getElementById('header-value').value;
+  const body=document.getElementById('body').value;
+  const footer=document.getElementById('footer').value;
+  const btns=collectButtons();
+  const pb=document.getElementById('preview-body');
+
+  if(!body&&!headerVal){
+    pb.innerHTML=`<div class="pf-empty"><div class="eico">💬</div><span>Preview appears here as you type…</span></div>`;
+    return;
+  }
+
+  const now=new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+  let html='<div style="padding:12px 12px 6px;">';
+  html+='<div class="pv-msg">';
+  if(headerType==='text'&&headerVal)
+    html+=`<div class="pv-header">${esc(headerVal)}</div>`;
+  if(body)
+    html+=`<div class="pv-body">${esc(body)}</div>`;
+  if(footer)
+    html+=`<div class="pv-footer">${esc(footer)}</div>`;
+  html+=`<div class="pv-meta">${now} <span class="pv-tick">✓✓</span></div>`;
+  if(btns.length){
+    html+='<div class="pv-btns">';
+    btns.forEach(b=>{
+      const icon=b.type==='visit_site'?'🔗':'↩️';
+      html+=`<div class="pv-btn">${icon} ${esc(b.text)}</div>`;
+    });
+    html+='</div>';
+  }
+  html+='</div></div>';
+  pb.innerHTML=html;
+}
+
+/* ── Load templates list ── */
+async function loadTemplates(){
+  const r=await fetch('/api/templates');const d=await r.json();
+  templates=Array.isArray(d.templates)?d.templates:[];
+  const list=document.getElementById('tpl-list');
+  const currentId=document.getElementById('tpl-id').value;
+  if(!templates.length){
+    list.innerHTML='<div class="tpl-empty"><div class="eico">📄</div><p>No templates yet.<br>Create your first one →</p></div>';
+    return;
+  }
+  const tagMap={none:'No header',text:'Text header'};
+  list.innerHTML=templates.map(t=>`
+    <div class="tpl-item${String(t.id)===String(currentId)?' active':''}" onclick="loadTemplate('${t.id}')">
+      <div class="tpl-name">${esc(t.name)}</div>
+      <div class="tpl-preview">${esc((t.body||'').slice(0,65))}</div>
+      <div class="tpl-meta">
+        <span class="tpl-tag">${tagMap[t.headerType]||t.headerType}</span>
+        ${t.buttons?.length?`<span class="tpl-tag">${t.buttons.length} btn${t.buttons.length>1?'s':''}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function loadTemplate(id){
+  const t=templates.find(x=>String(x.id)===String(id));if(!t)return;
+  document.getElementById('tpl-id').value=t.id;
+  document.getElementById('tpl-name').value=t.name||'';
+  document.getElementById('header-type').value=t.headerType||'none';
+  document.getElementById('header-value').value=t.headerVal||'';
+  document.getElementById('body').value=t.body||'';
+  document.getElementById('footer').value=t.footer||'';
+  document.getElementById('buttons').innerHTML='';
+  (t.buttons||[]).forEach(b=>addBtn(b.type,b.text||'',b.url||''));
+  toggleHeader();updatePreview();
+  // highlight active
+  document.querySelectorAll('.tpl-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tpl-item').forEach(el=>{
+    if(el.onclick.toString().includes(String(id)))el.classList.add('active');
+  });
+  document.getElementById('form-mode-icon').textContent='✏️';
+  document.getElementById('form-mode-label').textContent='Edit Template';
+}
+
+async function saveTemplate(){
+  const name=document.getElementById('tpl-name').value.trim();
+  const body=document.getElementById('body').value.trim();
+  if(!name||!body){showToast('Name and body are required',true);return;}
+  const payload={
+    id:document.getElementById('tpl-id').value||null,
+    name,
+    headerType:document.getElementById('header-type').value,
+    headerVal:document.getElementById('header-value').value.trim(),
+    body,
+    footer:document.getElementById('footer').value.trim(),
+    buttons:collectButtons()
+  };
+  const r=await fetch('/api/templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(d.status){
+    showToast('✅ Template saved!',false);
+    await loadTemplates();
+    if(d.template)loadTemplate(d.template.id);
+  }else showToast('❌ '+(d.error||'Save failed'),true);
+}
+
+async function deleteTemplate(){
+  const id=document.getElementById('tpl-id').value;
+  if(!id){showToast('Select a template to delete',true);return;}
+  if(!confirm('Delete this template?'))return;
+  const r=await fetch('/api/templates/'+id,{method:'DELETE'});
+  const d=await r.json();
+  if(d.status){showToast('🗑 Deleted',false);clearForm();await loadTemplates();}
+  else showToast('❌ '+(d.error||'Delete failed'),true);
+}
+
+function clearForm(){
+  document.getElementById('tpl-id').value='';
+  document.getElementById('tpl-name').value='';
+  document.getElementById('header-type').value='none';
+  document.getElementById('header-value').value='';
+  document.getElementById('body').value='';
+  document.getElementById('footer').value='';
+  document.getElementById('buttons').innerHTML='';
+  document.getElementById('form-mode-icon').textContent='✨';
+  document.getElementById('form-mode-label').textContent='Create Template';
+  toggleHeader();updatePreview();
+  document.querySelectorAll('.tpl-item').forEach(el=>el.classList.remove('active'));
+}
+
+// wire inputs
+['tpl-name','header-value','body','footer'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',updatePreview);
+});
+
+loadTemplates();
+</script>
+</body>
+</html>

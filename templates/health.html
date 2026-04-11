@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% block title %}Health Agent{% endblock %}
+{% block page_title %}💊 Health Agent — Medication Reminders{% endblock %}
+
+{% block content %}
+<div x-data="healthApp()" x-init="init()">
+
+  <!-- Config Banner -->
+  <div class="card mb-4">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
+        <div style="font-size:28px">💊</div>
+        <div>
+          <div style="font-weight:700;font-size:15px">Health Agent</div>
+          <div class="text-sm text-muted">Send personalised medication reminders & health alerts via WhatsApp</div>
+        </div>
+        <label class="toggle" style="margin-left:8px">
+          <input type="checkbox" x-model="cfg.enabled" @change="saveCfg()">
+          <span class="slider"></span>
+        </label>
+        <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button @click="sendAllReminders()" class="btn btn-a btn-sm" :disabled="patients.length===0">💬 Remind All</button>
+        <button @click="showAdd=true" class="btn btn-p btn-sm">+ Add Patient</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid g4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fff7ed">👤</div>
+      <div><div class="stat-val" x-text="patients.length">{{ patients|length }}</div><div class="stat-lbl">Patients</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef2f2">💊</div>
+      <div>
+        <div class="stat-val" x-text="totalMeds" style="color:#f59e0b">0</div>
+        <div class="stat-lbl">Medications Tracked</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4">📤</div>
+      <div>
+        <div class="stat-val" x-text="patients.filter(p=>p.medications.length>0).length" style="color:#22c55e">0</div>
+        <div class="stat-lbl">Active Reminders</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">🕐</div>
+      <div>
+        <div class="stat-val" style="font-size:18px" x-text="nextReminder">—</div>
+        <div class="stat-lbl">Next Reminder</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Cards Grid -->
+  <template x-if="patients.length > 0">
+    <div class="grid g3 mb-4">
+      <template x-for="p in patients" :key="p.id">
+        <div class="card" style="border-top:3px solid var(--g)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g),var(--gd));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:700;flex-shrink:0"
+                   x-text="p.name.charAt(0).toUpperCase()"></div>
+              <div>
+                <div style="font-weight:700;font-size:15px" x-text="p.name"></div>
+                <div class="text-sm text-muted" x-text="'Age: ' + p.age + (p.condition ? ' · ' + p.condition : '')"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button @click="editPatient(p)" class="btn btn-o btn-xs">Edit</button>
+              <button @click="deletePatient(p.id)" class="btn btn-d btn-xs">✕</button>
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <span style="font-size:16px">📞</span>
+            <span style="font-size:13px;color:var(--muted)" x-text="p.phone"></span>
+          </div>
+
+          <!-- Medications -->
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Medications</div>
+            <template x-if="p.medications.length === 0">
+              <div style="font-size:13px;color:var(--muted);font-style:italic">No medications — click Edit to add</div>
+            </template>
+            <template x-for="med in p.medications" :key="med.name">
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px">
+                <span style="font-size:14px">💊</span>
+                <div style="flex:1">
+                  <span style="font-size:13px;font-weight:600" x-text="med.name"></span>
+                  <span style="font-size:12px;color:var(--muted)" x-text="' — ' + med.dose"></span>
+                </div>
+                <span style="font-size:12px;color:var(--blue);font-weight:600;background:#eff6ff;padding:2px 8px;border-radius:10px" x-text="med.time"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Send Reminder -->
+          <button @click="remind(p)" class="btn btn-p btn-sm" style="width:100%;justify-content:center" :disabled="p.medications.length===0">
+            💬 Send Reminder via WhatsApp
+          </button>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Empty state -->
+  <template x-if="patients.length === 0">
+    <div class="card" style="text-align:center;padding:52px">
+      <div style="font-size:52px;margin-bottom:16px">🏥</div>
+      <h3 style="font-size:18px;font-weight:800;margin-bottom:8px">No patients yet</h3>
+      <p style="color:var(--muted);font-size:14px;max-width:360px;margin:0 auto 24px;line-height:1.6">Add patients to track their medications and send them WhatsApp reminders automatically.</p>
+      <button @click="showAdd=true" class="btn btn-p">+ Add First Patient</button>
+    </div>
+  </template>
+
+  <!-- Bot Preview -->
+  <template x-if="patients.length > 0">
+    <div class="card mt-4">
+      <div class="card-title">🤖 Sample WhatsApp Message</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">Message Preview</div>
+          <div style="background:#e5ddd5;border-radius:12px;padding:16px;font-family:monospace">
+            <div style="background:#dcf8c6;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;border-bottom-right-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.1)">
+              💊 <strong>Medication Reminder</strong><br>
+              Hello <span x-text="patients[0]?.name.split(' ')[0] || 'Patient'"></span>! 👋<br><br>
+              <template x-for="med in (patients[0]?.medications || []).slice(0,3)">
+                <span>• <strong x-text="med.name"></strong> — <span x-text="med.dose"></span> at <span x-text="med.time"></span><br></span>
+              </template>
+              <br>
+              <em style="color:#5a7a5a">Take your medications on time for good health! 🌿</em>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">Health Tips</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+              <span>💧</span><span>Always take medicines with a full glass of water</span>
+            </div>
+            <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+              <span>⏰</span><span>Set a daily alarm to ensure on-time medication</span>
+            </div>
+            <div style="background:#fff7ed;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+              <span>📋</span><span>Keep a log of missed doses to share with your doctor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Medical Image Analysis -->
+  <div class="mt-4">
+    <div class="card">
+      <div class="card-title">🔬 Medical Image Analysis <span class="badge ba" style="font-size:11px;margin-left:6px">GLM-4V Vision</span></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Upload an X-ray, scan, report or any medical image for AI analysis.</p>
+      <div id="imgDropZone" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px;transition:.15s" onclick="document.getElementById('imgFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--g)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleImgDrop(event)">
+        <div id="imgPreview" style="font-size:13px;color:var(--muted)">📷 Click or drag an image here<br><span style="font-size:12px">JPG, PNG, WEBP up to 10MB</span></div>
+      </div>
+      <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="previewImg(this)">
+      <div class="fg">
+        <label>Analysis prompt (optional)</label>
+        <input type="text" id="imgPrompt" placeholder="Describe what you want analyzed..." value="Analyze this medical image and describe key findings.">
+      </div>
+      <button onclick="analyzeImage()" class="btn btn-p" style="width:100%;justify-content:center" id="analyzeBtn">🔬 Analyze with AI</button>
+      <div id="analysisResult" style="margin-top:14px;background:#f0fdf4;border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;display:none"></div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Patient Modal -->
+  <div class="overlay" x-show="showAdd || editTarget" x-transition @click.self="closeModal()">
+    <div class="modal modal-lg" @click.stop>
+      <div class="modal-hd">
+        <h3 x-text="editTarget ? 'Edit Patient' : 'Add New Patient'"></h3>
+        <button class="modal-close" @click="closeModal()">✕</button>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Patient Name *</label>
+          <input x-model="form.name" placeholder="Full name">
+        </div>
+        <div class="fg">
+          <label>WhatsApp Phone *</label>
+          <input x-model="form.phone" placeholder="+91 9876543210">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>Age</label>
+          <input type="number" x-model="form.age" min="0" max="120" placeholder="Age in years">
+        </div>
+        <div class="fg">
+          <label>Condition / Diagnosis</label>
+          <input x-model="form.condition" placeholder="e.g. Diabetes, Hypertension">
+        </div>
+      </div>
+
+      <!-- Medications -->
+      <div style="margin-top:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <label style="font-size:13px;font-weight:600">Medications</label>
+          <button @click="form.medications.push({name:'',dose:'',time:''})" class="btn btn-o btn-xs">+ Add Medication</button>
+        </div>
+        <template x-if="form.medications.length === 0">
+          <div style="text-align:center;padding:20px;background:#f8fafc;border-radius:10px;color:var(--muted);font-size:13px">
+            Click "Add Medication" to add medicines for this patient
+          </div>
+        </template>
+        <template x-for="(med,idx) in form.medications" :key="idx">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-bottom:10px;align-items:flex-end">
+            <div class="fg" style="margin:0">
+              <label style="font-size:12px">Medicine Name</label>
+              <input x-model="med.name" placeholder="e.g. Metformin 500mg">
+            </div>
+            <div class="fg" style="margin:0">
+              <label style="font-size:12px">Dose</label>
+              <input x-model="med.dose" placeholder="e.g. 1 tablet">
+            </div>
+            <div class="fg" style="margin:0">
+              <label style="font-size:12px">Time</label>
+              <select x-model="med.time">
+                <option value="Morning (8 AM)">Morning (8 AM)</option>
+                <option value="Afternoon (1 PM)">Afternoon (1 PM)</option>
+                <option value="Evening (6 PM)">Evening (6 PM)</option>
+                <option value="Night (10 PM)">Night (10 PM)</option>
+                <option value="Before meals">Before meals</option>
+                <option value="After meals">After meals</option>
+                <option value="As needed">As needed</option>
+              </select>
+            </div>
+            <button @click="form.medications.splice(idx,1)" class="btn btn-d btn-xs" style="margin-bottom:1px">✕</button>
+          </div>
+        </template>
+      </div>
+
+      <div class="form-actions">
+        <button @click="closeModal()" class="btn btn-o">Cancel</button>
+        <button @click="savePatient()" class="btn btn-p" x-text="editTarget ? 'Update Patient' : 'Add Patient'"></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function healthApp() {
+  return {
+    patients: {{ patients|tojson }},
+    cfg: {{ cfg|tojson }},
+    showAdd: false,
+    editTarget: null,
+    form: {name:'',phone:'',age:0,condition:'',medications:[]},
+
+    init() {},
+
+    get totalMeds() {
+      return this.patients.reduce((s,p)=>s+p.medications.length,0);
+    },
+    get nextReminder() {
+      const times = this.patients.flatMap(p=>p.medications.map(m=>m.time));
+      return times.length > 0 ? times[0].split(' ')[0] : '—';
+    },
+
+    async saveCfg() {
+      await api('POST','/api/agent/health',{enabled:this.cfg.enabled?1:0,wa_number:this.cfg.wa_number||'',notes:''});
+    },
+
+    editPatient(p) {
+      this.editTarget = p;
+      this.form = JSON.parse(JSON.stringify(p));
+    },
+    closeModal() {
+      this.showAdd=false; this.editTarget=null;
+      this.form={name:'',phone:'',age:0,condition:'',medications:[]};
+    },
+
+    async savePatient() {
+      if (!this.form.name || !this.form.phone) { toast('Name & phone required',false); return; }
+      const method = this.editTarget ? 'PUT' : 'POST';
+      const url = this.editTarget ? '/api/patients/'+this.editTarget.id : '/api/patients';
+      const data = await api(method, url, this.form);
+      if (data.id) {
+        if (this.editTarget) {
+          const idx = this.patients.findIndex(p=>p.id===data.id);
+          if (idx>=0) this.patients[idx]=data;
+        } else {
+          this.patients.push(data);
+        }
+        toast(this.editTarget ? 'Patient updated' : 'Patient added');
+        this.closeModal();
+      } else toast(data.error||'Error',false);
+    },
+
+    async deletePatient(id) {
+      if (!confirm('Remove this patient?')) return;
+      const data = await api('DELETE','/api/patients/'+id);
+      if (data.status==='deleted') { this.patients=this.patients.filter(p=>p.id!==id); toast('Removed'); }
+    },
+
+    async remind(p) {
+      if (!p.medications.length) { toast('No medications for this patient',false); return; }
+      toast('Sending reminder to '+p.name+'...');
+      const data = await api('POST','/api/patients/'+p.id+'/remind');
+      if (data.error) toast(data.error,false);
+      else toast('Reminder sent to '+p.name+'!');
+    },
+
+    async sendAllReminders() {
+      const withMeds = this.patients.filter(p=>p.medications.length>0);
+      if (!withMeds.length) { toast('No patients with medications',false); return; }
+      if (!confirm(`Send reminders to ${withMeds.length} patient(s)?`)) return;
+      let ok=0, fail=0;
+      for (const p of withMeds) {
+        const data = await api('POST','/api/patients/'+p.id+'/remind');
+        if (data.error) fail++; else ok++;
+        await new Promise(r=>setTimeout(r,800));
+      }
+      toast(`Sent: ${ok}, Failed: ${fail}`, fail===0);
+    }
+  }
+}
+
+let _imgFile = null;
+function previewImg(input) {
+  _imgFile = input.files[0];
+  const zone = document.getElementById('imgPreview');
+  if (_imgFile) {
+    const url = URL.createObjectURL(_imgFile);
+    zone.innerHTML = `<img src="${url}" style="max-height:120px;max-width:100%;border-radius:8px;margin-bottom:6px"><br><span style="font-size:12px;color:var(--muted)">${_imgFile.name}</span>`;
+  }
+}
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgDropZone').style.borderColor='var(--border)';
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    _imgFile = f;
+    document.getElementById('imgFile').files = e.dataTransfer.files;
+    const url = URL.createObjectURL(f);
+    document.getElementById('imgPreview').innerHTML = `<img src="${url}" style="max-height:120px;max-width:100%;border-radius:8px;margin-bottom:6px"><br><span style="font-size:12px;color:var(--muted)">${f.name}</span>`;
+  }
+}
+async function analyzeImage() {
+  if (!_imgFile) { toast('Select an image first', false); return; }
+  const btn = document.getElementById('analyzeBtn');
+  const result = document.getElementById('analysisResult');
+  btn.textContent = '⏳ Analyzing…'; btn.disabled = true;
+  result.style.display = 'none';
+  const form = new FormData();
+  form.append('file', _imgFile);
+  form.append('prompt', document.getElementById('imgPrompt').value || 'Analyze this medical image.');
+  const r = await fetch('/api/ai/health/analyze', {method:'POST', body:form});
+  const data = await r.json();
+  btn.textContent = '🔬 Analyze with AI'; btn.disabled = false;
+  if (data.analysis) {
+    result.textContent = data.analysis;
+    result.style.display = 'block';
+  } else {
+    toast(data.error || 'Analysis failed', false);
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Invoice Agent{% endblock %}
+{% block page_title %}🧾 Invoice Agent — Billing & Payments{% endblock %}
+
+{% block content %}
+<div x-data="invoiceApp()" x-init="init()">
+
+  <!-- Config Banner -->
+  <div class="card mb-4">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
+        <div style="font-size:28px">🧾</div>
+        <div>
+          <div style="font-weight:700;font-size:15px">Invoice Agent</div>
+          <div class="text-sm text-muted">Auto-generate & send professional invoices via WhatsApp</div>
+        </div>
+        <label class="toggle" style="margin-left:8px">
+          <input type="checkbox" x-model="cfg.enabled" @change="saveCfg()">
+          <span class="slider"></span>
+        </label>
+        <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
+      </div>
+      <button @click="showCreate=true" class="btn btn-p">+ New Invoice</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid g4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f8fafc">📋</div>
+      <div><div class="stat-val" x-text="invoices.length">{{ invoices|length }}</div><div class="stat-lbl">Total Invoices</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4">✅</div>
+      <div>
+        <div class="stat-val" style="color:#22c55e" x-text="invoices.filter(i=>i.status==='sent').length">{{ invoices|selectattr('status','eq','sent')|list|length }}</div>
+        <div class="stat-lbl">Sent</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef9c3">📝</div>
+      <div>
+        <div class="stat-val" style="color:var(--amber)" x-text="invoices.filter(i=>i.status==='draft').length">{{ invoices|selectattr('status','eq','draft')|list|length }}</div>
+        <div class="stat-lbl">Drafts</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">💰</div>
+      <div>
+        <div class="stat-val" style="font-size:18px" x-text="'₹'+totalRevenue">₹0</div>
+        <div class="stat-lbl">Total Revenue</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Table -->
+  <div class="card">
+    <div class="section-header">
+      <h3>Invoices</h3>
+      <select x-model="filter" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none">
+        <option value="all">All</option>
+        <option value="draft">Drafts</option>
+        <option value="sent">Sent</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>Invoice #</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <template x-for="inv in filteredInvoices" :key="inv.id">
+            <tr>
+              <td style="font-weight:700;color:var(--blue)" x-text="inv.inv_no"></td>
+              <td style="font-weight:600" x-text="inv.cust_name"></td>
+              <td class="text-muted text-sm" x-text="inv.cust_phone"></td>
+              <td class="text-muted text-sm" x-text="inv.items.length + ' item(s)'"></td>
+              <td style="font-weight:700" x-text="'₹' + inv.total.toFixed(2)"></td>
+              <td>
+                <span class="badge" :class="inv.status==='sent'?'bg':'ba'" x-text="inv.status==='sent'?'✓ Sent':'Draft'"></span>
+              </td>
+              <td class="text-muted text-sm" x-text="inv.date"></td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <button @click="viewInv(inv)" class="btn btn-o btn-xs">View</button>
+                  <template x-if="inv.status==='draft'">
+                    <button @click="sendInv(inv)" class="btn btn-p btn-xs">📤 Send</button>
+                  </template>
+                  <template x-if="inv.status==='sent'">
+                    <button @click="sendInv(inv)" class="btn btn-b btn-xs">Resend</button>
+                  </template>
+                  <button @click="deleteInv(inv.id)" class="btn btn-d btn-xs">✕</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+          <template x-if="filteredInvoices.length===0">
+            <tr><td colspan="8" class="empty"><div class="empty-icon">🧾</div><p>No invoices yet — create your first one!</p></td></tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create Invoice Modal -->
+  <div class="overlay" x-show="showCreate" x-transition @click.self="showCreate=false">
+    <div class="modal modal-lg" @click.stop>
+      <div class="modal-hd">
+        <h3>Create New Invoice</h3>
+        <button class="modal-close" @click="showCreate=false">✕</button>
+      </div>
+
+      <div class="form-row">
+        <div class="fg">
+          <label>Customer Name *</label>
+          <input x-model="form.cust_name" placeholder="Full name">
+        </div>
+        <div class="fg">
+          <label>WhatsApp Number *</label>
+          <input x-model="form.cust_phone" placeholder="+91 9876543210">
+        </div>
+      </div>
+
+      <!-- Line Items -->
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <label style="font-size:13px;font-weight:600">Items *</label>
+          <button @click="addLine()" class="btn btn-o btn-xs">+ Add Line</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:45%">Item Name</th><th>Qty</th><th>Price (₹)</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+              <template x-for="(line,idx) in form.items" :key="idx">
+                <tr>
+                  <td><input x-model="line.name" placeholder="Item description" style="width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
+                  <td><input type="number" x-model.number="line.qty" min="1" step="1" style="width:70px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
+                  <td><input type="number" x-model.number="line.price" min="0" step="0.01" style="width:90px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
+                  <td style="font-weight:600" x-text="'₹'+(line.qty*line.price).toFixed(2)"></td>
+                  <td><button @click="form.items.splice(idx,1)" class="btn btn-d btn-xs">✕</button></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align:right;padding:12px 16px;font-size:15px;font-weight:800;color:var(--text)">
+          Total: ₹<span x-text="formTotal"></span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button @click="showCreate=false" class="btn btn-o">Cancel</button>
+        <button @click="createInv(false)" class="btn btn-o">Save as Draft</button>
+        <button @click="createInv(true)" class="btn btn-p">💾 Save & Send via WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Invoice Modal -->
+  <div class="overlay" x-show="viewTarget" x-transition @click.self="viewTarget=null">
+    <div class="modal modal-lg" @click.stop x-show="viewTarget">
+      <div class="modal-hd">
+        <h3 x-text="'Invoice #' + viewTarget?.inv_no"></h3>
+        <button class="modal-close" @click="viewTarget=null">✕</button>
+      </div>
+      <template x-if="viewTarget">
+        <div>
+          <div class="form-row" style="margin-bottom:16px">
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Customer</div><div style="font-weight:700" x-text="viewTarget.cust_name"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Phone</div><div x-text="viewTarget.cust_phone"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Date</div><div x-text="viewTarget.date"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Status</div><span class="badge" :class="viewTarget.status==='sent'?'bg':'ba'" x-text="viewTarget.status"></span></div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+              <tbody>
+                <template x-for="line in viewTarget.items" :key="line.name">
+                  <tr>
+                    <td x-text="line.name"></td>
+                    <td x-text="line.qty"></td>
+                    <td x-text="'₹'+line.price"></td>
+                    <td style="font-weight:600" x-text="'₹'+(line.qty*line.price).toFixed(2)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+          <div style="text-align:right;padding:14px 16px;font-size:16px;font-weight:800;border-top:2px solid var(--g);margin-top:4px">
+            Total: ₹<span x-text="viewTarget.total.toFixed(2)"></span>
+          </div>
+          <div class="form-actions">
+            <button @click="viewTarget=null" class="btn btn-o">Close</button>
+            <button @click="sendInv(viewTarget);viewTarget=null" class="btn btn-p">📤 Send via WhatsApp</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function invoiceApp() {
+  return {
+    invoices: {{ invoices|tojson }},
+    cfg: {{ cfg|tojson }},
+    showCreate: false,
+    viewTarget: null,
+    filter: 'all',
+    form: { cust_name:'', cust_phone:'', items:[{name:'',qty:1,price:0}] },
+
+    init() {},
+
+    get filteredInvoices() {
+      if (this.filter==='all') return this.invoices;
+      return this.invoices.filter(i=>i.status===this.filter);
+    },
+    get totalRevenue() {
+      return this.invoices.reduce((s,i)=>s+i.total,0).toFixed(2);
+    },
+    get formTotal() {
+      return this.form.items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2);
+    },
+
+    addLine() { this.form.items.push({name:'',qty:1,price:0}); },
+
+    viewInv(inv) { this.viewTarget = inv; },
+
+    async saveCfg() {
+      await api('POST','/api/agent/invoice',{enabled:this.cfg.enabled?1:0,wa_number:this.cfg.wa_number||'',notes:''});
+    },
+
+    async createInv(sendNow) {
+      if (!this.form.cust_name || !this.form.cust_phone) { toast('Customer name & phone required',false); return; }
+      const validItems = this.form.items.filter(i=>i.name&&i.qty>0);
+      if (!validItems.length) { toast('Add at least one item',false); return; }
+      const data = await api('POST','/api/invoices',{...this.form, items:validItems});
+      if (data.id) {
+        data.date = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+        this.invoices.unshift(data);
+        toast('Invoice created');
+        this.showCreate = false;
+        this.form = {cust_name:'',cust_phone:'',items:[{name:'',qty:1,price:0}]};
+        if (sendNow) this.sendInv(data);
+      } else toast(data.error||'Error creating invoice',false);
+    },
+
+    async sendInv(inv) {
+      toast('Sending invoice via WhatsApp...');
+      const data = await api('POST',`/api/invoices/${inv.id}/send`);
+      if (!data.error) {
+        const idx = this.invoices.findIndex(i=>i.id===inv.id);
+        if (idx>=0) this.invoices[idx].status='sent';
+        toast('Invoice sent successfully!');
+      } else toast(data.error,false);
+    },
+
+    async deleteInv(id) {
+      if (!confirm('Delete this invoice?')) return;
+      const data = await api('DELETE','/api/invoices/'+id);
+      if (data.status==='deleted') { this.invoices=this.invoices.filter(i=>i.id!==id); toast('Deleted'); }
+    }
+  }
+}
+</script>
+{% endblock %}

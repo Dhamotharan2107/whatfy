@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}Shop Agent{% endblock %}
+{% block page_title %}🛒 Shop Agent — Grocery & Inventory{% endblock %}
+
+{% block content %}
+<div x-data="shopApp()" x-init="init()">
+
+  <!-- Agent Config Banner -->
+  <div class="card mb-4">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
+        <div style="font-size:28px">🛒</div>
+        <div>
+          <div style="font-weight:700;font-size:15px">Shop Agent</div>
+          <div class="text-sm text-muted">Inventory management & WhatsApp alerts</div>
+        </div>
+        <label class="toggle" style="margin-left:8px">
+          <input type="checkbox" x-model="cfg.enabled" @change="saveCfg()">
+          <span class="slider"></span>
+        </label>
+        <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <input class="fg" style="margin:0;padding:8px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;width:200px" x-model="cfg.wa_number" placeholder="+91... (alert number)" @blur="saveCfg()">
+        <button @click="sendAlert()" class="btn btn-a btn-sm" :disabled="!cfg.wa_number">⚠️ Send Low-Stock Alert</button>
+        <button @click="showAdd=true" class="btn btn-p btn-sm">+ Add Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="grid g4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4">📦</div>
+      <div><div class="stat-val" x-text="items.length">{{ items|length }}</div><div class="stat-lbl">Total Items</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef2f2">⚠️</div>
+      <div>
+        <div class="stat-val" x-text="lowItems.length" style="color:var(--red)">{{ items | selectattr('qty', 'le', items[0].low_thresh if items else 0) | list | length }}</div>
+        <div class="stat-lbl">Low Stock</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fffbeb">🛍️</div>
+      <div>
+        <div class="stat-val" x-text="orderedItems.length" style="color:var(--amber)">0</div>
+        <div class="stat-lbl">Ordered</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">💰</div>
+      <div>
+        <div class="stat-val" x-text="'₹'+totalValue" style="font-size:20px">₹0</div>
+        <div class="stat-lbl">Stock Value</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert -->
+  <template x-if="lowItems.length > 0">
+    <div class="alert alert-warn mb-4">
+      ⚠️ <strong x-text="lowItems.length + ' item(s)'"></strong> are below threshold.
+      <button @click="sendAlert()" class="btn btn-a btn-xs" style="margin-left:10px">Send WhatsApp Alert</button>
+    </div>
+  </template>
+
+  <!-- Inventory Table -->
+  <div class="card">
+    <div class="section-header">
+      <h3>Inventory</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input x-model="search" placeholder="Search items..." style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;width:180px">
+        <select x-model="filter" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none">
+          <option value="all">All Items</option>
+          <option value="low">Low Stock</option>
+          <option value="ordered">Ordered</option>
+          <option value="ok">In Stock</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Item Name</th><th>Quantity</th><th>Unit</th><th>Low Threshold</th><th>Price/Unit</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="item in filteredItems" :key="item.id">
+            <tr>
+              <td style="font-weight:600" x-text="item.name"></td>
+              <td>
+                <span x-text="item.qty" :style="item.qty <= item.low_thresh && !item.ordered ? 'color:var(--red);font-weight:700' : ''"></span>
+                <span class="text-muted text-xs" x-text="' ' + item.unit"></span>
+              </td>
+              <td class="text-muted" x-text="item.unit"></td>
+              <td class="text-muted" x-text="item.low_thresh + ' ' + item.unit"></td>
+              <td x-text="'₹' + item.price"></td>
+              <td>
+                <template x-if="item.ordered">
+                  <span class="badge bb">Ordered</span>
+                </template>
+                <template x-if="!item.ordered && item.qty <= item.low_thresh">
+                  <span class="badge br">Low Stock</span>
+                </template>
+                <template x-if="!item.ordered && item.qty > item.low_thresh">
+                  <span class="badge bg">In Stock</span>
+                </template>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <button @click="editItem(item)" class="btn btn-o btn-xs">Edit</button>
+                  <button @click="toggleOrdered(item)" class="btn btn-xs" :class="item.ordered ? 'btn-o' : 'btn-b'" x-text="item.ordered ? 'Mark Received' : 'Mark Ordered'"></button>
+                  <button @click="deleteItem(item.id)" class="btn btn-d btn-xs">✕</button>
+                </div>
+              </td>
+            </tr>
+          </template>
+          <template x-if="filteredItems.length === 0">
+            <tr><td colspan="7" class="empty"><div class="empty-icon">📦</div><p>No items found</p></td></tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bot Preview Card -->
+  <div class="card mt-4">
+    <div class="card-title">🤖 Agent Preview — How it responds on WhatsApp</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">Customer asks:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">How much rice is available?</div>
+          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">What items are low in stock?</div>
+          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">What is the price of sugar?</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">Agent replies:</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">🌾 Rice: <strong x-text="items.find(i=>i.name.toLowerCase().includes('rice'))?.qty || 'N/A'"></strong> kg available</div>
+          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">⚠️ <strong x-text="lowItems.length"></strong> item(s) need restocking</div>
+          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">🍬 Sugar: ₹<strong x-text="items.find(i=>i.name.toLowerCase().includes('sugar'))?.price || 'N/A'"></strong> per kg</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="overlay" x-show="showAdd || editTarget" x-transition @click.self="closeModal()">
+    <div class="modal" @click.stop>
+      <div class="modal-hd">
+        <h3 x-text="editTarget ? 'Edit Item' : 'Add Grocery Item'"></h3>
+        <button class="modal-close" @click="closeModal()">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="fg" style="grid-column:1/-1">
+          <label>Item Name *</label>
+          <input x-model="form.name" placeholder="e.g. Rice, Sugar, Wheat">
+        </div>
+      </div>
+      <div class="form-row3">
+        <div class="fg">
+          <label>Quantity</label>
+          <input type="number" x-model="form.qty" step="0.1" min="0" placeholder="0">
+        </div>
+        <div class="fg">
+          <label>Unit</label>
+          <select x-model="form.unit">
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="L">L</option>
+            <option value="mL">mL</option>
+            <option value="pcs">pcs</option>
+            <option value="box">box</option>
+            <option value="bag">bag</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Low Stock Threshold</label>
+          <input type="number" x-model="form.low_thresh" step="0.1" min="0" placeholder="5">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Price per Unit (₹)</label>
+        <input type="number" x-model="form.price" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-actions">
+        <button @click="closeModal()" class="btn btn-o">Cancel</button>
+        <button @click="saveItem()" class="btn btn-p" x-text="editTarget ? 'Update Item' : 'Add Item'"></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function shopApp() {
+  return {
+    items: {{ items|tojson }},
+    cfg: {{ cfg|tojson }},
+    showAdd: false,
+    editTarget: null,
+    search: '',
+    filter: 'all',
+    form: {name:'',qty:0,unit:'kg',low_thresh:5,price:0},
+
+    init() {},
+
+    get lowItems() { return this.items.filter(i => i.qty <= i.low_thresh && !i.ordered); },
+    get orderedItems() { return this.items.filter(i => i.ordered); },
+    get totalValue() {
+      return this.items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2);
+    },
+    get filteredItems() {
+      let res = this.items;
+      if (this.search) res = res.filter(i=>i.name.toLowerCase().includes(this.search.toLowerCase()));
+      if (this.filter==='low') res = res.filter(i=>i.qty<=i.low_thresh&&!i.ordered);
+      if (this.filter==='ordered') res = res.filter(i=>i.ordered);
+      if (this.filter==='ok') res = res.filter(i=>i.qty>i.low_thresh&&!i.ordered);
+      return res;
+    },
+
+    async saveCfg() {
+      await api('POST','/api/agent/shop',{enabled:this.cfg.enabled?1:0, wa_number:this.cfg.wa_number||'',notes:''});
+    },
+
+    editItem(item) {
+      this.editTarget = item;
+      this.form = {...item};
+    },
+    closeModal() { this.showAdd=false; this.editTarget=null; this.form={name:'',qty:0,unit:'kg',low_thresh:5,price:0}; },
+
+    async saveItem() {
+      if (!this.form.name) { toast('Item name required',false); return; }
+      const method = this.editTarget ? 'PUT' : 'POST';
+      const url = this.editTarget ? '/api/grocery/'+this.editTarget.id : '/api/grocery';
+      const data = await api(method, url, this.form);
+      if (data.id) {
+        if (this.editTarget) {
+          const idx = this.items.findIndex(i=>i.id===data.id);
+          if (idx>=0) this.items[idx]=data;
+        } else {
+          this.items.push(data);
+        }
+        toast(this.editTarget ? 'Item updated':'Item added');
+        this.closeModal();
+      } else toast(data.error||'Error',false);
+    },
+
+    async deleteItem(id) {
+      if (!confirm('Delete this item?')) return;
+      const data = await api('DELETE','/api/grocery/'+id);
+      if (data.status==='deleted') { this.items=this.items.filter(i=>i.id!==id); toast('Deleted'); }
+      else toast('Error',false);
+    },
+
+    async toggleOrdered(item) {
+      const data = await api('PUT','/api/grocery/'+item.id,{...item, ordered: item.ordered?0:1, qty: item.ordered?item.low_thresh*2:item.qty});
+      if (data.id) {
+        const idx = this.items.findIndex(i=>i.id===data.id);
+        if (idx>=0) this.items[idx]=data;
+        toast(data.ordered ? 'Marked as ordered' : 'Marked as received — stock updated');
+      }
+    },
+
+    async sendAlert() {
+      const data = await api('POST','/api/grocery/alert');
+      if (data.message) toast(data.message);
+      else if (data.error) toast(data.error,false);
+      else toast('Low-stock alert sent via WhatsApp!');
+    }
+  }
+}
+
+</script>
+{% endblock %}

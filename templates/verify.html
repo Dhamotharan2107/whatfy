@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verify — Whatfy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:#0b0f1a;min-height:100vh;color:#e2e8f0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;
+}
+
+/* Animated BG */
+.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0}
+.bg-glow::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;
+  background:radial-gradient(ellipse,rgba(37,211,102,.07) 0%,transparent 70%);
+  animation:bgp 7s ease-in-out infinite;
+}
+@keyframes bgp{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* Topbar */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:rgba(11,15,26,.9);border-bottom:1px solid rgba(255,255,255,.06);
+  backdrop-filter:blur(10px);
+}
+.brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800;color:#fff}
+.brand-icon{width:28px;height:28px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.step-indicator{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.35)}
+.step-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15)}
+.step-dot.done{background:#25D366}
+.step-dot.active{background:#4ade80;box-shadow:0 0 0 3px rgba(37,211,102,.2)}
+.logout-link{font-size:13px;color:rgba(255,255,255,.3);text-decoration:none;padding:4px 12px;border:1px solid rgba(255,255,255,.07);border-radius:6px;transition:.15s}
+.logout-link:hover{color:#f87171;border-color:rgba(239,68,68,.25)}
+
+/* Main card */
+.card{
+  position:relative;z-index:1;
+  width:100%;max-width:480px;margin-top:54px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;padding:40px 36px;
+  backdrop-filter:blur(8px);
+  animation:fadeUp .3s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.step-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);
+  padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;
+  color:#4ade80;margin-bottom:18px;
+}
+.step-badge-dot{width:6px;height:6px;background:#25D366;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+h1{font-size:24px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-.4px}
+.subtitle{font-size:14px;color:rgba(255,255,255,.4);line-height:1.6;margin-bottom:28px}
+
+/* Phone display */
+.phone-display{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(37,211,102,.07);
+  border:1px solid rgba(37,211,102,.2);
+  border-radius:14px;padding:14px 18px;margin-bottom:24px;
+  cursor:pointer;transition:.15s;
+}
+.phone-display:hover{background:rgba(37,211,102,.11)}
+.phone-icon{
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  background:linear-gradient(135deg,#25D366,#128C7E);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.phone-text{flex:1}
+.phone-label{font-size:11.5px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.phone-number{font-size:16px;font-weight:700;color:#fff;font-family:monospace;letter-spacing:1px}
+.phone-arrow{color:rgba(255,255,255,.2);font-size:18px}
+
+/* Send button */
+.btn-send{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#25D366,#128C7E);
+  color:#fff;border:none;border-radius:13px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:16px;
+}
+.btn-send:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(37,211,102,.35)}
+.btn-send:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Message preview */
+.msg-preview{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:16px 18px;margin-bottom:24px;
+  display:none;animation:fadeUp .25s ease;
+}
+.msg-preview.show{display:block}
+.msg-preview-title{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.25);margin-bottom:12px}
+
+/* WhatsApp bubble */
+.wa-bubble-wrap{display:flex;justify-content:flex-end}
+.wa-bubble{
+  background:#005c4b;
+  border-radius:12px 12px 2px 12px;
+  padding:12px 16px;max-width:85%;
+  font-size:13.5px;line-height:1.65;color:#e9edef;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+  white-space:pre-line;
+}
+.wa-bubble strong{color:#fff}
+.wa-code-highlight{
+  display:block;text-align:center;
+  font-size:28px;font-weight:800;letter-spacing:6px;
+  color:#4ade80;font-family:monospace;
+  margin:6px 0;padding:8px;
+  background:rgba(37,211,102,.1);border-radius:8px;
+}
+.wa-time{font-size:11px;color:rgba(255,255,255,.3);text-align:right;margin-top:6px}
+
+/* Code input */
+.code-section{display:none;animation:fadeUp .25s ease}
+.code-section.show{display:block}
+.code-label{font-size:13px;font-weight:600;color:rgba(255,255,255,.55);margin-bottom:10px}
+.code-input-row{display:flex;gap:10px;margin-bottom:14px}
+.code-input{
+  flex:1;padding:15px;
+  background:rgba(255,255,255,.07);
+  border:2px solid rgba(255,255,255,.1);
+  border-radius:12px;color:#fff;
+  font-size:22px;font-weight:800;text-align:center;
+  letter-spacing:6px;outline:none;
+  transition:.2s;font-family:monospace;
+  text-transform:uppercase;
+}
+.code-input:focus{border-color:#25D366;background:rgba(37,211,102,.07);box-shadow:0 0 0 3px rgba(37,211,102,.12)}
+.code-input::placeholder{color:rgba(255,255,255,.15);letter-spacing:2px;font-size:16px}
+.btn-verify{
+  flex-shrink:0;padding:15px 22px;
+  background:rgba(37,211,102,.15);border:1.5px solid rgba(37,211,102,.3);
+  color:#4ade80;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;
+  transition:.15s;white-space:nowrap;
+}
+.btn-verify:hover{background:rgba(37,211,102,.25)}
+.btn-verify:disabled{opacity:.4;cursor:not-allowed}
+
+/* Resend link */
+.resend-row{text-align:center;margin-top:8px}
+.resend-link{font-size:13px;color:rgba(255,255,255,.3);cursor:pointer;transition:.15s;background:none;border:none}
+.resend-link:hover{color:#4ade80}
+
+/* Status message */
+.status-msg{
+  padding:11px 16px;border-radius:10px;font-size:13.5px;font-weight:600;
+  display:none;margin-top:14px;
+  align-items:center;gap:8px;
+}
+.status-msg.show{display:flex}
+.status-msg.ok{background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);color:#4ade80}
+.status-msg.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171}
+
+/* Success overlay */
+.success-screen{
+  position:fixed;inset:0;z-index:200;
+  background:#0b0f1a;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  animation:fadeIn .4s ease;
+}
+.success-screen.show{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.success-icon{font-size:64px;margin-bottom:20px;animation:bounce .6s ease}
+@keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.success-title{font-size:28px;font-weight:800;color:#fff;margin-bottom:8px}
+.success-sub{font-size:15px;color:rgba(255,255,255,.4);margin-bottom:28px}
+.progress-bar{width:220px;height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:#25D366;border-radius:4px;animation:fill 2s ease forwards}
+@keyframes fill{from{width:0}to{width:100%}}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">💬</div>
+    Whatfy
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot done"></div>
+    <div style="font-size:11px">Connect</div>
+    <div style="width:20px;height:1px;background:rgba(255,255,255,.1)"></div>
+    <div class="step-dot active"></div>
+    <div style="font-size:11px">Verify</div>
+    <div style="width:20px;height:1px;background:rgba(255,255,255,.1)"></div>
+    <div class="step-dot"></div>
+    <div style="font-size:11px">Dashboard</div>
+  </div>
+  <a href="/auth/logout" class="logout-link">Sign Out</a>
+</div>
+
+<!-- Main card -->
+<div class="card">
+  <div class="step-badge"><div class="step-badge-dot"></div> Step 2 of 2 — Verify Identity</div>
+  <h1>Check Your WhatsApp 📲</h1>
+  <p class="subtitle">We'll send a verification code to your connected WhatsApp number. Enter it below to unlock your dashboard.</p>
+
+  <!-- Phone display (clickable = send code) -->
+  <div class="phone-display" onclick="sendCode()" id="phoneDisplay">
+    <div class="phone-icon">📱</div>
+    <div class="phone-text">
+      <div class="phone-label">Send code to this number</div>
+      <div class="phone-number" id="phoneNumber">{{ wa_phone or 'Your connected number' }}</div>
+    </div>
+    <div class="phone-arrow">›</div>
+  </div>
+
+  <!-- Send button -->
+  <button class="btn-send" id="sendBtn" onclick="sendCode()">
+    <span id="sendIcon">📲</span>
+    <span id="sendText">Send Verification Code</span>
+  </button>
+
+  <!-- WhatsApp message preview (shown after sending) -->
+  <div class="msg-preview" id="msgPreview">
+    <div class="msg-preview-title">✉️ Message sent to your WhatsApp</div>
+    <div class="wa-bubble-wrap">
+      <div class="wa-bubble">
+🔐 <strong>Whatfy Verification Code</strong>
+
+Your login verification code is:
+<span class="wa-code-highlight" id="previewCode">· · · · · ·</span>
+<em style="color:rgba(233,237,239,.5);font-size:12px">Valid for 5 minutes. Do not share.</em>
+
+— Whatfy
+        <div class="wa-time">now · ✓✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code entry (shown after sending) -->
+  <div class="code-section" id="codeSection">
+    <div class="code-label">Enter the code from WhatsApp:</div>
+    <div class="code-input-row">
+      <input type="text" id="codeInput" class="code-input"
+        maxlength="6" placeholder="A3F8C2"
+        autocomplete="off"
+        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"
+        onkeydown="if(event.key==='Enter')verifyCode()">
+      <button class="btn-verify" id="verifyBtn" onclick="verifyCode()">Confirm →</button>
+    </div>
+    <div class="resend-row">
+      <button class="resend-link" onclick="sendCode()">Didn't receive it? Resend →</button>
+    </div>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+</div>
+
+<!-- Success screen -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">🎉</div>
+  <div class="success-title">Verified!</div>
+  <div class="success-sub">Opening your dashboard…</div>
+  <div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+
+<script>
+async function apiFetch(method, url, body=null) {
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if (body) opts.body = JSON.stringify(body);
+  return (await fetch(url, opts)).json();
+}
+
+function showStatus(text, ok) {
+  const el = document.getElementById('statusMsg');
+  el.innerHTML = (ok ? '✓ ' : '✕ ') + text;
+  el.className = 'status-msg show ' + (ok ? 'ok' : 'err');
+}
+
+async function sendCode() {
+  const btn  = document.getElementById('sendBtn');
+  const icon = document.getElementById('sendIcon');
+  const txt  = document.getElementById('sendText');
+  btn.disabled = true;
+  icon.style.animation = 'spin .6s linear infinite';
+  txt.textContent = 'Sending…';
+  document.getElementById('statusMsg').className = 'status-msg';
+
+  const data = await apiFetch('POST', '/api/wa/send-code');
+
+  btn.disabled = false;
+  icon.style.animation = '';
+
+  if (data.status === 'sent') {
+    // Update phone number display if returned
+    if (data.phone) {
+      document.getElementById('phoneNumber').textContent = '+' + data.phone;
+    }
+    // Show WA message preview (with placeholder code)
+    document.getElementById('msgPreview').classList.add('show');
+    // Show code input
+    document.getElementById('codeSection').classList.add('show');
+    // Update button
+    icon.textContent = '🔄'; txt.textContent = 'Resend Code';
+    showStatus('Code sent to your WhatsApp — check your messages', true);
+    // Focus code input
+    setTimeout(() => document.getElementById('codeInput').focus(), 200);
+  } else {
+    icon.textContent = '📲'; txt.textContent = 'Try Again';
+    showStatus(data.error || 'Failed to send code', false);
+  }
+}
+
+async function verifyCode() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (code.length < 6) { showStatus('Enter the full 6-character code', false); return; }
+
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = '⏳';
+
+  const data = await apiFetch('POST', '/api/wa/verify-code', {code});
+
+  if (data.status === 'verified') {
+    document.getElementById('successScreen').classList.add('show');
+    setTimeout(() => location.href = '/dashboard', 2200);
+  } else {
+    btn.disabled = false; btn.textContent = 'Confirm →';
+    showStatus(data.error || 'Incorrect code — try again', false);
+    document.getElementById('codeInput').value = '';
+    document.getElementById('codeInput').focus();
+  }
+}
+
+// Auto-send if code was already sent in a previous request
+{% if code_sent %}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('msgPreview').classList.add('show');
+  document.getElementById('codeSection').classList.add('show');
+  document.getElementById('sendIcon').textContent = '🔄';
+  document.getElementById('sendText').textContent = 'Resend Code';
+  showStatus('Code already sent — check WhatsApp or resend', true);
+});
+{% endif %}
+</script>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

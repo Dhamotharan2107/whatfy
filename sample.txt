@@ -1,0 +1,1255 @@
+import json
+import requests
+import pandas as pd
+from datetime import datetime
+import os
+import time as t
+import psutil
+import shutil
+import io
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, InvalidElementStateException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
+from PIL import Image, ImageDraw, ImageFont
+import logging
+
+# Try to import win32clipboard for clipboard method
+try:
+    import win32clipboard
+    CLIPBOARD_AVAILABLE = True
+    print("Clipboard method available")
+except ImportError:
+    CLIPBOARD_AVAILABLE = False
+    print("Clipboard method not available. Install pywin32 for clipboard support: pip install pywin32")
+
+
+
+# =======================================
+#    HELPER: CLEANUP LOCK FILES
+# =======================================
+def cleanup_lock_files(user_data_dir):
+    """
+    Remove Chrome lock files that might prevent the session from starting.
+    """
+    lock_files = [
+        'SingletonLock',
+        'SingletonSocket',
+        'SingletonCookie',
+        'lockfile'
+    ]
+
+    print(f"Cleaning up lock files in: {user_data_dir}")
+
+    for lock_file in lock_files:
+        lock_path = os.path.join(user_data_dir, lock_file)
+        if os.path.exists(lock_path):
+            try:
+                if os.path.isdir(lock_path):
+                    shutil.rmtree(lock_path)
+                else:
+                    os.remove(lock_path)
+                print(f"  Removed: {lock_file}")
+            except Exception as e:
+                print(f"  Could not remove {lock_file}: {e}")
+
+
+def debug_whatsapp_elements():
+    """
+    Debug function to print all clickable elements on the page.
+    Helps identify correct XPath selectors.
+    """
+    print("\n" + "=" * 60)
+    print("DEBUGGING WHATSAPP WEB ELEMENTS")
+    print("=" * 60)
+
+    try:
+        # Find all buttons
+        buttons = driver.find_elements(By.TAG_NAME, "button")
+        print(f"\n[BUTTONS] Found {len(buttons)} buttons")
+        for i, btn in enumerate(buttons[:15]):
+            try:
+                title = btn.get_attribute('title') or 'None'
+                aria = btn.get_attribute('aria-label') or 'None'
+                if 'attach' in title.lower() or 'attach' in aria.lower() or 'clip' in title.lower():
+                    print(f"  *** Button {i}: title='{title}', aria-label='{aria}'")
+            except:
+                pass
+
+        # Find all spans with data-icon
+        icons = driver.find_elements(By.XPATH, "//span[@data-icon]")
+        print(f"\n[ICONS] Found {len(icons)} icons with data-icon")
+        for i, icon in enumerate(icons[:15]):
+            try:
+                data_icon = icon.get_attribute('data-icon')
+                if data_icon and (
+                        'attach' in data_icon or 'clip' in data_icon or 'plus' in data_icon or 'send' in data_icon):
+                    print(f"  *** Icon {i}: data-icon='{data_icon}'")
+            except:
+                pass
+
+        # Find all divs with title
+        divs = driver.find_elements(By.XPATH, "//div[@title]")
+        print(f"\n[DIVS] Found {len(divs)} divs with title")
+        for i, div in enumerate(divs[:15]):
+            try:
+                title = div.get_attribute('title')
+                if title and 'attach' in title.lower():
+                    print(f"  *** Div {i}: title='{title}'")
+            except:
+                pass
+
+        print("\n" + "=" * 60)
+        print("END DEBUG - Check lines marked with ***")
+        print("=" * 60 + "\n")
+    except Exception as e:
+        print(f"Debug error: {e}")
+
+
+# =======================================
+#       FUNCTION: OPEN WHATSAPP GROUP
+# =======================================
+def open_whatsapp_group(group_name):
+    """
+    Opens the specified WhatsApp group by searching for it.
+    """
+    try:
+        # Wait a bit for WhatsApp to fully load
+        t.sleep(2)
+
+        # Search for the group - try multiple XPath options
+        search_xpaths = [
+            "//div[@contenteditable='true'][@data-tab='3']",  # Search box
+            "//div[@contenteditable='true' and @role='textbox']",
+            "//div[@title='Search input textbox']",
+            "//p[@class='selectable-text copyable-text'][@contenteditable='true']",
+            "//div[@contenteditable='true'][@data-lexical-editor='true']"
+        ]
+
+        input_bar = None
+        for xpath in search_xpaths:
+            try:
+                input_bar = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, xpath))
+                )
+                print(f"Search bar found with XPath: {xpath}")
+                break
+            except:
+                continue
+
+        if input_bar is None:
+            raise Exception("Could not find search bar")
+
+        input_bar.click()
+        t.sleep(1)
+        input_bar.clear()
+        input_bar.send_keys(group_name)
+        t.sleep(2)
+        input_bar.send_keys(Keys.RETURN)
+        t.sleep(3)
+
+        # Select the group
+        collectiongroup = WebDriverWait(driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, f"//span[@title='{group_name}']")),
+            message=f'Group "{group_name}" not found'
+        )
+        collectiongroup.click()
+        print(f"Group '{group_name}' selected successfully")
+        t.sleep(3)
+    except TimeoutException as e:
+        logging.error(f"Timeout during WhatsApp initialization: {e}")
+        print(f"Error: {e}")
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error during WhatsApp initialization: {e}")
+        print(f"Unexpected error: {e}")
+        raise
+
+
+# =======================================
+#   THAAGAM: GENERATE TABLE IMAGE - FIXED
+# =======================================
+def generate_table_image(df, image_name, total_label="TOTAL"):
+    """
+    Generates a table image from a DataFrame and saves it as an image file.
+    FIXED: Ensures minimum dimensions to prevent sticker conversion.
+    """
+    if 'Amount' in df.columns:
+        df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce').fillna(0)
+        df = df.sort_values(by='Amount', ascending=False).reset_index(drop=True)
+        print(f"DataFrame sorted by 'Amount':\n{df}")
+    else:
+        print("'Amount' column not found in DataFrame. Skipping sort.")
+
+    cell_padding = 20  # Increased padding
+    cell_width = 250  # Increased width
+    row_height = 50  # Increased height
+    header_color = (255, 165, 0)
+    row_colors = [(255, 255, 255), (224, 238, 238)]
+    text_color = (0, 0, 0)
+
+    rows = len(df)
+    cols = len(df.columns)
+
+    table_width = (cols + 1) * cell_width
+    table_height = (rows + 2) * row_height
+
+    # *** IMPORTANT: Ensure minimum dimensions (WhatsApp treats small/square images as stickers) ***
+    min_width = 800   # Increased from 600
+    min_height = 600  # Increased from 400
+
+    final_width = max(table_width + 2 * cell_padding, min_width)
+    final_height = max(table_height + 2 * cell_padding, min_height)
+
+    img = Image.new('RGB', (final_width, final_height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(img)
+
+    try:
+        font_path = "C:/Windows/Fonts/arial.ttf"
+        font = ImageFont.truetype(font_path, size=20)  # Slightly larger font
+    except OSError:
+        print("Font not found; using default font.")
+        font = ImageFont.load_default()
+
+    # Draw table headers
+    for col_idx in range(cols):
+        x = col_idx * cell_width + cell_padding
+        y = cell_padding
+        draw.rectangle([x, y, x + cell_width, y + row_height], fill=header_color)
+        header_text = str(df.columns[col_idx]).upper()
+        draw.text((x + 10, y + 10), header_text, font=font, fill=text_color)
+
+    # Draw table rows
+    for row_idx in range(rows):
+        for col_idx in range(cols):
+            x = col_idx * cell_width + cell_padding
+            y = (row_idx + 1) * row_height + cell_padding
+            color = row_colors[row_idx % len(row_colors)]
+            draw.rectangle([x, y, x + cell_width, y + row_height], fill=color)
+            cell_value = str(df.iloc[row_idx, col_idx])
+            draw.text((x + 10, y + 10), cell_value, font=font, fill=text_color)
+
+    # Draw the TOTAL row
+    x = cell_padding
+    y = (rows + 1) * row_height + cell_padding
+    draw.rectangle([x, y, x + cell_width, y + row_height], fill=row_colors[1])
+    draw.text((x + 10, y + 10), total_label, font=font, fill=text_color)
+
+    total_amount = df['Amount'].sum()
+    draw.text((x + cell_width + 10, y + 10), f"{total_amount:.2f}", font=font, fill=text_color)
+
+    # Save as JPEG with high quality (PNG can sometimes be treated as sticker)
+    img.save(image_name, 'JPEG', quality=95, dpi=(300, 300))
+    print(f"Table image saved as '{image_name}' ({final_width}x{final_height}px).")
+    return total_amount
+
+
+# =======================================
+#   M7: GENERATE SONG TABLE IMAGE - FIXED
+# =======================================
+def generate_song_table_image(today_total, month_total, today_categories, month_categories):
+    """
+    Generates two separate images: one for today's collection and one for this month's collection.
+    FIXED: Ensures proper dimensions to avoid sticker conversion.
+    """
+
+    def create_table_image(table_data, heading_text):
+        cell_padding = 20  # Increased
+        cell_width = 350  # Increased
+        row_height = 65  # Increased
+        header_color = (0, 128, 255)
+        row_colors = [(255, 255, 255), (230, 230, 230)]
+        text_color = (0, 0, 0)
+        font_size = 24
+        font_path = 'arial.ttf'
+
+        rows = len(table_data)
+        cols = len(table_data[0])
+        table_width = cols * cell_width
+        table_height = rows * row_height
+        heading_height = 80
+
+        image_width = table_width + (2 * cell_padding)
+        image_height = table_height + heading_height + (2 * cell_padding)
+
+        # *** Ensure minimum dimensions ***
+        image_width = max(image_width, 800)  # Increased from 700
+        image_height = max(image_height, 600) # Increased from 500
+
+        img = Image.new('RGB', (image_width, image_height), color=(255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.truetype(font_path, size=font_size)
+        heading_font = ImageFont.truetype(font_path, size=30)
+
+        heading_bbox = draw.textbbox((0, 0), heading_text, font=heading_font)
+        heading_x = (image_width - heading_bbox[2]) // 2
+        heading_y = cell_padding
+        draw.text((heading_x, heading_y), heading_text, font=heading_font, fill=text_color)
+
+        for row in range(rows):
+            for col in range(cols):
+                x = (col * cell_width) + cell_padding
+                y = (row * row_height) + cell_padding + heading_height
+                color = header_color if row == 0 else row_colors[row % len(row_colors)]
+                draw.rectangle([x, y, x + cell_width, y + row_height], fill=color)
+                text = str(table_data[row][col])
+
+                text_bbox = draw.textbbox((0, 0), text, font=font)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                text_x = x + (cell_width - text_width) / 2
+                text_y = y + (row_height - text_height) / 2
+                draw.text((text_x, text_y), text, font=font, fill=text_color)
+
+        return img
+
+    today_table_data = [
+        ("Categories", "Amount (INR)"),
+        ("Song Collection", today_categories.get("song", 0)),
+        ("Cine Song Collection", today_categories.get("cine_song", 0)),
+        ("Lipsync Collection", today_categories.get("lipsync", 0)),
+        ("Photo-to-Video Collection", today_categories.get("photo_to_video", 0)),
+        ("Acrylic Frame Collection", today_categories.get("acrylic_frame", 0)),
+        ("AI Photoshoot Collection", today_categories.get("ai_photoshoot", 0)),
+        ("Animation Video Collection", today_categories.get("animation_video", 0)),
+        ("Digital Art Collection", today_categories.get("digital_art", 0)),
+        ("Digital Merge Collection", today_categories.get("digital_merge", 0)),
+        ("E-Invitation Collection", today_categories.get("e_invitation", 0)),
+        ("Handmoulding Collection", today_categories.get("handmoulding", 0)),
+        ("Heaven Video Collection", today_categories.get("heaven_video", 0)),
+        ("Today's Total Collection", today_total),
+    ]
+
+    month_table_data = [
+        ("Categories", "Amount (INR)"),
+        ("Song Collection", month_categories.get("song", 0)),
+        ("Cine Song Collection", month_categories.get("cine_song", 0)),
+        ("Lipsync Collection", month_categories.get("lipsync", 0)),
+        ("Photo-to-Video Collection", month_categories.get("photo_to_video", 0)),
+        ("Acrylic Frame Collection", month_categories.get("acrylic_frame", 0)),
+        ("AI Photoshoot Collection", month_categories.get("ai_photoshoot", 0)),
+        ("Animation Video Collection", month_categories.get("animation_video", 0)),
+        ("Digital Art Collection", month_categories.get("digital_art", 0)),
+        ("Digital Merge Collection", month_categories.get("digital_merge", 0)),
+        ("E-Invitation Collection", month_categories.get("e_invitation", 0)),
+        ("Handmoulding Collection", month_categories.get("handmoulding", 0)),
+        ("Heaven Video Collection", month_categories.get("heaven_video", 0)),
+        ("This Month's Total Collection", month_total),
+    ]
+
+    today_image = create_table_image(today_table_data, "Today M7Corporation Collection")
+    month_image = create_table_image(month_table_data, "This Month M7Corporation Collection")
+
+    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    today_image_filename = f'today_M7_Corporation_collection_{now}.jpg'
+    month_image_filename = f'month_M7_Corporation_collection_{now}.jpg'
+
+    today_image.save(today_image_filename, 'JPEG', quality=95, dpi=(300, 300))
+    month_image.save(month_image_filename, 'JPEG', quality=95, dpi=(300, 300))
+
+    print(f"M7 images saved: {today_image_filename}, {month_image_filename}")
+    return today_image_filename, month_image_filename
+
+
+# =======================================
+#   SIMPLE: DIRECT FILE UPLOAD METHOD
+# =======================================
+def send_image_via_direct_upload(image_path, max_retries=3):
+    """
+    Simplified method: Skip attach menu, go directly to file input.
+    Add caption to prevent sticker conversion.
+    """
+    for attempt in range(max_retries):
+        try:
+            print(f"Attempt {attempt + 1}/{max_retries}: Using direct upload method...")
+
+            # Look for file input directly (sometimes it's already present)
+            file_input_xpaths = [
+                "//input[@accept='image/*,video/mp4,video/3gpp,video/quicktime']",
+                "//input[@type='file' and contains(@accept, 'image')]",
+                "//input[@type='file']"
+            ]
+
+            # First try to find existing file input
+            image_input = None
+            for xpath in file_input_xpaths:
+                try:
+                    image_input = driver.find_element(By.XPATH, xpath)
+                    if image_input.is_displayed():
+                        print(f"✓ Found visible file input with XPath: {xpath}")
+                        break
+                    else:
+                        # Make it visible if it's hidden
+                        driver.execute_script("arguments[0].style.display = 'block'; arguments[0].style.visibility = 'visible';", image_input)
+                        print(f"✓ Made file input visible with XPath: {xpath}")
+                        break
+                except:
+                    continue
+
+            # If no file input found, click attach first
+            if image_input is None:
+                print("No direct file input found, clicking attach button first...")
+                attach_button = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[@title='Attach'] | //span[@data-icon='plus']/.. | //button[@aria-label='Attach']"))
+                )
+                driver.execute_script("arguments[0].click();", attach_button)
+                t.sleep(2)
+
+                # Now look for file input again
+                for xpath in file_input_xpaths:
+                    try:
+                        image_input = WebDriverWait(driver, 5).until(
+                            EC.presence_of_element_located((By.XPATH, xpath))
+                        )
+                        print(f"✓ File input found after attach click: {xpath}")
+                        break
+                    except:
+                        continue
+
+            if image_input is None:
+                raise Exception("Could not find file input")
+
+            # Send the file
+            absolute_path = os.path.abspath(image_path)
+            if not os.path.exists(absolute_path):
+                raise Exception(f"Image file does not exist: {absolute_path}")
+
+            image_input.send_keys(absolute_path)
+            print(f"✓ Image path sent: {absolute_path}")
+            t.sleep(3)
+
+            # Add caption to prevent sticker conversion
+            try:
+                caption_input = WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.XPATH, "//div[@contenteditable='true'][@data-tab='10'] | //div[@role='textbox' and @contenteditable='true']"))
+                )
+                caption_input.send_keys("📊 Report")
+                print("✓ Caption added to prevent sticker conversion")
+            except:
+                print("⚠ Could not add caption - may send as sticker")
+
+            t.sleep(2)
+
+            # Click send
+            send_button = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//span[@data-icon='send'] | //button[@aria-label='Send']"))
+            )
+            driver.execute_script("arguments[0].click();", send_button)
+            print(f"✓ Image sent via direct upload method!")
+            t.sleep(3)
+            return True
+
+        except Exception as e:
+            print(f"✗ Direct upload method failed on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                t.sleep(3)
+            else:
+                return False
+
+    return False
+
+
+# =======================================
+#   ALTERNATIVE: DRAG AND DROP METHOD
+# =======================================
+def send_image_via_drag_drop(image_path, max_retries=3):
+    """
+    Alternative method: Send image using drag and drop to message input area.
+    This method can sometimes avoid sticker conversion.
+    """
+    for attempt in range(max_retries):
+        try:
+            print(f"Attempt {attempt + 1}/{max_retries}: Using drag and drop method...")
+
+            # Find the message input area
+            message_input_xpaths = [
+                "//div[@contenteditable='true'][@data-tab='10']",
+                "//div[@contenteditable='true' and @role='textbox']",
+                "//footer//div[@contenteditable='true']",
+                "//div[@contenteditable='true'][@data-lexical-editor='true']"
+            ]
+
+            message_input = None
+            for xpath in message_input_xpaths:
+                try:
+                    message_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, xpath))
+                    )
+                    print(f"✓ Message input found with XPath: {xpath}")
+                    break
+                except:
+                    continue
+
+            if message_input is None:
+                raise Exception("Could not find message input area")
+
+            # Create a hidden file input element and trigger it
+            absolute_path = os.path.abspath(image_path)
+            
+            # Ensure the file exists
+            if not os.path.exists(absolute_path):
+                raise Exception(f"Image file does not exist: {absolute_path}")
+
+            # Use JavaScript to create a file input and simulate file selection
+            js_script = """
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+            
+            var event = new Event('change', { bubbles: true });
+            var file = new File([''], arguments[0].split('/').pop(), { type: 'image/jpeg' });
+            
+            // Create a DataTransfer object and add the file
+            var dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+            
+            // Trigger the change event
+            input.dispatchEvent(event);
+            
+            return input;
+            """
+            
+            # Execute the JavaScript
+            file_input = driver.execute_script(js_script, absolute_path)
+            
+            # Send the file path to the created input
+            file_input.send_keys(absolute_path)
+            print(f"✓ File path sent via JavaScript: {absolute_path}")
+            
+            t.sleep(3)
+            
+            # Look for and click send button
+            send_xpaths = [
+                "//span[@data-icon='send']",
+                "//button[@aria-label='Send']",
+                "//*[@data-icon='send']",
+                "//div[@aria-label='Send']"
+            ]
+            
+            send_button = None
+            for xpath in send_xpaths:
+                try:
+                    send_button = WebDriverWait(driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath))
+                    )
+                    driver.execute_script("arguments[0].click();", send_button)
+                    print(f"✓ Image sent via drag and drop method!")
+                    t.sleep(3)
+                    return True
+                except:
+                    continue
+                    
+            if send_button is None:
+                print("⚠ Send button not found after drag and drop")
+                return False
+
+        except Exception as e:
+            print(f"✗ Drag and drop method failed on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                t.sleep(3)
+            else:
+                return False
+
+    return False
+
+
+# =======================================
+#   FIXED: SEND IMAGE VIA ATTACH BUTTON
+# =======================================
+def send_image_via_attach_button(image_path, max_retries=3):
+    """
+    Traditional method: Send image by clicking attach button and selecting file.
+    FIXED: Now clicks "Photos & Videos" option to send as image, not sticker.
+    """
+    for attempt in range(max_retries):
+        try:
+            print(f"Attempt {attempt + 1}/{max_retries}: Locating attach button...")
+
+            # Multiple XPath options for the attach/clip button
+            attach_xpaths = [
+                "//div[@title='Attach']",
+                "//span[@data-icon='plus']",
+                "//span[@data-icon='clip']",
+                "//button[@aria-label='Attach']",
+                "//div[@aria-label='Attach']",
+                "//*[contains(@data-icon, 'clip') or contains(@data-icon, 'plus')]",
+                "//span[contains(@data-icon, 'attach')]/..",
+                "//div[contains(@title, 'Attach')]",
+                "//div[@role='button' and @title='Attach']",
+                "//button[contains(@aria-label, 'ttach')]"
+            ]
+
+            attach_button = None
+            for xpath in attach_xpaths:
+                try:
+                    attach_button = WebDriverWait(driver, 5).until(
+                        EC.presence_of_element_located((By.XPATH, xpath))
+                    )
+                    print(f"✓ Attach button found with XPath: {xpath}")
+
+                    # Scroll element into view
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", attach_button)
+                    t.sleep(1)
+
+                    # Try JavaScript click
+                    driver.execute_script("arguments[0].click();", attach_button)
+                    print("✓ Attach button clicked!")
+                    break
+                except:
+                    continue
+
+            if attach_button is None:
+                raise Exception("Could not find attach button with any known XPath")
+
+            t.sleep(2)
+
+            # *** CRITICAL: Click on "Photos & Videos" option to avoid sticker upload ***
+            print("Looking for 'Photos & Videos' option...")
+            
+            # First, let's debug what's available after clicking attach
+            try:
+                print("Debugging available elements after attach click...")
+                # Look for any clickable elements that might be the photos option
+                all_buttons = driver.find_elements(By.TAG_NAME, "button")
+                all_divs = driver.find_elements(By.XPATH, "//div[@role='button']")
+                all_spans = driver.find_elements(By.XPATH, "//span[@data-icon]")
+                
+                print(f"Found {len(all_buttons)} buttons, {len(all_divs)} clickable divs, {len(all_spans)} icon spans")
+                
+                # Check for common patterns
+                for i, element in enumerate(all_buttons[:10]):  # Check first 10 buttons
+                    try:
+                        title = element.get_attribute('title') or ''
+                        aria_label = element.get_attribute('aria-label') or ''
+                        if any(word in (title + aria_label).lower() for word in ['photo', 'image', 'media', 'gallery']):
+                            print(f"  Potential photos button {i}: title='{title}', aria-label='{aria_label}'")
+                    except:
+                        pass
+                        
+                for i, element in enumerate(all_spans[:15]):  # Check first 15 spans
+                    try:
+                        data_icon = element.get_attribute('data-icon') or ''
+                        if any(word in data_icon.lower() for word in ['image', 'photo', 'media', 'gallery', 'camera']):
+                            print(f"  Potential photos icon {i}: data-icon='{data_icon}'")
+                    except:
+                        pass
+            except Exception as debug_e:
+                print(f"Debug failed: {debug_e}")
+            
+            # Updated XPath selectors based on common WhatsApp patterns
+            photos_videos_xpaths = [
+                # Try data-icon variations
+                "//span[@data-icon='image']/..",
+                "//span[@data-icon='gallery']/..",
+                "//span[@data-icon='photo']/..",
+                "//span[@data-icon='media']/..",
+                "//*[@data-icon='image']",
+                "//*[@data-icon='gallery']",
+                "//*[@data-icon='photo']",
+                
+                # Try title/aria-label variations
+                "//div[@title='Photos & videos']",
+                "//button[@title='Photos & videos']",
+                "//div[contains(@title, 'Photos')]",
+                "//button[contains(@title, 'Photos')]",
+                "//div[contains(@aria-label, 'Photos')]",
+                "//button[contains(@aria-label, 'Photos')]",
+                
+                # Try text content
+                "//div[contains(text(), 'Photos')]",
+                "//button[contains(text(), 'Photos')]",
+                "//span[contains(text(), 'Photos')]/..",
+                
+                # Try list items (if it's in a menu)
+                "//li[contains(., 'Photos')]",
+                "//li[contains(., 'Gallery')]",
+                
+                # Try input-related selectors
+                "//input[@accept='image/*,video/mp4,video/3gpp,video/quicktime']/preceding-sibling::*",
+                "//input[@accept='image/*,video/mp4,video/3gpp,video/quicktime']/../*",
+                
+                # Generic fallback - look for any clickable element near file input
+                "//input[@type='file']/preceding-sibling::*",
+                "//input[@type='file']/../*[@role='button']"
+            ]
+
+            photos_button = None
+            for i, xpath in enumerate(photos_videos_xpaths):
+                try:
+                    print(f"Trying XPath {i+1}/{len(photos_videos_xpaths)}: {xpath}")
+                    photos_button = WebDriverWait(driver, 3).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath))
+                    )
+                    print(f"✓ Photos & Videos button found with XPath: {xpath}")
+                    
+                    # Scroll into view and click
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", photos_button)
+                    t.sleep(1)
+                    driver.execute_script("arguments[0].click();", photos_button)
+                    print("✓ Photos & Videos clicked!")
+                    t.sleep(2)
+                    break
+                except Exception as e:
+                    print(f"Failed with XPath {xpath}: {str(e)[:100]}...")
+                    continue
+
+            # If we couldn't find the photos button, try directly with file input
+            if photos_button is None:
+                print("⚠ Could not find Photos & Videos button, trying direct file input approach...")
+                print("This may still work but might send as sticker - we'll add caption to prevent this")
+
+            # Locate the file input
+            print("Locating file input field...")
+
+            file_input_xpaths = [
+                "//input[@accept='image/*,video/mp4,video/3gpp,video/quicktime']",
+                "//input[@type='file' and contains(@accept, 'image')]",
+                "//input[@type='file' and contains(@accept, 'video')]",
+                "//input[@type='file']",
+                "//input[contains(@accept, 'image')]"
+            ]
+
+            image_input = None
+            for xpath in file_input_xpaths:
+                try:
+                    image_input = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, xpath))
+                    )
+                    print(f"✓ File input found with XPath: {xpath}")
+                    break
+                except:
+                    continue
+
+            if image_input is None:
+                raise Exception("Could not find file input")
+
+            absolute_path = os.path.abspath(image_path)
+            print(f"Sending file path: {absolute_path}")
+            
+            # Ensure the file exists
+            if not os.path.exists(absolute_path):
+                raise Exception(f"Image file does not exist: {absolute_path}")
+            
+            image_input.send_keys(absolute_path)
+            print(f"✓ Image path sent: {absolute_path}")
+
+            t.sleep(4)
+
+            # *** CRITICAL: Look for caption input and add text to ensure it's sent as image ***
+            print("Looking for caption input to prevent sticker conversion...")
+            try:
+                caption_xpaths = [
+                    "//div[@contenteditable='true' and @data-tab='10']",
+                    "//div[@contenteditable='true' and contains(@class, 'caption')]",
+                    "//div[@role='textbox' and @contenteditable='true']",
+                    "//div[@contenteditable='true'][@data-lexical-editor='true']",
+                    "//div[@contenteditable='true' and @aria-label]",
+                    "//div[@contenteditable='true'][@data-tab]",
+                    "//footer//div[@contenteditable='true']"
+                ]
+                
+                caption_input = None
+                for i, xpath in enumerate(caption_xpaths):
+                    try:
+                        caption_input = WebDriverWait(driver, 2).until(
+                            EC.presence_of_element_located((By.XPATH, xpath))
+                        )
+                        print(f"✓ Caption input found with XPath {i+1}: {xpath}")
+                        
+                        # Add a descriptive caption to ensure it's treated as image, not sticker
+                        caption_text = "📊 Collection Report"
+                        caption_input.clear()
+                        caption_input.send_keys(caption_text)
+                        print(f"✓ Caption added: '{caption_text}' to prevent sticker conversion")
+                        break
+                    except:
+                        continue
+                        
+                if caption_input is None:
+                    print("⚠ Caption input not found - image might be sent as sticker")
+                    print("Trying alternative caption methods...")
+                    
+                    # Try to find any text input in the media preview
+                    alt_caption_xpaths = [
+                        "//input[@placeholder]",
+                        "//textarea[@placeholder]",
+                        "//div[contains(@class, 'input')][@contenteditable='true']"
+                    ]
+                    
+                    for xpath in alt_caption_xpaths:
+                        try:
+                            alt_input = WebDriverWait(driver, 1).until(
+                                EC.presence_of_element_located((By.XPATH, xpath))
+                            )
+                            alt_input.send_keys("📊")
+                            print("✓ Alternative caption method worked")
+                            break
+                        except:
+                            continue
+                    
+            except Exception as e:
+                print(f"⚠ Could not add caption: {e}")
+                print("Image may be sent as sticker without caption")
+
+            t.sleep(2)
+
+            # Locate and click send button
+            print("Locating send button...")
+            send_xpaths = [
+                "//span[@data-icon='send']",
+                "//span[@data-testid='send']",
+                "//button[@aria-label='Send']",
+                "//*[@data-icon='send']",
+                "//div[@aria-label='Send']",
+                "//span[contains(@data-icon, 'send')]",
+                "//button[contains(@aria-label, 'Send')]"
+            ]
+
+            send_button = None
+            for xpath in send_xpaths:
+                try:
+                    send_button = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath))
+                    )
+                    print(f"✓ Send button found with XPath: {xpath}")
+
+                    # Scroll into view and click
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", send_button)
+                    t.sleep(1)
+                    driver.execute_script("arguments[0].click();", send_button)
+                    print(f"✓ Image '{image_path}' sent successfully!")
+                    t.sleep(3)
+                    return True
+                except Exception as e:
+                    print(f"Failed to click send button with XPath {xpath}: {e}")
+                    continue
+
+            if send_button is None:
+                raise Exception("Could not find send button")
+
+        except TimeoutException as e:
+            print(f"✗ Timeout on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in 5 seconds...")
+                t.sleep(5)
+            else:
+                print(f"Failed to send image after {max_retries} attempts")
+                return False
+
+        except Exception as e:
+            print(f"✗ Error on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in 5 seconds...")
+                t.sleep(5)
+            else:
+                print(f"Failed to send image after {max_retries} attempts")
+                return False
+
+    return False
+
+
+# =======================================
+#   FIXED: UNIFIED SEND IMAGE FUNCTION
+# =======================================
+def send_image_in_whatsapp(image_path, max_retries=3):
+    """
+    Unified function - Tries multiple methods to send image (not sticker).
+    1. Attach button method with Photos & Videos option
+    2. Direct upload method (simplified)
+    3. Drag and drop method as final fallback
+    """
+    print(f"\n{'=' * 60}")
+    print(f"SENDING IMAGE: {image_path}")
+    print(f"{'=' * 60}")
+
+    # Method 1: Attach button method (primary)
+    print("\n[METHOD 1] Using attach button method with Photos & Videos detection...")
+    if send_image_via_attach_button(image_path, max_retries):
+        return True
+
+    print("\n[METHOD 1] Attach button method failed, trying simplified approach...")
+    
+    # Method 2: Direct upload method (simplified)
+    print("\n[METHOD 2] Using direct upload method...")
+    if send_image_via_direct_upload(image_path, max_retries):
+        return True
+
+    print("\n[METHOD 2] Direct upload method failed, trying final fallback...")
+    
+    # Method 3: Drag and drop method (final fallback)
+    print("\n[METHOD 3] Using drag and drop method...")
+    if send_image_via_drag_drop(image_path, max_retries):
+        return True
+
+    print(f"\n{'=' * 60}")
+    print("FAILED TO SEND IMAGE WITH ALL METHODS!")
+    print("Consider manually checking WhatsApp Web interface for changes.")
+    print(f"{'=' * 60}\n")
+    return False
+
+
+# =======================================
+#   FUNCTION: SEND WHATSAPP TEXT MESSAGE
+# =======================================
+def send_whatsapp_msg(text, max_retries=3):
+    """
+    Send WhatsApp text message with retry logic and updated XPath selectors.
+    """
+    for attempt in range(max_retries):
+        try:
+            # Multiple XPath options for message input box
+            message_xpaths = [
+                "//div[@contenteditable='true'][@data-tab='10']",
+                "//div[@contenteditable='true' and @role='textbox']",
+                "//p[@class='selectable-text copyable-text'][@contenteditable='true']",
+                "//div[@title='Type a message']",
+                "//footer//div[@contenteditable='true']",
+                "//div[@contenteditable='true'][@data-lexical-editor='true']"
+            ]
+
+            chat_input = None
+            for xpath in message_xpaths:
+                try:
+                    chat_input = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.XPATH, xpath))
+                    )
+                    break
+                except:
+                    continue
+
+            if chat_input is None:
+                raise Exception("Could not find message input box")
+
+            chat_input.click()
+            t.sleep(1)
+            chat_input.send_keys(text)
+            chat_input.send_keys(Keys.RETURN)
+            print("✓ Text message sent successfully!")
+            t.sleep(2)
+            return True
+
+        except TimeoutException:
+            print(f"✗ Timeout waiting for message box (attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                t.sleep(3)
+            else:
+                return False
+
+        except InvalidElementStateException:
+            print(f"✗ Element not in a state to send messages (attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                t.sleep(3)
+            else:
+                return False
+
+        except Exception as e:
+            print(f"✗ Unexpected error sending text (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                t.sleep(3)
+            else:
+                return False
+
+    return False
+
+
+# =======================================
+#    FUNCTION: CLEAR IMAGE + DATAFRAME
+# =======================================
+def clear_data(image_paths, df=None):
+    """
+    Delete image files. If df is provided, clear it.
+    """
+    if isinstance(image_paths, str):
+        image_paths = [image_paths]
+
+    for image_path in image_paths:
+        if os.path.isfile(image_path):
+            try:
+                os.remove(image_path)
+                print(f"✓ Deleted image: {image_path}")
+            except Exception as e:
+                print(f"✗ Error deleting {image_path}: {e}")
+        else:
+            print(f"⚠ Warning: {image_path} not found.")
+
+    if df is not None:
+        df.drop(df.index, inplace=True)
+        print("✓ DataFrame cleared!")
+        return df
+
+
+# =======================================
+#   THAAGAM: SEND REQUEST TO API
+# =======================================
+def send_thaagam_request(date_param):
+    """
+    Fetch data from Thaagam API and send images to Thaagam Collection group.
+    """
+    api_key = "Yh9al0QXtcCpHb6xl6vxkD0zG5wd0JvX8RxyWG_7w5k="
+    url = "https://thaagam.org/api/donations"
+    headers = {"API-Key": api_key}
+    params = {"date": date_param}
+
+    response = requests.get(url, headers=headers, params=params)
+    print(f"Thaagam API Response Status: {response.status_code}")
+
+    if response.status_code == 200:
+        json_data = response.json()
+        print("Thaagam JSON response:", json_data)
+
+        if 'source_data' in json_data and 'category_data' in json_data:
+            # Open Thaagam Collection group
+            open_whatsapp_group("Thaagam Collection")
+
+            # SOURCE DATA
+            source_df = pd.DataFrame(json_data['source_data'])
+            source_df.rename(columns={'source': 'Source', 'total_amount': 'Amount'}, inplace=True)
+
+            source_total = generate_table_image(source_df, 'source_image.jpg', total_label="TOTAL SOURCE")
+
+            if send_image_in_whatsapp('source_image.jpg'):
+                current_time = datetime.now().strftime("%I:%M:%S %p")
+                source_msg = f"Total Source Collection = Rupees: {source_total:.2f} at {current_time}"
+                send_whatsapp_msg(source_msg)
+            else:
+                print("Failed to send source image, but sending text message anyway")
+                current_time = datetime.now().strftime("%I:%M:%S %p")
+                source_msg = f"Total Source Collection = Rupees: {source_total:.2f} at {current_time}"
+                send_whatsapp_msg(source_msg)
+
+            clear_data('source_image.jpg', source_df)
+
+            # CATEGORY DATA
+            print("Waiting 10 seconds before sending Category data...")
+            t.sleep(10)
+
+            category_df = pd.DataFrame(json_data['category_data'])
+            category_df.rename(columns={'category': 'Category', 'total_amount': 'Amount'}, inplace=True)
+
+            category_total = generate_table_image(category_df, 'category_image.jpg', total_label="TOTAL CATEGORY")
+
+            if send_image_in_whatsapp('category_image.jpg'):
+                current_time = datetime.now().strftime("%I:%M:%S %p")
+                cat_msg = f"Total Category Collection = Rupees: {category_total:.2f} at {current_time}"
+                send_whatsapp_msg(cat_msg)
+            else:
+                print("Failed to send category image, but sending text message anyway")
+                current_time = datetime.now().strftime("%I:%M:%S %p")
+                cat_msg = f"Total Category Collection = Rupees: {category_total:.2f} at {current_time}"
+                send_whatsapp_msg(cat_msg)
+
+            clear_data('category_image.jpg', category_df)
+
+            print("✓ Thaagam images and messages sent successfully!")
+            return True
+        else:
+            print("Expected 'source_data' and 'category_data' in the JSON response.")
+            return False
+    else:
+        print(f"Error: {response.status_code}, Message: {response.text}")
+        return False
+
+# =======================================
+#   M7: FETCH AND GENERATE TABLE
+# =======================================
+def fetch_and_send_m7_data():
+    """
+    Fetch M7 Corporation data and send images to M7 Corporation collection group.
+    """
+    url = "https://acustomsong.com/api/song_collection/"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        today_total = data["today"]["total"]
+        month_total = data["month"]["total"]
+        today_categories = data["today"]["categories"]
+        month_categories = data["month"]["categories"]
+
+        today_image_filename, month_image_filename = generate_song_table_image(
+            today_total, month_total, today_categories, month_categories
+        )
+        print(f"M7 table images generated: {today_image_filename}, {month_image_filename}")
+
+        # Open M7 Corporation collection group
+        open_whatsapp_group("M7 Corporation Collection")
+
+        # Send today's image
+        send_image_in_whatsapp(today_image_filename)
+        t.sleep(5)
+
+        # Send month's image
+        send_image_in_whatsapp(month_image_filename)
+
+        print("✓ M7 images sent successfully!")
+
+        # Clear images
+        clear_data([today_image_filename, month_image_filename])
+
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"✗ Failed to fetch M7 data: {e}")
+        return False
+    except Exception as e:
+        print(f"✗ Error in M7 process: {e}")
+        return False
+
+
+# =======================================
+#               MAIN EXECUTION
+# =======================================
+if __name__ == '__main__':
+    # =======================================
+    #         SETUP SELENIUM WEBDRIVER
+    # =======================================
+    startwait = 15
+    options = Options()
+
+    # Set the path to store the user data (ensure the directory exists)
+    user_data_dir = "D:/gobinath projects/pythonProject1/chrome-data-whatsapp-bot1"
+    profile_dir = "Profile1"
+
+    # Create directory if it doesn't exist
+    os.makedirs(user_data_dir, exist_ok=True)
+
+    # Clean up lock files for this bot's user data directory
+    cleanup_lock_files(user_data_dir)
+
+    # Set the user-data directory for persistent sessions
+    options.add_argument(f"--user-data-dir={user_data_dir}")
+    options.add_argument(f"--profile-directory={profile_dir}")
+
+    # Remove the "Chrome is being contro lled by automated test software" banner
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    options.add_experimental_option('useAutomationExtension', False)
+
+    # Additional options to prevent conflicts
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+
+    print("Starting Chrome WebDriver...")
+    try:
+        driver = webdriver.Chrome(options=options)
+        print("Chrome WebDriver started successfully!")
+    except Exception as e:
+        print(f"Error starting Chrome: {e}")
+        print("\n=== TROUBLESHOOTING ===")
+        print("If the error persists, try one of these solutions:")
+        print(f"1. Manually delete the folder: {user_data_dir}")
+        print("2. Ensure no other Chrome instance is using this profile")
+        print("3. Run the script without persistent profile (you'll need to scan QR code each time)")
+        raise
+
+    driver.get("https://web.whatsapp.com")
+
+    # Pause until user scans the QR code
+    input("Please scan the QR code in the opened Chrome window, then press Enter to continue...")
+
+    # Optional: Run debug after WhatsApp loads (uncomment to use)
+    # print("\nRunning debug to identify WhatsApp elements...")
+    # debug_whatsapp_elements()
+
+    # =======================================
+    #               MAIN LOOP
+    # =======================================
+    try:
+        print("\n" + "=" * 70)
+        print("  UNIFIED WHATSAPP COLLECTION BOT")
+        print("  Thaagam Collection + M7 Corporation Collection")
+        print("=" * 70)
+
+        if CLIPBOARD_AVAILABLE:
+            print("✓ Clipboard method: ENABLED")
+        else:
+            print("⚠ Clipboard method: DISABLED (install pywin32 to enable)")
+            print("  Install: pip install pywin32")
+
+        print("=" * 70 + "\n")
+
+        cycle_count = 0
+        m7_cycle_counter = 0  # Track M7 cycles (send every 4th cycle = 1 hour)
+        
+        while True:
+            cycle_count += 1
+            m7_cycle_counter += 1
+            current_date = datetime.now().strftime('%Y-%m-%d')
+
+            print("\n" + "=" * 70)
+            print(f"  CYCLE #{cycle_count} - {datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}")
+            print("=" * 70 + "\n")
+
+            # Process Thaagam Collection (every cycle = every 15 minutes)
+            print("▶ Processing Thaagam Collection...")
+            thaagam_success = send_thaagam_request(current_date)
+            if thaagam_success:
+                print(f"✓ Thaagam images for {current_date} sent successfully!")
+            else:
+                print(f"✗ Failed to send Thaagam images for {current_date}.")
+
+            # Process M7 Corporation Collection (every 4th cycle = every 60 minutes)
+            m7_success = None
+            if m7_cycle_counter >= 4:
+                # Wait 15 seconds between groups
+                print("\n⏳ Waiting 15 seconds before processing M7 Corporation...")
+                t.sleep(15)
+                
+                print("\n▶ Processing M7 Corporation Collection...")
+                m7_success = fetch_and_send_m7_data()
+                if m7_success:
+                    print("✓ M7 Corporation images sent successfully!")
+                else:
+                    print("✗ Failed to send M7 Corporation images.")
+                
+                m7_cycle_counter = 0  # Reset counter after sending
+            else:
+                print(f"\n⏭ Skipping M7 Corporation (will send in {4 - m7_cycle_counter} more cycle(s))")
+
+            # Summary
+            print("\n" + "=" * 70)
+            print("  CYCLE SUMMARY")
+            print("=" * 70)
+            print(f"  Thaagam Collection: {'✓ SUCCESS' if thaagam_success else '✗ FAILED'}")
+            if m7_success is not None:
+                print(f"  M7 Corporation:     {'✓ SUCCESS' if m7_success else '✗ FAILED'}")
+            else:
+                print(f"  M7 Corporation:     ⏭ SKIPPED (next in {4 - m7_cycle_counter} cycle(s))")
+            print("=" * 70)
+
+            # Sleep for 15 minutes before next cycle
+            next_run = datetime.fromtimestamp(t.time() + 900)
+            print(f"\n⏳ Sleeping for 900 seconds (15 minutes)...")
+            print(f"📅 Next Thaagam cycle at: {next_run.strftime('%Y-%m-%d %I:%M:%S %p')}")
+            if m7_cycle_counter == 3:
+                print(f"📅 Next M7 Corporation cycle at: {next_run.strftime('%Y-%m-%d %I:%M:%S %p')}")
+            print("=" * 70 + "\n")
+            t.sleep(900)
+
+    except KeyboardInterrupt:
+        print("\n\n" + "=" * 70)
+        print("  BOT STOPPED BY USER (Ctrl+C)")
+        print("=" * 70 + "\n")
+    except Exception as e:
+        print("\n\n" + "=" * 70)
+        print(f"  FATAL ERROR: {e}")
+        print("=" * 70 + "\n")
+        import traceback
+        traceback.print_exc()
+    finally:
+        print("Closing browser...")
+        try:
+            driver.quit()
+            print("✓ Browser closed successfully!")
+        except Exception as e:
+            print(f"⚠ Could not close browser gracefully: {e}")
