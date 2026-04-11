@@ -91,11 +91,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
     <!-- WhatsApp Hub -->
     <div class="hub-col">
-      <div class="hub-node" id="hubNode" onclick="location.href='/connect'">
-        <div class="hub-icon">💬</div>
+      <div class="hub-node" id="hubNode">
+        <div class="hub-icon" onclick="location.href='/connect'" style="cursor:pointer">💬</div>
         <div class="hub-title">WhatsApp</div>
         <div class="hub-phone">{{ wa_phone }}</div>
         <div class="hub-status">Connected</div>
+        <button onclick="disconnectWA()" style="margin-top:14px;width:100%;padding:7px 0;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);border-radius:10px;color:#f87171;font-size:12px;font-weight:700;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(239,68,68,.28)'" onmouseout="this.style.background='rgba(239,68,68,.15)'">⏏ Disconnect</button>
       </div>
     </div>
 
@@ -233,6 +234,14 @@ function drawConnections() {
     dot.setAttribute('r','4'); dot.setAttribute('fill','#25D366'); dot.setAttribute('opacity','0.6');
     svg.appendChild(dot);
   });
+}
+
+async function disconnectWA() {
+  if (!confirm('Disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) return;
+  try {
+    await fetch('/api/wa/logout');
+    location.href = '/connect';
+  } catch(e) { alert('Disconnect failed: ' + e); }
 }
 
 window.addEventListener('load', () => { loadStats(); setInterval(loadStats, 30000); });

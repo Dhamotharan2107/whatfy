@@ -19,7 +19,7 @@ try:
     _ai = _OpenAI(
         api_key="4ed473e121c7480186f26d81a0464b41.O4F2MZtdY4xah84r",
         base_url="https://open.bigmodel.cn/api/paas/v4/",
-        timeout=20.0,
+        timeout=60.0,
     )
     AI_OK = True
 except ImportError:
@@ -42,8 +42,13 @@ def _ai_call(messages: list, max_tokens: int = 400) -> str:
             status = getattr(getattr(e, "response", None), "status_code", None)
             # openai SDK wraps HTTP errors; check for 429
             if status == 429 or "1302" in str(e) or "rate" in str(e).lower():
-                wait = 2 ** attempt  # 1s, 2s, 4s
+                wait = 4 ** attempt  # 1s, 4s, 16s
                 print(f"[AI] 429 rate-limit, waiting {wait}s (attempt {attempt+1}/3)")
+                time.sleep(wait)
+                continue
+            if "timed out" in str(e).lower() or "timeout" in str(e).lower():
+                wait = 4 ** attempt
+                print(f"[AI] timeout, retrying in {wait}s (attempt {attempt+1}/3)")
                 time.sleep(wait)
                 continue
             if _is_network_err(e):
@@ -58,8 +63,8 @@ except ImportError:
     QR_OK = False
 
 app = FastAPI(title="Whatfy")
-templates = Jinja2Templates(directory="templates")
 BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 DB_PATH  = BASE_DIR / "platform.db"
 API_BASE = "http://localhost:8080"
 
@@ -903,7 +908,7 @@ def _build_ai_reply(sender: str, text: str):
             reply = "⚠️ AI service not available."
         else:
             try:
-                reply = _ai_call(msgs)
+                reply = _ai_call(msgs) or "I'm sorry, I couldn't generate a response. Please try again."
             except Exception as e:
                 if _is_network_err(e):
                     reply = "⚠️ Cannot reach AI service — check internet connection."
