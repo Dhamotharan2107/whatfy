@@ -95,16 +95,73 @@ openai
 FASTAPI_URL = https://your-api-domain.alwaysdata.net
 ```
 
-### Alwaysdata Site/Process config:
-- **Type:** Custom process
-- **Command:** `./wa_server`  (compile first: `go build -o wa_server .`)
-- **Working directory:** your whatsmeow_server folder
-
-### Build the Go binary on the server:
+### Step 1 — Build the Go binary
 ```bash
 cd whatsmeow_server
 go build -o wa_server .
 ```
+
+### Step 2 — Register as a Process
+Go to **Processes → Add a process:**
+
+- **Command:** `/home/your-account/whatsmeow_server/wa_server`
+- **Working directory:** `/home/your-account/whatsmeow_server/`
+- **Auto restart:** Yes
+
+This keeps Go running in the background on port **8080** (internal only).
+
+### Step 3 — Apache as Reverse Proxy (Site config)
+Go to **Web → Sites → Add a site** and fill in:
+
+**Addresses**
+```
+whatfy.alwaysdata.net
+```
+
+**Type**
+```
+Apache custom
+```
+
+**Global directives**
+```apache
+ProxyRequests Off
+```
+
+**Virtual host directives**
+```apache
+ProxyPreserveHost On
+ProxyPass / http://localhost:8080/
+ProxyPassReverse / http://localhost:8080/
+```
+
+**Additional directives of the virtual host**
+```apache
+<Proxy *>
+    Allow from all
+</Proxy>
+```
+
+**Annotation**
+```
+Go WhatsMeow server
+```
+
+```
+Internet
+   │
+   ▼
+Apache (Alwaysdata)   ← site config above
+   │  ProxyPass
+   ▼
+Go wa_server :8080    ← process running internally
+```
+
+> Make sure your Go process is already running via **Processes** panel before testing — otherwise Apache returns 502 Bad Gateway.
+
+Apache receives all requests and forwards them to your Go binary.
+`Apache custom` is where you write the config. `Reverse proxy` is what it does.
+They are the same step — not two separate choices.
 
 ---
 

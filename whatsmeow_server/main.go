@@ -369,8 +369,13 @@ func main() {
     http.HandleFunc("/events", eventsHandler)
     http.HandleFunc("/logout", logoutHandler)
 
-    fmt.Println("WhatsApp Backend started on :8080")
-    if err := http.ListenAndServe(":8080", nil); err != nil {
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    addr := "0.0.0.0:" + port
+    fmt.Println("WhatsApp Backend started on", addr)
+    if err := http.ListenAndServe(addr, nil); err != nil {
         fmt.Println("Server error:", err)
     }
 }
