@@ -325,7 +325,7 @@ def root(request: Request):
 @app.get("/auth")
 def auth_page(request: Request):
     if _uid(request): return _home()
-    return templates.TemplateResponse("auth.html", {"request": request})
+    return templates.TemplateResponse(request, "auth.html")
 
 @app.post("/auth/register")
 def do_register(request: Request, name: str=Form(...), email: str=Form(...), password: str=Form(...)):
@@ -337,8 +337,8 @@ def do_register(request: Request, name: str=Form(...), email: str=Form(...), pas
         row = db.execute("SELECT id FROM users WHERE email=?", (email.lower().strip(),)).fetchone()
     except sqlite3.IntegrityError:
         db.close()
-        return templates.TemplateResponse("auth.html", {"request": request,
-            "error": "Email already registered.", "tab": "reg"})
+        return templates.TemplateResponse(request, "auth.html",
+            {"error": "Email already registered.", "tab": "reg"})
     db.close()
     t = secrets.token_hex(32)
     _session_save(t, row["id"], wa_verified=True)
@@ -352,8 +352,8 @@ def do_login(request: Request, email: str=Form(...), password: str=Form(...)):
                      (email.lower().strip(), _hash(password))).fetchone()
     db.close()
     if not row:
-        return templates.TemplateResponse("auth.html", {"request": request,
-            "error": "Invalid email or password.", "tab": "login"})
+        return templates.TemplateResponse(request, "auth.html",
+            {"error": "Invalid email or password.", "tab": "login"})
     t = secrets.token_hex(32)
     _session_save(t, row["id"], wa_verified=True)
     r = _home(); r.set_cookie("st", t, httponly=True, max_age=86400*30)
@@ -375,8 +375,8 @@ def connect_page(request: Request):
     db = _db()
     user = dict(db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone())
     db.close()
-    return templates.TemplateResponse("connect.html", {
-        "request": request, "user": user, "wa_ok": wa_ok, "wa_phone": wa_phone
+    return templates.TemplateResponse(request, "connect.html", {
+        "user": user, "wa_ok": wa_ok, "wa_phone": wa_phone
     })
 
 @app.get("/verify")
@@ -389,9 +389,8 @@ def verify_page(request: Request):
     db.close()
     s = _session(request)
     code_sent = bool(s and s.get("code"))
-    return templates.TemplateResponse("verify.html", {
-        "request": request, "user": user,
-        "wa_phone": wa_phone, "code_sent": code_sent
+    return templates.TemplateResponse(request, "verify.html", {
+        "user": user, "wa_phone": wa_phone, "code_sent": code_sent
     })
 
 @app.post("/api/wa/send-code")
@@ -447,6 +446,7 @@ def wa_qr_image(request: Request):
         r = requests.get(f"{API_BASE}/qr",timeout=25); data = r.json()
         raw = data.get("qr","")
         if not raw: return {"error": "No QR available — may already be connected"}
+        if not QR_OK: return {"error": "qrcode package not installed"}
         q = _qrlib.QRCode(version=1,box_size=8,border=2,
                           error_correction=_qrlib.constants.ERROR_CORRECT_L)
         q.add_data(raw); q.make(fit=True)
@@ -502,8 +502,8 @@ def dashboard(request: Request):
     agents = {r["agent"]:dict(r) for r in db.execute("SELECT * FROM agent_cfg WHERE user_id=?",(uid,)).fetchall()}
     db.close()
     _, wa_phone = _wa_status()
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, "user": user, "wa_phone": wa_phone, "wa_ok": True,
+    return templates.TemplateResponse(request, "dashboard.html", {
+        "user": user, "wa_phone": wa_phone, "wa_ok": True,
         "g_low": g_low, "inv_draft": inv_draft, "p_total": p_total,
         "appt_today": appt_today, "agents": agents,
     })
@@ -518,8 +518,8 @@ def shop_page(request: Request):
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
     db.close()
     _, wa_phone = _wa_status()
-    return templates.TemplateResponse("shop.html", {
-        "request": request, "user": user, "items": items, "cfg": cfg,
+    return templates.TemplateResponse(request, "shop.html", {
+        "user": user, "items": items, "cfg": cfg,
         "wa_ok": True, "wa_phone": wa_phone, "active": "shop"
     })
 
@@ -538,8 +538,8 @@ def invoice_page(request: Request):
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
     db.close()
     _, wa_phone = _wa_status()
-    return templates.TemplateResponse("invoice.html", {
-        "request": request, "user": user, "invoices": invs, "cfg": cfg,
+    return templates.TemplateResponse(request, "invoice.html", {
+        "user": user, "invoices": invs, "cfg": cfg,
         "wa_ok": True, "wa_phone": wa_phone, "active": "invoice"
     })
 
@@ -556,8 +556,8 @@ def health_page(request: Request):
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
     db.close()
     _, wa_phone = _wa_status()
-    return templates.TemplateResponse("health.html", {
-        "request": request, "user": user, "patients": patients, "cfg": cfg,
+    return templates.TemplateResponse(request, "health.html", {
+        "user": user, "patients": patients, "cfg": cfg,
         "wa_ok": True, "wa_phone": wa_phone, "active": "health"
     })
 
@@ -572,8 +572,8 @@ def appt_page(request: Request):
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
     db.close()
     _, wa_phone = _wa_status()
-    return templates.TemplateResponse("appointment.html", {
-        "request": request, "user": user, "appointments": appts, "cfg": cfg,
+    return templates.TemplateResponse(request, "appointment.html", {
+        "user": user, "appointments": appts, "cfg": cfg,
         "wa_ok": True, "wa_phone": wa_phone, "active": "appointment"
     })
 

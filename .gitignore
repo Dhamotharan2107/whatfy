@@ -4,3 +4,5 @@ __pycache__/
 *.db
 *.db-shm
 *.db-wal
+# list file to not track by the local-history extension. comment line starts with a '#' character
+*.lh
