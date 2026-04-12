@@ -283,11 +283,21 @@ def _ai_vision(image_b64: str, prompt: str) -> str:
 # ── Invoice image ─────────────────────────────────────────────────────────────
 
 def _invoice_image(inv_no, cust_name, items, total):
-    try:
-        fb = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 22)
-        fr = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 18)
-        fs = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 14)
-    except:
+    _fonts = [
+        ("C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf"),
+        ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    ]
+    fb = fr = fs = None
+    for bold, reg in _fonts:
+        try:
+            fb = ImageFont.truetype(bold, 22)
+            fr = ImageFont.truetype(reg, 18)
+            fs = ImageFont.truetype(reg, 14)
+            break
+        except:
+            continue
+    if fb is None:
         fb = fr = fs = ImageFont.load_default()
     pad=40; col=[280,70,100,110]; rh=42
     W=sum(col)+2*pad; H=180+(len(items)+3)*rh+60
