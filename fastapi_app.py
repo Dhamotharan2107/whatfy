@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, Body, UploadFile, File, BackgroundTa
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
-import sqlite3, hashlib, secrets, json, time, io, base64, threading
+import sqlite3, hashlib, secrets, json, time, io, base64, threading, os
 import requests
 from pathlib import Path
 from datetime import datetime
@@ -66,7 +66,7 @@ app = FastAPI(title="Whatfy")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 DB_PATH  = BASE_DIR / "platform.db"
-API_BASE = "http://localhost:8080"
+API_BASE = os.environ.get("GO_SERVER_URL", "http://localhost:8080")
 
 # token -> {uid, wa_verified, code, code_sent}
 _sessions: dict = {}

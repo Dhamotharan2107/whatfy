@@ -34,7 +34,12 @@ var msgMu sync.Mutex
 var sseClients = make(map[chan []byte]bool)
 var sseMu sync.Mutex
 
-const webhookURL = "http://localhost:5000/wa/incoming"
+var webhookURL = func() string {
+	if v := os.Getenv("FASTAPI_URL"); v != "" {
+		return v + "/wa/incoming"
+	}
+	return "http://localhost:5000/wa/incoming"
+}()
 
 func callWebhook(entry map[string]interface{}) {
     data, err := json.Marshal(entry)
