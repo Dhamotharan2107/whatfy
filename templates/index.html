@@ -490,6 +490,87 @@ input[type=datetime-local]:focus,input[type=date]:focus,input[type=time]:focus{b
   color:var(--text);font-size:11.5px;padding:5px 10px;border-radius:7px;
   white-space:nowrap;z-index:999;pointer-events:none;font-family:'Inter',sans-serif;
 }
+
+/* ═══════════ MOBILE RESPONSIVE ═══════════ */
+.mob-menu-btn{
+  display:none;flex-direction:column;gap:5px;
+  cursor:pointer;padding:8px;background:none;border:none;
+  border-radius:8px;transition:background .15s;
+}
+.mob-menu-btn:hover{background:rgba(255,255,255,0.06);}
+.mob-menu-btn span{
+  display:block;width:22px;height:2px;
+  background:var(--text);border-radius:2px;
+  transition:all .25s ease;
+}
+.mob-menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.mob-menu-btn.open span:nth-child(2){opacity:0;}
+.mob-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.65);z-index:10;
+  animation:fadeIn .2s ease;
+}
+.sidebar-overlay.show{display:block;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+@media(max-width:768px){
+  html,body{overflow:hidden;}
+
+  .mob-menu-btn{display:flex;}
+
+  /* Sidebar slides in from left */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    width:280px;max-width:85vw;
+    z-index:11;
+    transform:translateX(-100%);
+    transition:transform .28s ease;
+  }
+  .sidebar.mob-open{transform:translateX(0);}
+
+  /* Topbar adjustments */
+  .topbar{padding:12px 16px;}
+  .tb-title{font-size:16px;}
+  .tb-sub{font-size:11px;}
+  .tb-badge{padding:6px 10px;font-size:11px;}
+  .tb-right{gap:6px;}
+
+  /* Content padding */
+  .content{padding:16px;}
+
+  /* Grid overrides — stack everything on mobile */
+  .grid4,.grid3,.grid2{grid-template-columns:1fr !important;gap:12px;}
+
+  /* Stat cards */
+  .stat-card{padding:16px 18px;}
+  .stat-val{font-size:24px;}
+
+  /* Card padding */
+  .card{padding:18px;}
+
+  /* Login card */
+  .lcard{width:calc(100vw - 32px);max-width:400px;padding:32px 24px 28px;}
+  .login-title{font-size:22px;}
+
+  /* Pair code */
+  .pair-val{font-size:28px;letter-spacing:6px;}
+
+  /* Bulk progress inside content */
+  .bulk-progress{padding:16px;}
+}
+
+@media(max-width:480px){
+  .topbar{padding:10px 12px;}
+  .tb-title{font-size:14px;}
+  .tb-sub{display:none;}
+  .tb-right .tb-badge:first-child{display:none;}
+  .content{padding:12px;}
+  .stat-val{font-size:20px;}
+  .card{padding:14px;}
+  .lcard{padding:28px 18px 24px;}
+}
 </style>
 </head>
 <body>
@@ -566,8 +647,11 @@ input[type=datetime-local]:focus,input[type=date]:focus,input[type=time]:focus{b
 <!-- ══ MAIN APP ══ -->
 <div id="app">
 
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="appSidebar">
     <div class="sb-header">
       <div class="sb-brand">
         <div class="sb-mark">
@@ -653,9 +737,14 @@ input[type=datetime-local]:focus,input[type=date]:focus,input[type=time]:focus{b
   <!-- Main -->
   <div class="main">
     <div class="topbar">
-      <div class="tb-left">
-        <div class="tb-title" id="page-title">Dashboard</div>
-        <div class="tb-sub" id="page-sub">Overview of your WhatsApp activity</div>
+      <div class="tb-left" style="display:flex;align-items:center;gap:12px;">
+        <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleSidebar()">
+          <span></span><span></span><span></span>
+        </button>
+        <div>
+          <div class="tb-title" id="page-title">Dashboard</div>
+          <div class="tb-sub" id="page-sub">Overview of your WhatsApp activity</div>
+        </div>
       </div>
       <div class="tb-right">
         <div class="tb-badge" id="tb-date">
@@ -1069,6 +1158,34 @@ input[type=datetime-local]:focus,input[type=date]:focus,input[type=time]:focus{b
 </div>
 
 <script>
+/* ── Mobile Sidebar ── */
+function toggleSidebar(){
+  const sb=document.getElementById('appSidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  const btn=document.getElementById('mobMenuBtn');
+  const open=sb.classList.toggle('mob-open');
+  ov.classList.toggle('show',open);
+  btn.classList.toggle('open',open);
+  document.body.style.overflow=open?'hidden':'';
+}
+function closeSidebar(){
+  const sb=document.getElementById('appSidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  const btn=document.getElementById('mobMenuBtn');
+  sb.classList.remove('mob-open');
+  ov.classList.remove('show');
+  btn.classList.remove('open');
+  document.body.style.overflow='';
+}
+// Close sidebar when a nav item is clicked on mobile
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.nbtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(window.innerWidth<=768) closeSidebar();
+    });
+  });
+});
+
 /* ── State ── */
 let sc=0,fc=0,allContacts=[],allGroups=[],customTemplates=[];
 

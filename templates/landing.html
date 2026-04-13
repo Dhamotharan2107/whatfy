@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whatfy — WhatsApp Business Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─── 3-COLOR SYSTEM: Black · White · Green ─── */
+:root {
+  --black:  #0a0a0a;
+  --white:  #ffffff;
+  --green:  #16a34a;
+  --green2: #22c55e;
+  --green3: #dcfce7;
+  --ink:    #111827;
+  --gray1:  #f9fafb;
+  --gray2:  #f3f4f6;
+  --gray3:  #e5e7eb;
+  --gray4:  #9ca3af;
+  --gray5:  #6b7280;
+  --gray6:  #374151;
+  --r:16px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'Inter',sans-serif;background:var(--white);color:var(--ink);overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+img{display:block;max-width:100%;}
+
+/* ─── NAV ─── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.92);
+  border-bottom:1px solid var(--gray3);
+  backdrop-filter:blur(16px);
+  transition:box-shadow .2s;
+}
+.nav.up{box-shadow:0 1px 24px rgba(0,0,0,.06);}
+.nav-wrap{
+  max-width:1160px;margin:0 auto;padding:0 24px;
+  height:64px;display:flex;align-items:center;justify-content:space-between;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{
+  width:36px;height:36px;background:var(--black);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo-mark svg{width:18px;height:18px;fill:var(--green2);}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--black);letter-spacing:-.3px;}
+.logo-text em{color:var(--green);font-style:normal;}
+
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none;}
+.nav-links a{
+  font-size:14px;font-weight:500;color:var(--gray5);
+  padding:7px 13px;border-radius:8px;transition:all .15s;
+}
+.nav-links a:hover{color:var(--ink);background:var(--gray2);}
+
+.nav-btns{display:flex;align-items:center;gap:10px;}
+.btn-line{
+  font-size:14px;font-weight:600;color:var(--ink);
+  padding:8px 18px;border-radius:9px;
+  border:1.5px solid var(--gray3);transition:all .15s;
+}
+.btn-line:hover{border-color:var(--ink);}
+.btn-fill{
+  font-size:14px;font-weight:600;color:var(--white);
+  padding:8px 18px;border-radius:9px;
+  background:var(--black);transition:all .15s;
+}
+.btn-fill:hover{background:var(--ink);transform:translateY(-1px);}
+
+/* hamburger */
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:6px;}
+.burger span{display:block;width:22px;height:2px;background:var(--black);border-radius:2px;transition:.25s;}
+.burger.x span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.burger.x span:nth-child(2){opacity:0;}
+.burger.x span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mob-nav{
+  display:none;position:fixed;top:64px;left:0;right:0;
+  background:var(--white);border-bottom:1px solid var(--gray3);
+  padding:12px 24px 20px;flex-direction:column;gap:3px;z-index:99;
+}
+.mob-nav.show{display:flex;animation:sd .2s ease;}
+@keyframes sd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.mob-nav a{padding:12px 14px;border-radius:10px;font-size:15px;font-weight:500;color:var(--gray6);transition:.15s;}
+.mob-nav a:hover{background:var(--gray2);color:var(--ink);}
+.mob-div{height:1px;background:var(--gray3);margin:8px 0;}
+.mob-cta{padding:13px;border-radius:10px;text-align:center;font-weight:600;font-size:15px;background:var(--black);color:var(--white);margin-top:4px;}
+
+/* ─── HERO ─── */
+.hero{
+  background:var(--black);
+  position:relative;overflow:hidden;
+  padding:140px 24px 100px;
+  text-align:center;
+}
+/* Grid pattern */
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:56px 56px;
+}
+/* Green glow */
+.hero::after{
+  content:'';position:absolute;
+  width:700px;height:400px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(34,197,94,.12) 0%,transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-60%);
+  pointer-events:none;
+}
+.hero-inner{position:relative;z-index:1;max-width:860px;margin:0 auto;}
+
+.hero-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(34,197,94,.3);border-radius:50px;
+  padding:5px 14px 5px 8px;margin-bottom:32px;
+  background:rgba(34,197,94,.06);
+}
+.pill-dot{
+  width:28px;height:28px;border-radius:50%;background:rgba(34,197,94,.15);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.pill-dot svg{width:13px;height:13px;fill:var(--green2);}
+.pill-text{font-size:13px;font-weight:600;color:var(--green2);}
+
+h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(42px,7vw,84px);
+  font-weight:800;line-height:1.0;
+  letter-spacing:-2.5px;
+  color:var(--white);
+  margin-bottom:24px;
+}
+h1 .accent{color:var(--green2);}
+h1 .dim{color:rgba(255,255,255,.45);}
+
+.hero-sub{
+  font-size:clamp(15px,2vw,18px);
+  color:rgba(255,255,255,.55);
+  line-height:1.7;max-width:540px;margin:0 auto 40px;
+}
+
+.hero-btns{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;flex-wrap:wrap;margin-bottom:64px;
+}
+.btn-g{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  font-size:15px;font-weight:600;
+  background:var(--green);color:var(--white);
+  transition:all .18s;
+}
+.btn-g:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 8px 24px rgba(22,163,74,.35);}
+.btn-g svg{width:17px;height:17px;flex-shrink:0;}
+.btn-ghost-w{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:12px;
+  font-size:15px;font-weight:600;
+  border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.75);
+  transition:all .18s;
+}
+.btn-ghost-w:hover{border-color:rgba(255,255,255,.4);color:var(--white);}
+
+/* Hero bento preview */
+.hero-bento{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  grid-template-rows:auto auto;
+  gap:12px;max-width:900px;margin:0 auto;
+  text-align:left;
+}
+.hb{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:20px;
+  transition:border-color .2s;
+}
+.hb:hover{border-color:rgba(34,197,94,.25);}
+.hb.span2{grid-column:span 2;}
+.hb-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:10px;}
+.hb-val{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--white);line-height:1;margin-bottom:4px;}
+.hb-sub{font-size:12px;color:rgba(255,255,255,.35);}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green2);box-shadow:0 0 8px var(--green2);animation:blink 2s infinite;margin-right:6px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Chat mini */
+.mini-msgs{display:flex;flex-direction:column;gap:7px;}
+.mm{font-size:12px;padding:8px 11px;border-radius:9px;max-width:88%;line-height:1.45;}
+.mm-in{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);border-radius:9px 9px 9px 2px;align-self:flex-start;}
+.mm-out{background:rgba(34,197,94,.15);color:var(--green2);border-radius:9px 9px 2px 9px;align-self:flex-end;}
+
+/* Agent pills */
+.agent-list{display:flex;flex-direction:column;gap:8px;}
+.ag{display:flex;align-items:center;gap:10px;}
+.ag-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ag-name{font-size:13px;color:rgba(255,255,255,.65);font-weight:500;}
+.ag-status{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.ag-on{background:rgba(34,197,94,.12);color:var(--green2);}
+.ag-off{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);}
+
+/* ─── TICKER ─── */
+.ticker{background:var(--gray2);border-top:1px solid var(--gray3);border-bottom:1px solid var(--gray3);padding:16px 0;overflow:hidden;}
+.ticker-track{display:flex;gap:48px;width:max-content;animation:scroll 20s linear infinite;}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:13.5px;font-weight:600;color:var(--gray5);}
+.ticker-item span{font-size:18px;}
+.ticker-div{color:var(--gray3);font-size:20px;}
+
+/* ─── SECTION BASE ─── */
+.section{padding:96px 24px;}
+.sec-max{max-width:1160px;margin:0 auto;}
+.sec-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--green);border:1px solid rgba(22,163,74,.2);
+  background:rgba(22,163,74,.05);border-radius:50px;padding:4px 13px;
+  margin-bottom:14px;
+}
+.sec-h{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(30px,4.5vw,52px);
+  font-weight:800;line-height:1.1;letter-spacing:-1.2px;
+  color:var(--black);margin-bottom:14px;
+}
+.sec-p{font-size:16.5px;color:var(--gray5);line-height:1.7;max-width:520px;}
+.center{text-align:center;}
+.center .sec-p{margin:0 auto;}
+
+/* ─── FEATURE BENTO ─── */
+.feat-bento{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  grid-auto-rows:minmax(180px,auto);
+  gap:14px;margin-top:56px;
+}
+.fb{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:18px;padding:28px;overflow:hidden;position:relative;
+  transition:all .22s ease;
+}
+.fb:hover{border-color:var(--black);box-shadow:0 8px 40px rgba(0,0,0,.07);}
+.fb.c4{grid-column:span 4;}
+.fb.c6{grid-column:span 6;}
+.fb.c8{grid-column:span 8;}
+.fb.c12{grid-column:span 12;}
+
+.fb-tag{font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray4);margin-bottom:12px;}
+.fb-icon{font-size:32px;margin-bottom:14px;}
+.fb-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--black);margin-bottom:7px;line-height:1.2;}
+.fb-desc{font-size:13.5px;color:var(--gray5);line-height:1.65;}
+.fb-num{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--black);line-height:1;}
+.fb-num-sub{font-size:13px;color:var(--gray4);margin-top:4px;}
+
+/* Big feature card (chat) */
+.fb-chat{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
+.fbc{font-size:12.5px;padding:9px 13px;border-radius:9px;line-height:1.4;max-width:86%;}
+.fbc-in{background:var(--gray2);color:var(--ink);border-radius:9px 9px 9px 2px;align-self:flex-start;}
+.fbc-bot{background:var(--black);color:var(--white);border-radius:9px 9px 9px 2px;align-self:flex-start;}
+.fbc-out{background:var(--green3);color:#166534;border-radius:9px 9px 2px 9px;align-self:flex-end;}
+
+/* Invoice card */
+.inv-preview{margin-top:14px;border:1.5px solid var(--gray3);border-radius:12px;overflow:hidden;}
+.inv-hdr{background:var(--black);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.inv-hdr-title{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--white);text-transform:uppercase;}
+.inv-hdr-num{font-size:11px;color:var(--gray4);}
+.inv-row{display:flex;justify-content:space-between;padding:7px 14px;font-size:12px;border-bottom:1px solid var(--gray3);}
+.inv-row:last-child{border:none;background:var(--green3);font-weight:700;color:#166534;}
+
+/* ─── HOW IT WORKS ─── */
+.how-section{background:var(--black);padding:96px 24px;}
+.how-inner{max-width:1160px;margin:0 auto;}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);border-radius:20px;overflow:hidden;margin-top:56px;}
+.how-step{padding:40px 32px;background:var(--black);}
+.how-num{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:800;
+  letter-spacing:1.5px;color:var(--green2);margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;
+}
+.how-num::before{content:'';display:block;width:24px;height:2px;background:var(--green2);}
+.how-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--white);margin-bottom:10px;line-height:1.2;}
+.how-desc{font-size:14px;color:rgba(255,255,255,.4);line-height:1.7;}
+.how-visual{margin-top:20px;}
+
+/* How step visuals */
+.code-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;padding:8px 14px;font-size:12px;
+  font-family:monospace;color:rgba(255,255,255,.5);margin-top:8px;
+}
+
+/* ─── PRICING ─── */
+.pricing-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:20px;max-width:840px;margin:56px auto 0;
+}
+.pc{
+  border-radius:20px;padding:36px 32px;
+  border:1.5px solid var(--gray3);background:var(--white);
+  position:relative;transition:all .2s;
+}
+.pc:hover{box-shadow:0 20px 60px rgba(0,0,0,.08);border-color:var(--black);}
+.pc.hot{border-color:var(--black);background:var(--black);}
+.pc-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:var(--white);
+  font-size:11.5px;font-weight:700;padding:4px 16px;
+  border-radius:50px;white-space:nowrap;
+}
+.pc-plan{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gray4);margin-bottom:8px;}
+.pc.hot .pc-plan{color:rgba(255,255,255,.4);}
+.pc-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--black);margin-bottom:6px;}
+.pc.hot .pc-name{color:var(--white);}
+.pc-tagline{font-size:13.5px;color:var(--gray5);margin-bottom:24px;line-height:1.5;}
+.pc.hot .pc-tagline{color:rgba(255,255,255,.4);}
+.pc-price{margin-bottom:8px;}
+.pc-rs{font-size:22px;font-weight:700;color:var(--black);vertical-align:top;line-height:1.6;}
+.pc.hot .pc-rs{color:var(--white);}
+.pc-amt{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--black);line-height:1;}
+.pc.hot .pc-amt{color:var(--green2);}
+.pc-mo{font-size:14px;color:var(--gray4);margin-left:3px;}
+.pc-setup{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12.5px;font-weight:600;color:var(--gray5);
+  background:var(--gray2);border:1px solid var(--gray3);
+  border-radius:50px;padding:4px 13px;margin-bottom:26px;
+}
+.pc.hot .pc-setup{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.45);}
+.pc-div{height:1px;background:var(--gray3);margin-bottom:24px;}
+.pc.hot .pc-div{background:rgba(255,255,255,.08);}
+.pc-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:30px;}
+.pc-feats li{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--gray6);}
+.pc.hot .pc-feats li{color:rgba(255,255,255,.65);}
+.pc-feats li.dim{color:var(--gray4);}
+.pc.hot .pc-feats li.dim{color:rgba(255,255,255,.2);}
+.ck{
+  width:19px;height:19px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:9.5px;
+}
+.ck-yes{background:var(--green3);color:var(--green);}
+.ck-no{background:var(--gray2);color:var(--gray4);}
+.pc.hot .ck-yes{background:rgba(34,197,94,.15);color:var(--green2);}
+.pc.hot .ck-no{background:rgba(255,255,255,.06);color:rgba(255,255,255,.2);}
+.pc-btn{
+  display:block;text-align:center;padding:14px;border-radius:12px;
+  font-size:15px;font-weight:600;transition:all .18s;
+}
+.pc-btn-dark{background:var(--black);color:var(--white);}
+.pc-btn-dark:hover{background:var(--ink);}
+.pc-btn-green{background:var(--green);color:var(--white);}
+.pc-btn-green:hover{background:#15803d;box-shadow:0 6px 24px rgba(22,163,74,.35);}
+.pricing-note{text-align:center;margin-top:24px;font-size:13px;color:var(--gray4);}
+
+/* ─── CTA ─── */
+.cta-section{padding:96px 24px;background:var(--black);}
+.cta-inner{
+  max-width:760px;margin:0 auto;text-align:center;
+  position:relative;
+}
+.cta-inner::before{
+  content:'';position:absolute;inset:-60px;
+  background:radial-gradient(ellipse at center,rgba(34,197,94,.08) 0%,transparent 65%);
+  pointer-events:none;
+}
+.cta-title{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(34px,5vw,64px);
+  font-weight:800;line-height:1.05;letter-spacing:-1.5px;
+  color:var(--white);margin-bottom:18px;position:relative;
+}
+.cta-title span{color:var(--green2);}
+.cta-sub{font-size:16px;color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:40px;position:relative;}
+.cta-btns{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;position:relative;}
+.cta-note{margin-top:18px;font-size:12.5px;color:rgba(255,255,255,.25);position:relative;}
+
+/* ─── FOOTER ─── */
+footer{background:var(--black);border-top:1px solid rgba(255,255,255,.06);padding:60px 24px 36px;}
+.foot-inner{max-width:1160px;margin:0 auto;}
+.foot-top{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:48px;margin-bottom:56px;}
+.foot-logo{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.foot-logo-mark{width:32px;height:32px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.foot-logo-mark svg{width:16px;height:16px;fill:var(--green2);}
+.foot-logo-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--white);}
+.foot-desc{font-size:13.5px;color:rgba(255,255,255,.28);line-height:1.7;margin-bottom:18px;}
+.foot-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--green2);}
+.fp-dot{width:7px;height:7px;border-radius:50%;background:var(--green2);animation:blink 2s infinite;}
+.foot-col-h{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:16px;}
+.foot-links{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.foot-links a{font-size:13.5px;color:rgba(255,255,255,.38);transition:color .15s;}
+.foot-links a:hover{color:rgba(255,255,255,.75);}
+.foot-bottom{padding-top:28px;border-top:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.foot-copy{font-size:12.5px;color:rgba(255,255,255,.2);}
+.foot-right{font-size:12px;color:rgba(255,255,255,.15);}
+
+/* ─── REVEAL ─── */
+.r{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s ease;}
+.r.in{opacity:1;transform:none;}
+.r2{opacity:0;transform:translateY(20px);transition:opacity .55s .1s ease,transform .55s .1s ease;}
+.r2.in{opacity:1;transform:none;}
+.r3{opacity:0;transform:translateY(20px);transition:opacity .55s .2s ease,transform .55s .2s ease;}
+.r3.in{opacity:1;transform:none;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:960px){
+  .nav-links,.nav-btns{display:none;}
+  .burger{display:flex;}
+  .feat-bento{grid-template-columns:1fr 1fr;}
+  .fb.c4,.fb.c6,.fb.c8,.fb.c12{grid-column:span 2;}
+  .how-grid{grid-template-columns:1fr;}
+  .foot-top{grid-template-columns:1fr 1fr;gap:32px;}
+}
+@media(max-width:680px){
+  .hero{padding:110px 20px 72px;}
+  h1{letter-spacing:-1.5px;}
+  .hero-bento{grid-template-columns:1fr 1fr;}
+  .hb.span2{grid-column:span 2;}
+  .feat-bento{grid-template-columns:1fr;}
+  .fb.c4,.fb.c6,.fb.c8,.fb.c12{grid-column:span 1;}
+  .pricing-grid{grid-template-columns:1fr;max-width:420px;}
+  .section{padding:64px 20px;}
+  .cta-section,.how-section{padding:64px 20px;}
+  .how-step{padding:28px 22px;}
+  .hero-btns{flex-direction:column;align-items:stretch;}
+  .btn-g,.btn-ghost-w{justify-content:center;}
+  .foot-top{grid-template-columns:1fr;}
+  .foot-bottom{flex-direction:column;text-align:center;}
+}
+@media(max-width:420px){
+  .hero-bento{grid-template-columns:1fr;}
+  .hb.span2{grid-column:span 1;}
+  .nav-wrap{height:58px;}
+  .mob-nav{top:58px;}
+  h1{font-size:34px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-wrap">
+    <a href="/" class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+      <span class="logo-text">What<em>fy</em></span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/docs-api">API Docs</a></li>
+    </ul>
+
+    <div class="nav-btns">
+      <a href="/auth" class="btn-line">Sign In</a>
+      <a href="/auth" class="btn-fill">Get Started</a>
+    </div>
+
+    <button class="burger" id="burger"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav" id="mobNav">
+  <a href="#features" onclick="closeMob()">Features</a>
+  <a href="#how" onclick="closeMob()">How It Works</a>
+  <a href="#pricing" onclick="closeMob()">Pricing</a>
+  <a href="/docs-api" onclick="closeMob()">API Docs</a>
+  <div class="mob-div"></div>
+  <a href="/auth" style="padding:12px 14px;color:#6b7280;font-size:15px;font-weight:500">Sign In</a>
+  <a href="/auth" class="mob-cta">Get Started Free →</a>
+</div>
+
+<!-- ════ HERO ════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-pill r">
+      <div class="pill-dot">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+      <span class="pill-text">WhatsApp Business Automation</span>
+    </div>
+
+    <h1 class="r2">
+      Automate Your<br>
+      Business on <span class="accent">WhatsApp</span><br>
+      <span class="dim">with AI Agents</span>
+    </h1>
+
+    <p class="hero-sub r3">
+      Connect your WhatsApp once. Let AI agents handle orders, invoices, appointments, patient care, and customer conversations — automatically, 24/7.
+    </p>
+
+    <div class="hero-btns r3">
+      <a href="/auth" class="btn-g">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Connect WhatsApp Free
+      </a>
+      <a href="#features" class="btn-ghost-w">Explore Features →</a>
+    </div>
+
+    <!-- Bento preview -->
+    <div class="hero-bento r3">
+      <!-- Stats -->
+      <div class="hb">
+        <div class="hb-label"><span class="live-dot"></span>Live Now</div>
+        <div class="hb-val">247</div>
+        <div class="hb-sub">Messages handled today</div>
+      </div>
+      <!-- Chat -->
+      <div class="hb span2">
+        <div class="hb-label">AI Chat Bot · Active</div>
+        <div class="mini-msgs">
+          <div class="mm mm-in">Price of 5kg rice?</div>
+          <div class="mm mm-out">₹280. Order now? Reply YES</div>
+          <div class="mm mm-in">YES</div>
+          <div class="mm mm-out">✅ Order confirmed! Delivering today.</div>
+        </div>
+      </div>
+      <!-- Agents -->
+      <div class="hb">
+        <div class="hb-label">Active Agents</div>
+        <div class="agent-list">
+          <div class="ag"><div class="ag-dot" style="background:var(--green2)"></div><span class="ag-name">Shop Agent</span><span class="ag-status ag-on">ON</span></div>
+          <div class="ag"><div class="ag-dot" style="background:var(--green2)"></div><span class="ag-name">Invoice Agent</span><span class="ag-status ag-on">ON</span></div>
+          <div class="ag"><div class="ag-dot" style="background:var(--green2)"></div><span class="ag-name">Health Agent</span><span class="ag-status ag-on">ON</span></div>
+          <div class="ag"><div class="ag-dot" style="background:rgba(255,255,255,.2)"></div><span class="ag-name">Appointment</span><span class="ag-status ag-off">OFF</span></div>
+        </div>
+      </div>
+      <!-- Invoice -->
+      <div class="hb span2">
+        <div class="hb-label">Last Invoice Sent</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--white)">#INV-1042</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:3px;">Ravi Kumar · just now</div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--green2)">₹4,800</div>
+        </div>
+        <div style="margin-top:12px;height:2px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:70%;background:var(--green2);border-radius:2px;"></div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:6px;">Sent via WhatsApp · Delivered</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <div class="ticker-item"><span>🛒</span> Shop Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🧾</span> Invoice Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>💊</span> Health Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🏥</span> Appointment Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🤖</span> AI Chat Bot</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>📊</span> Live Dashboard</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>📡</span> REST API</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>⚡</span> 24/7 Automation</div><div class="ticker-div">·</div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item"><span>🛒</span> Shop Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🧾</span> Invoice Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>💊</span> Health Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🏥</span> Appointment Agent</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>🤖</span> AI Chat Bot</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>📊</span> Live Dashboard</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>📡</span> REST API</div><div class="ticker-div">·</div>
+    <div class="ticker-item"><span>⚡</span> 24/7 Automation</div><div class="ticker-div">·</div>
+  </div>
+</div>
+
+<!-- ════ FEATURES ════ -->
+<section class="section" id="features">
+  <div class="sec-max">
+    <div class="center r">
+      <div class="sec-tag">Platform</div>
+      <h2 class="sec-h">Six agents.<br>One WhatsApp number.</h2>
+      <p class="sec-p">Everything your business needs — shop management, invoicing, healthcare, appointments, and intelligent AI chat.</p>
+    </div>
+
+    <div class="feat-bento">
+      <!-- Big: Chat -->
+      <div class="fb c8 r">
+        <div class="fb-tag">AI Chat Bot · GLM-4.7</div>
+        <div class="fb-title">Answers customers<br>24/7 automatically</div>
+        <div class="fb-desc" style="margin-bottom:0">Natural language understanding with per-sender memory. Customers get instant, contextual replies any time of day.</div>
+        <div class="fb-chat" style="margin-top:18px">
+          <div class="fbc fbc-in">What's the price of 5kg basmati rice?</div>
+          <div class="fbc fbc-bot">Basmati 5kg = ₹420. Premium quality, same-day delivery. Shall I place the order?</div>
+          <div class="fbc fbc-out" style="align-self:flex-end">YES please!</div>
+          <div class="fbc fbc-bot">✅ Order placed! Delivering by 6 PM. Invoice sent to your WhatsApp.</div>
+        </div>
+      </div>
+
+      <!-- Stat: Messages -->
+      <div class="fb c4 r2" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="fb-tag">Daily Automation</div>
+        <div>
+          <div class="fb-num" style="color:var(--green)">1,200+</div>
+          <div class="fb-num-sub">messages handled per day</div>
+        </div>
+        <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;">
+          <div style="height:6px;background:var(--gray2);border-radius:3px;overflow:hidden;"><div style="width:85%;height:100%;background:var(--green);border-radius:3px;"></div></div>
+          <div style="height:6px;background:var(--gray2);border-radius:3px;overflow:hidden;"><div style="width:60%;height:100%;background:var(--black);border-radius:3px;"></div></div>
+          <div style="height:6px;background:var(--gray2);border-radius:3px;overflow:hidden;"><div style="width:40%;height:100%;background:var(--green3);border-radius:3px;border:1px solid #86efac;"></div></div>
+        </div>
+      </div>
+
+      <!-- Invoice -->
+      <div class="fb c4 r">
+        <div class="fb-tag">Invoice Agent</div>
+        <div class="fb-title">Send invoices via WhatsApp</div>
+        <div class="inv-preview">
+          <div class="inv-hdr">
+            <span class="inv-hdr-title">Invoice</span>
+            <span class="inv-hdr-num">#INV-1042</span>
+          </div>
+          <div class="inv-row"><span>Rice 5kg</span><span>₹280</span></div>
+          <div class="inv-row"><span>Dal 2kg</span><span>₹160</span></div>
+          <div class="inv-row"><span style="font-weight:700">Total</span><span style="font-weight:700">₹440</span></div>
+        </div>
+      </div>
+
+      <!-- Shop -->
+      <div class="fb c4 r2">
+        <div class="fb-icon">🛒</div>
+        <div class="fb-tag">Shop Agent</div>
+        <div class="fb-title">Smart inventory management</div>
+        <div class="fb-desc">Track stock, auto-alert on low inventory, and let customers order through WhatsApp chat.</div>
+      </div>
+
+      <!-- Health -->
+      <div class="fb c4 r3">
+        <div class="fb-icon">💊</div>
+        <div class="fb-tag">Health Agent</div>
+        <div class="fb-title">Patient care on WhatsApp</div>
+        <div class="fb-desc">Medication reminders, AI-powered medical image analysis, and full patient record management.</div>
+      </div>
+
+      <!-- Appointment + API row -->
+      <div class="fb c6 r">
+        <div class="fb-icon">🏥</div>
+        <div class="fb-tag">Appointment Agent</div>
+        <div class="fb-title">Zero no-shows</div>
+        <div class="fb-desc">Schedule appointments and send automatic WhatsApp reminders. Patients confirm, reschedule, or cancel — all via chat.</div>
+      </div>
+
+      <div class="fb c6 r2">
+        <div class="fb-tag">REST API · Full Access</div>
+        <div class="fb-title">Integrate with anything</div>
+        <div class="fb-desc" style="margin-bottom:14px">Use the Whatfy API to send messages, query agents, and automate from your own apps.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="code-chip"><span style="color:var(--green);font-weight:700">POST</span>&nbsp; /api/wa/send</div>
+          <div class="code-chip"><span style="color:var(--black);font-weight:700">GET</span>&nbsp;&nbsp; /api/wa/status</div>
+          <div class="code-chip"><span style="color:var(--green);font-weight:700">POST</span>&nbsp; /api/ai/shop</div>
+        </div>
+        <a href="/docs-api" style="display:inline-block;margin-top:14px;font-size:13px;font-weight:600;color:var(--green);text-decoration:underline;text-underline-offset:3px;">View full API docs →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ HOW IT WORKS ════ -->
+<section class="how-section" id="how">
+  <div class="how-inner">
+    <div class="center r">
+      <div class="sec-tag" style="background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:var(--green2)">Process</div>
+      <h2 class="sec-h" style="color:var(--white)">Live in 3 steps</h2>
+      <p class="sec-p" style="color:rgba(255,255,255,.4);margin:0 auto">No technical skills needed. Connect your WhatsApp and activate agents in under 2 minutes.</p>
+    </div>
+
+    <div class="how-grid">
+      <div class="how-step r">
+        <div class="how-num">01</div>
+        <div class="how-title">Create your account</div>
+        <div class="how-desc">Sign up with your email. No credit card required. Your account is instantly ready with access to all agents and the dashboard.</div>
+        <div class="how-visual">
+          <div class="code-chip" style="margin-top:16px">register → dashboard ready</div>
+        </div>
+      </div>
+      <div class="how-step r2" style="border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);">
+        <div class="how-num">02</div>
+        <div class="how-title">Connect WhatsApp</div>
+        <div class="how-desc">Scan the QR code or enter your pair code to link your number. The entire connection process takes under 30 seconds.</div>
+        <div class="how-visual">
+          <div class="code-chip" style="margin-top:16px">scan QR → connected ✓</div>
+        </div>
+      </div>
+      <div class="how-step r3">
+        <div class="how-num">03</div>
+        <div class="how-title">Activate & automate</div>
+        <div class="how-desc">Toggle the AI agents you need. Your WhatsApp starts responding to customers automatically from that exact moment.</div>
+        <div class="how-visual">
+          <div class="code-chip" style="margin-top:16px">agents on → 24/7 running</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRICING ════ -->
+<section class="section" id="pricing">
+  <div class="sec-max">
+    <div class="center r">
+      <div class="sec-tag">Pricing</div>
+      <h2 class="sec-h">Two plans.<br>One setup fee.</h2>
+      <p class="sec-p">Transparent pricing with no hidden charges. One-time setup gets you fully configured and running.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Basic -->
+      <div class="pc r">
+        <div class="pc-plan">Basic Plan</div>
+        <div class="pc-name">Website / Agency</div>
+        <div class="pc-tagline">For agencies and web businesses managing WhatsApp automation.</div>
+        <div class="pc-price">
+          <span class="pc-rs">₹</span><span class="pc-amt">999</span><span class="pc-mo">/month</span>
+        </div>
+        <div class="pc-setup">🔧 + ₹2,999 one-time setup</div>
+        <div class="pc-div"></div>
+        <ul class="pc-feats">
+          <li><span class="ck ck-yes">✓</span> 1 WhatsApp Number</li>
+          <li><span class="ck ck-yes">✓</span> Shop Agent</li>
+          <li><span class="ck ck-yes">✓</span> Invoice Agent</li>
+          <li><span class="ck ck-yes">✓</span> AI Chat Bot (Basic)</li>
+          <li><span class="ck ck-yes">✓</span> Bulk Campaigns</li>
+          <li><span class="ck ck-yes">✓</span> Live Dashboard</li>
+          <li><span class="ck ck-yes">✓</span> REST API Access</li>
+          <li class="dim"><span class="ck ck-no">✗</span> Health Agent</li>
+          <li class="dim"><span class="ck ck-no">✗</span> Appointment Agent</li>
+          <li class="dim"><span class="ck ck-no">✗</span> AI Vision Analysis</li>
+        </ul>
+        <a href="/auth" class="pc-btn pc-btn-dark">Get Started</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="pc hot r2">
+        <div class="pc-badge">Most Popular</div>
+        <div class="pc-plan">Pro Plan</div>
+        <div class="pc-name">Individual Business</div>
+        <div class="pc-tagline">Full access for shops, clinics, and businesses needing every agent.</div>
+        <div class="pc-price">
+          <span class="pc-rs" style="color:var(--white)">₹</span><span class="pc-amt">2,499</span><span class="pc-mo">/month</span>
+        </div>
+        <div class="pc-setup">🔧 + ₹2,999 one-time setup</div>
+        <div class="pc-div"></div>
+        <ul class="pc-feats">
+          <li><span class="ck ck-yes">✓</span> 1 WhatsApp Number</li>
+          <li><span class="ck ck-yes">✓</span> Shop Agent</li>
+          <li><span class="ck ck-yes">✓</span> Invoice Agent</li>
+          <li><span class="ck ck-yes">✓</span> AI Chat Bot (Advanced)</li>
+          <li><span class="ck ck-yes">✓</span> Bulk Campaigns</li>
+          <li><span class="ck ck-yes">✓</span> Live Dashboard</li>
+          <li><span class="ck ck-yes">✓</span> Full API + Token</li>
+          <li><span class="ck ck-yes">✓</span> Health Agent</li>
+          <li><span class="ck ck-yes">✓</span> Appointment Agent</li>
+          <li><span class="ck ck-yes">✓</span> AI Vision Analysis</li>
+        </ul>
+        <a href="/auth" class="pc-btn pc-btn-green">Get Started — Best Value</a>
+      </div>
+    </div>
+
+    <p class="pricing-note r">Both plans include a <strong style="color:var(--gray5)">₹2,999 one-time setup fee</strong> for full configuration &amp; onboarding · Cancel anytime</p>
+  </div>
+</section>
+
+<!-- ════ CTA ════ -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title r">Your business deserves<br>to run on <span>autopilot</span></h2>
+    <p class="cta-sub r2">Join businesses already automating their WhatsApp with Whatfy. Start free, no credit card needed.</p>
+    <div class="cta-btns r3">
+      <a href="/auth" class="btn-g" style="font-size:15px;padding:14px 32px">Connect WhatsApp Free →</a>
+      <a href="/docs-api" class="btn-ghost-w" style="font-size:15px;padding:14px 28px">Read API Docs</a>
+    </div>
+    <p class="cta-note r3">Free to start · ₹999/mo or ₹2,499/mo after · ₹2,999 one-time setup</p>
+  </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-top">
+      <div>
+        <div class="foot-logo">
+          <div class="foot-logo-mark">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          </div>
+          <span class="foot-logo-name">Whatfy</span>
+        </div>
+        <p class="foot-desc">The all-in-one WhatsApp business automation platform. Connect once, automate everything.</p>
+        <div class="foot-pill"><span class="fp-dot"></span> WhatsApp · AI · 24/7</div>
+      </div>
+      <div>
+        <div class="foot-col-h">Platform</div>
+        <ul class="foot-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="/docs-api">API Docs</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="foot-col-h">Agents</div>
+        <ul class="foot-links">
+          <li><a href="/auth">Shop Agent</a></li>
+          <li><a href="/auth">Invoice Agent</a></li>
+          <li><a href="/auth">Health Agent</a></li>
+          <li><a href="/auth">Appointment Agent</a></li>
+          <li><a href="/auth">AI Chat Bot</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="foot-col-h">Account</div>
+        <ul class="foot-links">
+          <li><a href="/auth">Sign In</a></li>
+          <li><a href="/auth">Create Account</a></li>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/connect">Connect WhatsApp</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div class="foot-copy">© 2024 Whatfy · All rights reserved</div>
+      <div class="foot-right">WhatsApp™ is a trademark of Meta Platforms, Inc.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Nav hamburger
+const burger = document.getElementById('burger');
+const mobNav = document.getElementById('mobNav');
+burger.addEventListener('click', () => {
+  burger.classList.toggle('x');
+  mobNav.classList.toggle('show');
+});
+function closeMob() {
+  burger.classList.remove('x');
+  mobNav.classList.remove('show');
+}
+document.addEventListener('click', e => {
+  if (!burger.contains(e.target) && !mobNav.contains(e.target)) closeMob();
+});
+
+// Nav shadow on scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('up', scrollY > 30));
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const el = document.getElementById(a.getAttribute('href').slice(1));
+    if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+
+// Reveal on scroll
+const els = document.querySelectorAll('.r,.r2,.r3');
+const io = new IntersectionObserver(entries => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('in');
+      io.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+els.forEach(el => io.observe(el));
+</script>
+</body>
+</html>

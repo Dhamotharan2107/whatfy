@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whatfy API Docs</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --green: #16a34a;
+  --green2: #22c55e;
+  --green3: #dcfce7;
+  --gray1: #f9fafb;
+  --gray2: #f3f4f6;
+  --gray3: #e5e7eb;
+  --gray4: #9ca3af;
+  --gray5: #6b7280;
+  --gray6: #374151;
+  --ink: #111827;
+  --surface: #141414;
+  --border-dark: rgba(255,255,255,.08);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{font-family:'Inter',sans-serif;background:var(--white);color:var(--ink);overflow-x:hidden;}
+a{text-decoration:none;color:inherit;}
+code{font-family:'JetBrains Mono',monospace;}
+
+/* ── TOP NAV ── */
+.topnav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--gray3);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:60px;
+}
+.tn-left{display:flex;align-items:center;gap:10px;}
+.tn-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.tn-mark{width:32px;height:32px;background:var(--black);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tn-mark svg{width:16px;height:16px;fill:var(--green2);}
+.tn-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--black);}
+.tn-sep{color:var(--gray3);font-size:20px;margin:0 8px;}
+.tn-page{font-size:14px;font-weight:600;color:var(--gray5);}
+.tn-right{display:flex;align-items:center;gap:12px;}
+.tn-back{font-size:13.5px;font-weight:600;color:var(--gray5);padding:6px 14px;border-radius:8px;border:1px solid var(--gray3);transition:.15s;}
+.tn-back:hover{color:var(--ink);border-color:var(--gray4);}
+.tn-cta{font-size:13.5px;font-weight:600;color:var(--white);background:var(--black);padding:7px 16px;border-radius:8px;transition:.15s;}
+.tn-cta:hover{background:var(--ink);}
+
+/* ── LAYOUT ── */
+.docs-wrap{display:flex;min-height:calc(100vh - 60px);}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:260px;flex-shrink:0;
+  position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;
+  border-right:1px solid var(--gray3);padding:24px 0;
+  background:var(--gray1);
+}
+.sidebar::-webkit-scrollbar{width:0;}
+.sb-section{margin-bottom:28px;padding:0 16px;}
+.sb-head{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gray4);margin-bottom:8px;padding:0 8px;}
+.sb-link{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;border-radius:8px;
+  font-size:13.5px;font-weight:500;color:var(--gray6);
+  transition:all .15s;cursor:pointer;width:100%;text-align:left;border:none;background:none;
+}
+.sb-link:hover{color:var(--ink);background:var(--gray3);}
+.sb-link.active{color:var(--green);background:var(--green3);font-weight:600;}
+.sb-method{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.m-get{background:#dcfce7;color:#166534;}
+.m-post{background:#eff6ff;color:#1d4ed8;}
+.m-del{background:#fef2f2;color:#b91c1c;}
+
+/* Mobile sidebar toggle */
+.mob-sb-btn{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;border:1px solid var(--gray3);background:var(--white);font-size:13.5px;font-weight:600;color:var(--gray6);cursor:pointer;margin:16px 20px 0;}
+.mob-sb-btn svg{width:16px;height:16px;}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:40px 48px;max-width:900px;}
+
+/* ── HERO BANNER ── */
+.doc-hero{
+  background:var(--black);border-radius:18px;padding:36px 40px;margin-bottom:40px;
+  position:relative;overflow:hidden;
+}
+.doc-hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.doc-hero::after{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,rgba(34,197,94,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.doc-hero-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green2);border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.06);border-radius:50px;padding:4px 12px;margin-bottom:14px;position:relative;z-index:1;}
+.doc-hero h1{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--white);margin-bottom:10px;letter-spacing:-.5px;position:relative;z-index:1;line-height:1.2;}
+.doc-hero p{font-size:15px;color:rgba(255,255,255,.45);line-height:1.65;max-width:480px;position:relative;z-index:1;}
+.doc-hero-meta{display:flex;gap:20px;margin-top:22px;flex-wrap:wrap;position:relative;z-index:1;}
+.dhm{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.35);}
+.dhm strong{color:rgba(255,255,255,.65);}
+
+/* ── SECTION HEADERS ── */
+.doc-section{margin-bottom:56px;}
+.doc-section-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--black);margin-bottom:4px;padding-top:16px;}
+.doc-section-sub{font-size:14px;color:var(--gray5);margin-bottom:24px;line-height:1.6;}
+.doc-divider{height:1px;background:var(--gray3);margin-bottom:32px;}
+
+/* ── TOKEN BLOCK ── */
+.token-block{background:var(--black);border-radius:16px;padding:28px 28px 22px;margin-bottom:24px;}
+.token-block-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+.token-block-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--white);}
+.token-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--green2);}
+.ts-dot{width:7px;height:7px;border-radius:50%;background:var(--green2);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.token-row{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:11px 16px;margin-bottom:12px;
+}
+.token-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:#86efac;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.token-btn{
+  background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.2);
+  border-radius:7px;padding:5px 12px;
+  font-size:12px;font-weight:600;color:var(--green2);
+  cursor:pointer;transition:.15s;flex-shrink:0;
+}
+.token-btn:hover{background:rgba(34,197,94,.2);}
+.token-meta{display:flex;gap:24px;flex-wrap:wrap;}
+.tm{font-size:12px;color:rgba(255,255,255,.25);}
+.tm strong{color:rgba(255,255,255,.5);}
+
+/* Auth usage block */
+.auth-usage{background:var(--surface);border-radius:12px;padding:20px 22px;margin-top:16px;}
+.au-title{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px;}
+.code-line{font-family:'JetBrains Mono',monospace;font-size:13px;color:rgba(255,255,255,.5);line-height:1.8;}
+.code-line .ck{color:#86efac;}
+.code-line .cv{color:#fca5a5;}
+.code-line .cs{color:#fde68a;}
+.code-line .cc{color:rgba(255,255,255,.22);}
+
+/* ── ENDPOINT CARDS ── */
+.ep-card{border:1.5px solid var(--gray3);border-radius:16px;overflow:hidden;margin-bottom:20px;transition:border-color .2s;}
+.ep-card:hover{border-color:var(--gray4);}
+.ep-header{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px;background:var(--gray1);
+  border-bottom:1px solid var(--gray3);cursor:pointer;
+  user-select:none;
+}
+.ep-header:hover{background:var(--gray2);}
+.ep-method{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;flex-shrink:0;}
+.ep-path{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;color:var(--ink);flex:1;}
+.ep-desc{font-size:13px;color:var(--gray5);}
+.ep-arrow{font-size:16px;color:var(--gray4);transition:transform .2s;flex-shrink:0;}
+.ep-card.open .ep-arrow{transform:rotate(90deg);}
+.ep-body{padding:22px 22px;display:none;}
+.ep-card.open .ep-body{display:block;}
+.ep-desc-full{font-size:14px;color:var(--gray5);line-height:1.65;margin-bottom:20px;}
+
+/* Code blocks */
+.code-wrap{margin-bottom:18px;}
+.cw-label{font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray4);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.copy-btn{font-size:11.5px;font-weight:600;color:var(--gray4);cursor:pointer;padding:3px 8px;border-radius:5px;border:1px solid var(--gray3);background:none;transition:.15s;}
+.copy-btn:hover{color:var(--ink);border-color:var(--gray4);}
+.codeblock{
+  background:var(--black);border-radius:12px;padding:18px 20px;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.75;
+  overflow-x:auto;position:relative;
+}
+.codeblock .ck{color:#86efac;}
+.codeblock .cv{color:#fca5a5;}
+.codeblock .cs{color:#fde68a;}
+.codeblock .cn{color:#fdba74;}
+.codeblock .cc{color:rgba(255,255,255,.25);}
+.codeblock .cd{color:rgba(255,255,255,.55);}
+.codeblock .cm{color:#a78bfa;}
+
+/* Two-col code grid */
+.code-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+
+/* Params table */
+.params-wrap{margin-top:18px;}
+.params-title{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gray4);margin-bottom:10px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:8px 12px;border-bottom:1.5px solid var(--gray3);font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gray4);}
+td{padding:10px 12px;border-bottom:1px solid var(--gray3);color:var(--gray6);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.p-name{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink);font-weight:500;}
+.p-type{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--green);}
+.p-req{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;}
+.req{background:#fef2f2;color:#b91c1c;}
+.opt{background:var(--gray2);color:var(--gray5);}
+
+/* Response codes */
+.resp-codes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.resp-code{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:4px 12px;border-radius:6px;}
+.rc-ok{background:#dcfce7;color:#166534;}
+.rc-err{background:#fef2f2;color:#b91c1c;}
+.rc-unauth{background:#fefce8;color:#854d0e;}
+
+/* ── ENDPOINT QUICK REF ── */
+.ep-ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px;}
+.ep-ref{
+  display:flex;align-items:flex-start;gap:10px;
+  border:1px solid var(--gray3);border-radius:12px;
+  padding:13px 16px;transition:.15s;cursor:pointer;
+}
+.ep-ref:hover{border-color:var(--gray4);background:var(--gray1);}
+.ep-ref-path{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink);margin-bottom:3px;}
+.ep-ref-desc{font-size:12px;color:var(--gray4);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .sidebar.mob-open{display:block;position:fixed;top:60px;left:0;bottom:0;z-index:40;width:260px;box-shadow:4px 0 24px rgba(0,0,0,.1);}
+  .mob-sb-btn{display:flex;}
+  .content{padding:24px 20px;}
+  .code-grid{grid-template-columns:1fr;}
+  .ep-ref-grid{grid-template-columns:1fr;}
+  .doc-hero{padding:24px 22px;}
+  .doc-hero h1{font-size:24px;}
+}
+@media(max-width:480px){
+  .topnav{padding:0 16px;}
+  .tn-sep,.tn-page{display:none;}
+  .content{padding:16px;}
+  .ep-header{flex-wrap:wrap;gap:8px;}
+  .ep-desc{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <div class="tn-left">
+    <a href="/" class="tn-logo">
+      <div class="tn-mark">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+      <span class="tn-name">Whatfy</span>
+    </a>
+    <span class="tn-sep">/</span>
+    <span class="tn-page">API Reference</span>
+  </div>
+  <div class="tn-right">
+    <a href="/" class="tn-back">← Back to Home</a>
+    <a href="/auth" class="tn-cta">Get API Access</a>
+  </div>
+</div>
+
+<div class="docs-wrap">
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sb-section">
+      <div class="sb-head">Getting Started</div>
+      <button class="sb-link active" onclick="scrollTo('intro')">Introduction</button>
+      <button class="sb-link" onclick="scrollTo('auth')">Authentication</button>
+      <button class="sb-link" onclick="scrollTo('token')">API Token</button>
+      <button class="sb-link" onclick="scrollTo('errors')">Errors</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">WhatsApp</div>
+      <button class="sb-link" onclick="scrollTo('ep-send')"><span class="sb-method m-post">POST</span> Send Message</button>
+      <button class="sb-link" onclick="scrollTo('ep-status')"><span class="sb-method m-get">GET</span> Status</button>
+      <button class="sb-link" onclick="scrollTo('ep-qr')"><span class="sb-method m-get">GET</span> QR Code</button>
+      <button class="sb-link" onclick="scrollTo('ep-pair')"><span class="sb-method m-post">POST</span> Pair Number</button>
+      <button class="sb-link" onclick="scrollTo('ep-logout')"><span class="sb-method m-get">GET</span> Logout</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">Webhooks</div>
+      <button class="sb-link" onclick="scrollTo('ep-webhook')"><span class="sb-method m-post">POST</span> Incoming</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">AI Agents</div>
+      <button class="sb-link" onclick="scrollTo('ep-ai-shop')"><span class="sb-method m-post">POST</span> Shop AI</button>
+      <button class="sb-link" onclick="scrollTo('ep-ai-invoice')"><span class="sb-method m-post">POST</span> Invoice AI</button>
+      <button class="sb-link" onclick="scrollTo('ep-ai-health')"><span class="sb-method m-post">POST</span> Health AI</button>
+      <button class="sb-link" onclick="scrollTo('ep-ai-appt')"><span class="sb-method m-post">POST</span> Appointment AI</button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">Configuration</div>
+      <button class="sb-link" onclick="scrollTo('ep-agent-cfg')"><span class="sb-method m-post">POST</span> Agent Config</button>
+      <button class="sb-link" onclick="scrollTo('ep-stats')"><span class="sb-method m-get">GET</span> Stats</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- Mobile sidebar btn -->
+    <button class="mob-sb-btn" id="mobSbBtn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Navigation
+    </button>
+
+    <!-- HERO BANNER -->
+    <div class="doc-hero" id="intro">
+      <div class="doc-hero-tag">API Reference v1.0</div>
+      <h1>Whatfy API Documentation</h1>
+      <p>Integrate WhatsApp automation, AI agents, and business logic into your own applications using the Whatfy REST API.</p>
+      <div class="doc-hero-meta">
+        <div class="dhm">Base URL: <strong>https://your-domain.com</strong></div>
+        <div class="dhm">Format: <strong>JSON</strong></div>
+        <div class="dhm">Auth: <strong>Bearer Token</strong></div>
+        <div class="dhm">Rate Limit: <strong>60 req/min</strong></div>
+      </div>
+    </div>
+
+    <!-- QUICK REF -->
+    <div class="doc-section">
+      <h2 class="doc-section-title">All Endpoints</h2>
+      <p class="doc-section-sub">Quick reference for every available API endpoint.</p>
+      <div class="ep-ref-grid">
+        <div class="ep-ref" onclick="scrollTo('ep-send')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/wa/send</div><div class="ep-ref-desc">Send a WhatsApp message</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-status')"><span class="sb-method m-get">GET</span><div><div class="ep-ref-path">/api/wa/status</div><div class="ep-ref-desc">Check connection status</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-qr')"><span class="sb-method m-get">GET</span><div><div class="ep-ref-path">/api/wa/qr-image</div><div class="ep-ref-desc">Get QR code as base64 PNG</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-pair')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/wa/pair</div><div class="ep-ref-desc">Pair with phone number</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-logout')"><span class="sb-method m-get">GET</span><div><div class="ep-ref-path">/api/wa/logout</div><div class="ep-ref-desc">Disconnect WhatsApp session</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-webhook')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/webhook/incoming</div><div class="ep-ref-desc">Receive incoming messages</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-ai-shop')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/ai/shop</div><div class="ep-ref-desc">Shop AI assistant</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-ai-invoice')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/ai/invoice</div><div class="ep-ref-desc">Invoice AI assistant</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-ai-health')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/ai/health</div><div class="ep-ref-desc">Health AI assistant</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-ai-appt')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/ai/appointments</div><div class="ep-ref-desc">Appointment AI assistant</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-agent-cfg')"><span class="sb-method m-post">POST</span><div><div class="ep-ref-path">/api/agent/{type}</div><div class="ep-ref-desc">Configure an AI agent</div></div></div>
+        <div class="ep-ref" onclick="scrollTo('ep-stats')"><span class="sb-method m-get">GET</span><div><div class="ep-ref-path">/api/dashboard/stats</div><div class="ep-ref-desc">Live dashboard statistics</div></div></div>
+      </div>
+    </div>
+
+    <!-- AUTH -->
+    <div class="doc-section" id="auth">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">Authentication</h2>
+      <p class="doc-section-sub">Whatfy uses session-based authentication. Every request must include your session token via the <code>Authorization</code> header or the <code>st</code> cookie set after login.</p>
+
+      <div id="token">
+        <div class="token-block">
+          <div class="token-block-top">
+            <div class="token-block-title">Your API Token</div>
+            <div class="token-status"><span class="ts-dot"></span> Active</div>
+          </div>
+          <div class="token-row">
+            <span class="token-val">wf_sk_••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••</span>
+            <button class="token-btn" onclick="copyToken(this)">Copy</button>
+          </div>
+          <div class="token-meta">
+            <div class="tm">Scope: <strong>Full Access</strong></div>
+            <div class="tm">Rate Limit: <strong>60 req/min</strong></div>
+            <div class="tm">Expires: <strong>Never (rotatable)</strong></div>
+          </div>
+
+          <div class="auth-usage" style="margin-top:18px;">
+            <div class="au-title">Usage</div>
+            <div class="code-line"><span class="cc"># HTTP Header (recommended)</span></div>
+            <div class="code-line"><span class="ck">Authorization</span>: Bearer <span class="cs">your_api_token</span></div>
+            <br>
+            <div class="code-line"><span class="cc"># Cookie (browser / session)</span></div>
+            <div class="code-line"><span class="ck">Cookie</span>: st=<span class="cs">your_session_token</span></div>
+            <br>
+            <div class="code-line"><span class="cc"># 401 Unauthorized if missing or invalid</span></div>
+            <div class="code-line"><span class="cv">{"error": "unauthorized"}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERRORS -->
+    <div class="doc-section" id="errors">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">Error Codes</h2>
+      <p class="doc-section-sub">All errors return JSON with an <code>error</code> key. HTTP status codes follow REST conventions.</p>
+      <table>
+        <thead><tr><th>Status</th><th>Meaning</th><th>Common Cause</th></tr></thead>
+        <tbody>
+          <tr><td><span class="p-type">200</span></td><td>Success</td><td>Request completed successfully</td></tr>
+          <tr><td><span class="p-type">401</span></td><td>Unauthorized</td><td>Missing or invalid API token / session</td></tr>
+          <tr><td><span class="p-type">422</span></td><td>Unprocessable</td><td>Missing required body parameters</td></tr>
+          <tr><td><span class="p-type">500</span></td><td>Server Error</td><td>Internal error or WhatsApp not connected</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══ WHATSAPP ENDPOINTS ═══ -->
+    <div class="doc-section">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">WhatsApp Endpoints</h2>
+
+      <!-- Send -->
+      <div class="ep-card open" id="ep-send">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/wa/send</span>
+          <span class="ep-desc">Send a WhatsApp text message</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Send a text message to any WhatsApp number. The number must include country code without the <code>+</code> prefix (e.g. <code>919876543210</code> for India).</p>
+          <div class="resp-codes">
+            <span class="resp-code rc-ok">200 OK</span>
+            <span class="resp-code rc-unauth">401 Unauthorized</span>
+          </div>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request Body <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"number"</span><span class="cd">: </span><span class="cm">"919876543210"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Your order #42 is confirmed!"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"status"</span><span class="cd">: </span><span class="cm">"sent"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"messageId"</span><span class="cd">: </span><span class="cm">"3EB0F1A9..."</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"timestamp"</span><span class="cd">: </span><span class="cn">1714567890</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">cURL <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="ck">curl</span> <span class="cm">-X POST</span> \<br>&nbsp;&nbsp;<span class="cm">https://your-domain.com/api/wa/send</span> \<br>&nbsp;&nbsp;<span class="ck">-H</span> <span class="cm">"Authorization: Bearer TOKEN"</span> \<br>&nbsp;&nbsp;<span class="ck">-H</span> <span class="cm">"Content-Type: application/json"</span> \<br>&nbsp;&nbsp;<span class="ck">-d</span> <span class="cm">'{"number":"919876543210","message":"Hello!"}'</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Python <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="ck">import</span> <span class="cd">requests</span><br><br><span class="cd">r = requests.</span><span class="ck">post</span><span class="cd">(</span><br>&nbsp;&nbsp;<span class="cm">"https://your-domain.com/api/wa/send"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cd">headers={</span><span class="cm">"Authorization"</span><span class="cd">:</span><span class="cm">"Bearer TOKEN"</span><span class="cd">},</span><br>&nbsp;&nbsp;<span class="cd">json={</span><span class="cm">"number"</span><span class="cd">:</span><span class="cm">"919876543210"</span><span class="cd">,</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">"message"</span><span class="cd">:</span><span class="cm">"Hello!"</span><span class="cd">}</span><br><span class="cd">)</span></div>
+            </div>
+          </div>
+          <div class="params-wrap">
+            <div class="params-title">Body Parameters</div>
+            <table>
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="p-name">number</span></td><td><span class="p-type">string</span></td><td><span class="p-req req">Required</span></td><td>Phone number with country code, no + (e.g. 919876543210)</td></tr>
+                <tr><td><span class="p-name">message</span></td><td><span class="p-type">string</span></td><td><span class="p-req req">Required</span></td><td>Text content of the message to send</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="ep-card" id="ep-status">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/wa/status</span>
+          <span class="ep-desc">Check WhatsApp connection status</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Returns the current WhatsApp connection state including whether the session is active and the linked phone number.</p>
+          <div class="resp-codes"><span class="resp-code rc-ok">200 OK</span><span class="resp-code rc-unauth">401 Unauthorized</span></div>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">cURL <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="ck">curl</span> <span class="cm">https://your-domain.com/api/wa/status</span> \<br>&nbsp;&nbsp;<span class="ck">-H</span> <span class="cm">"Authorization: Bearer TOKEN"</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"connected"</span><span class="cd">: </span><span class="ck">true</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"loggedIn"</span><span class="cd">: </span><span class="ck">true</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"phone"</span><span class="cd">: </span><span class="cm">"919876543210"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"name"</span><span class="cd">: </span><span class="cm">"My Business"</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR -->
+      <div class="ep-card" id="ep-qr">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/wa/qr-image</span>
+          <span class="ep-desc">Get QR code as base64 PNG</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Fetches the current WhatsApp QR code from the Go server, converts it to a PNG image, and returns it as a base64 data URL. Show this in an <code>&lt;img&gt;</code> tag for users to scan.</p>
+          <div class="code-wrap">
+            <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+            <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"qr_image"</span><span class="cd">: </span><span class="cm">"data:image/png;base64,iVBORw0KGgoAAAANSUh..."</span><br><span class="cd">}</span><br><br><span class="cc">// Error (already connected or no QR)</span><br><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"error"</span><span class="cd">: </span><span class="cm">"No QR available — may already be connected"</span><br><span class="cd">}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pair -->
+      <div class="ep-card" id="ep-pair">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/wa/pair</span>
+          <span class="ep-desc">Pair with a phone number</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Request a pairing code for a given phone number. The user enters this code in WhatsApp → Linked Devices → Link with phone number.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"number"</span><span class="cd">: </span><span class="cm">"919876543210"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"code"</span><span class="cd">: </span><span class="cm">"ABCD-1234"</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <div class="ep-card" id="ep-logout">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/wa/logout</span>
+          <span class="ep-desc">Disconnect the WhatsApp session</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Terminates the WhatsApp session, clears all session tokens, and disconnects from the Go server. All users must reconnect afterwards.</p>
+          <div class="code-wrap">
+            <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+            <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"status"</span><span class="cd">: </span><span class="cm">"disconnected"</span><br><span class="cd">}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WEBHOOK -->
+    <div class="doc-section">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">Webhooks</h2>
+      <div class="ep-card" id="ep-webhook">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/webhook/incoming</span>
+          <span class="ep-desc">Receive incoming WhatsApp messages</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">This endpoint is called by the Go WhatsApp server when a message is received. The AI engine processes the message in a background task and sends a reply. Returns <code>200 OK</code> immediately to prevent Go server timeouts. Messages from groups or without text are silently ignored.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Payload from Go Server <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"from"</span><span class="cd">: </span><span class="cm">"919876543210@s.whatsapp.net"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Price of rice?"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"timestamp"</span><span class="cd">: </span><span class="cn">1714567890</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response (always immediate) <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"ok"</span><span class="cd">: </span><span class="ck">true</span><br><span class="cd">}</span><br><br><span class="cc">// AI reply sent async to WhatsApp</span><br><span class="cc">// via background task (no blocking)</span></div>
+            </div>
+          </div>
+          <div class="params-wrap">
+            <div class="params-title">Ignored Messages</div>
+            <table>
+              <thead><tr><th>Condition</th><th>Reason</th></tr></thead>
+              <tbody>
+                <tr><td>Sender ends with <code>@g.us</code></td><td>Group messages are skipped</td></tr>
+                <tr><td>Empty message text</td><td>Media-only messages skipped</td></tr>
+                <tr><td>Message starts with <code>[</code></td><td>System/status messages skipped</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI AGENTS -->
+    <div class="doc-section">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">AI Agent Endpoints</h2>
+      <p class="doc-section-sub">Query any AI agent with a natural language message. The agent responds based on your live business data (inventory, patients, invoices, appointments).</p>
+
+      <!-- Shop AI -->
+      <div class="ep-card" id="ep-ai-shop">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/ai/shop</span>
+          <span class="ep-desc">Shop inventory AI assistant</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Query the Shop AI with any inventory or order question. The AI has full context of your current stock levels, prices, thresholds, and units.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Which items are low in stock?"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"reply"</span><span class="cd">: </span><span class="cm">"3 items below threshold:\n• Rice – 2kg left (min 5kg)\n• Sugar – 1kg left (min 3kg)\n• Dal – 500g left (min 2kg)"</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice AI -->
+      <div class="ep-card" id="ep-ai-invoice">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/ai/invoice</span>
+          <span class="ep-desc">Invoice AI assistant</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Query the Invoice AI for help creating, reviewing, or managing invoices. The AI has context of your invoice history and draft status.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"How many unpaid invoices do I have?"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"reply"</span><span class="cd">: </span><span class="cm">"You have 3 draft invoices totalling ₹12,400 pending."</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health AI -->
+      <div class="ep-card" id="ep-ai-health">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/ai/health</span>
+          <span class="ep-desc">Health & patient AI assistant</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Query the Health AI for patient management, medication reminders, or medical image analysis. Pass a base64 image for AI vision analysis.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request (text) <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Which patients need medication today?"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Request (image) <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Analyze this prescription"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"image"</span><span class="cd">: </span><span class="cm">"data:image/jpeg;base64,..."</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+          <div class="params-wrap">
+            <div class="params-title">Parameters</div>
+            <table>
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><span class="p-name">message</span></td><td><span class="p-type">string</span></td><td><span class="p-req req">Required</span></td><td>Natural language query or instruction</td></tr>
+                <tr><td><span class="p-name">image</span></td><td><span class="p-type">string</span></td><td><span class="p-req opt">Optional</span></td><td>Base64-encoded image for AI vision analysis (Pro plan only)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment AI -->
+      <div class="ep-card" id="ep-ai-appt">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/ai/appointments</span>
+          <span class="ep-desc">Appointment scheduling AI</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Query the Appointment AI for scheduling, reminders, and managing appointments. The AI has context of all upcoming appointments and their statuses.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"message"</span><span class="cd">: </span><span class="cm">"Who has appointments tomorrow?"</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"reply"</span><span class="cd">: </span><span class="cm">"Tomorrow: Ravi (10:00 AM, Dr. Kumar), Priya (3:30 PM, Dr. Singh). Send reminders?"</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="doc-section">
+      <div class="doc-divider"></div>
+      <h2 class="doc-section-title">Configuration</h2>
+
+      <!-- Agent config -->
+      <div class="ep-card" id="ep-agent-cfg">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-post">POST</span>
+          <span class="ep-path">/api/agent/{type}</span>
+          <span class="ep-desc">Enable or configure an AI agent</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Toggle an agent on/off and set its configuration. The <code>{type}</code> path parameter must be one of: <code>shop</code>, <code>invoice</code>, <code>health</code>, <code>appointment</code>.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">Request <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"enabled"</span><span class="cd">: </span><span class="ck">true</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"wa_number"</span><span class="cd">: </span><span class="cm">"919876543210"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"notes"</span><span class="cd">: </span><span class="cm">"Custom system instructions..."</span><br><span class="cd">}</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"status"</span><span class="cd">: </span><span class="cm">"saved"</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+          <div class="params-wrap">
+            <div class="params-title">Path Parameters</div>
+            <table>
+              <thead><tr><th>Value</th><th>Agent</th></tr></thead>
+              <tbody>
+                <tr><td><span class="p-name">shop</span></td><td>Shop &amp; Inventory Agent</td></tr>
+                <tr><td><span class="p-name">invoice</span></td><td>Invoice Agent</td></tr>
+                <tr><td><span class="p-name">health</span></td><td>Health &amp; Patient Agent</td></tr>
+                <tr><td><span class="p-name">appointment</span></td><td>Appointment Agent</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="ep-card" id="ep-stats">
+        <div class="ep-header" onclick="toggle(this)">
+          <span class="ep-method m-get">GET</span>
+          <span class="ep-path">/api/dashboard/stats</span>
+          <span class="ep-desc">Fetch live dashboard statistics</span>
+          <span class="ep-arrow">›</span>
+        </div>
+        <div class="ep-body">
+          <p class="ep-desc-full">Returns real-time stats: WhatsApp status, low-stock count, draft invoices, patient total, today's appointments, and agent configuration.</p>
+          <div class="code-grid">
+            <div class="code-wrap">
+              <div class="cw-label">cURL <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="ck">curl</span> <span class="cm">https://your-domain.com/api/dashboard/stats</span> \<br>&nbsp;&nbsp;<span class="ck">-H</span> <span class="cm">"Authorization: Bearer TOKEN"</span></div>
+            </div>
+            <div class="code-wrap">
+              <div class="cw-label">Response <button class="copy-btn" onclick="cpCode(this)">Copy</button></div>
+              <div class="codeblock"><span class="cd">{</span><br>&nbsp;&nbsp;<span class="cs">"wa_phone"</span><span class="cd">: </span><span class="cm">"919876543210"</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"g_low"</span><span class="cd">: </span><span class="cn">3</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"inv_draft"</span><span class="cd">: </span><span class="cn">2</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"p_total"</span><span class="cd">: </span><span class="cn">48</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"appt_today"</span><span class="cd">: </span><span class="cn">5</span><span class="cd">,</span><br>&nbsp;&nbsp;<span class="cs">"agents"</span><span class="cd">: {</span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cs">"shop"</span><span class="cd">: {</span><span class="cs">"enabled"</span><span class="cd">: </span><span class="ck">true</span><span class="cd">}</span><br>&nbsp;&nbsp;<span class="cd">}</span><br><span class="cd">}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:60px"></div>
+  </div><!-- /content -->
+</div><!-- /docs-wrap -->
+
+<script>
+// Expand/collapse endpoint cards
+function toggle(header) {
+  const card = header.closest('.ep-card');
+  card.classList.toggle('open');
+}
+
+// Scroll to section
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Update active sidebar link
+  document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+  event.target.closest('.sb-link').classList.add('active');
+}
+
+// Copy code blocks
+function cpCode(btn) {
+  const block = btn.closest('.code-wrap').querySelector('.codeblock');
+  const text = block.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+// Copy token
+function copyToken(btn) {
+  navigator.clipboard.writeText('wf_sk_your_actual_token_from_dashboard').then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// Mobile sidebar
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mob-open');
+}
+document.addEventListener('click', e => {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('mobSbBtn');
+  if (sb.classList.contains('mob-open') && !sb.contains(e.target) && !btn.contains(e.target)) {
+    sb.classList.remove('mob-open');
+  }
+});
+
+// Highlight sidebar link on scroll
+const sections = ['intro','auth','token','errors','ep-send','ep-status','ep-qr','ep-pair','ep-logout','ep-webhook','ep-ai-shop','ep-ai-invoice','ep-ai-health','ep-ai-appt','ep-agent-cfg','ep-stats'];
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 100) current = id;
+  });
+  document.querySelectorAll('.sb-link').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('onclick')?.includes(current));
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

@@ -329,8 +329,13 @@ def _invoice_image(inv_no, cust_name, items, total):
 
 @app.get("/")
 def root(request: Request):
-    if not _uid(request): return _auth()
+    if not _uid(request):
+        return templates.TemplateResponse(request, "landing.html")
     return _home()
+
+@app.get("/docs-api")
+def docs_page(request: Request):
+    return templates.TemplateResponse(request, "docs.html")
 
 @app.get("/auth")
 def auth_page(request: Request):
