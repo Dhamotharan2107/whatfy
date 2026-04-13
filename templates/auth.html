@@ -39,6 +39,12 @@ input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.1)}
 .divider{text-align:center;font-size:13px;color:#94a3b8;margin:20px 0;position:relative}
 .divider::before,.divider::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:#e2e8f0}
 .divider::before{left:0}.divider::after{right:0}
+.terms-warn{background:#fff8ed;border:1.5px solid #fbbf24;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#92400e;line-height:1.6}
+.terms-warn strong{display:block;font-size:13px;font-weight:700;color:#b45309;margin-bottom:4px}
+.terms-check{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px}
+.terms-check input[type=checkbox]{width:17px;height:17px;margin-top:1px;accent-color:#16a34a;flex-shrink:0;cursor:pointer}
+.terms-check label{font-size:13px;color:#166534;line-height:1.5;font-weight:500;cursor:pointer;margin:0}
+.terms-check a{color:#16a34a;font-weight:700;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -100,6 +106,17 @@ input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.1)}
           <label>Password</label>
           <input type="password" name="password" placeholder="Min. 6 characters" required minlength="6">
         </div>
+
+        <div class="terms-warn">
+          <strong>⚠️ Important — Read Before Registering</strong>
+          This tool uses the unofficial WhatsApp Web protocol. Sending bulk or spam messages may result in your WhatsApp number being permanently banned. Use responsibly.
+        </div>
+
+        <div class="terms-check">
+          <input type="checkbox" id="termsChk" name="terms_accepted" value="1" required>
+          <label for="termsChk">I have read and agree to the <a href="/terms" target="_blank">Terms of Use & Responsible Use Policy</a>. I understand bulk misuse may result in a WhatsApp ban.</label>
+        </div>
+
         <button type="submit" class="btn-submit">Create Account →</button>
       </form>
     </div>

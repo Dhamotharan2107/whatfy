@@ -337,6 +337,10 @@ def root(request: Request):
 def docs_page(request: Request):
     return templates.TemplateResponse(request, "docs.html")
 
+@app.get("/terms")
+def terms_page(request: Request):
+    return templates.TemplateResponse(request, "terms.html")
+
 @app.get("/auth")
 def auth_page(request: Request):
     if _uid(request): return _home()

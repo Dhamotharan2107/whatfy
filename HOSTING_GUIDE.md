@@ -198,3 +198,5 @@ When running locally both services still default to localhost:
 FastAPI → GO_SERVER_URL not set → uses http://localhost:8080  ✅
 Go     → FASTAPI_URL not set   → uses http://localhost:5000   ✅
 ```
+docker build -t tertwer/whatfy .
+docker push tertwer/whatfy
