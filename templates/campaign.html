@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+{% block title %}Bulk Campaign — Whatfy{% endblock %}
+{% block page_title %}📣 Bulk Campaign{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ── Campaign layout ── */
+.camp-wrap{display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start}
+
+/* ── Campaign list card ── */
+.camp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.camp-header h3{font-size:16px;font-weight:700}
+
+/* status badges */
+.s-draft{background:#f1f5f9;color:#64748b}
+.s-running{background:#dcfce7;color:#16a34a}
+.s-paused{background:#fef3c7;color:#d97706}
+.s-completed{background:#dbeafe;color:#1d4ed8}
+.s-failed{background:#fee2e2;color:#dc2626}
+
+/* progress bar */
+.prog-wrap{height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-top:6px}
+.prog-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--g),var(--gd));transition:width .4s}
+.prog-bar.fail{background:#ef4444}
+
+/* campaign row */
+.camp-row{border:1.5px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative}
+.camp-row:hover{border-color:var(--g);box-shadow:0 2px 12px rgba(37,211,102,.08)}
+.camp-row.selected{border-color:var(--g);background:#f0fdf4}
+.cr-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.cr-name{font-size:14px;font-weight:700;flex:1}
+.cr-meta{font-size:12px;color:var(--muted);margin-bottom:6px;display:flex;gap:14px}
+.cr-counts{display:flex;gap:10px;font-size:12.5px;font-weight:600}
+.cr-sent{color:#16a34a}.cr-fail{color:#dc2626}.cr-pend{color:#64748b}
+
+/* running pulse */
+.run-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1.4s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* ── Detail panel ── */
+.detail-card{position:sticky;top:82px}
+.detail-empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.detail-empty .de-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+
+.dc-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.dc-title{font-size:16px;font-weight:800;flex:1}
+.dc-actions{display:flex;gap:8px}
+
+.dc-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.dc-stat{background:#f8fafc;border-radius:10px;padding:12px;text-align:center}
+.dc-stat .val{font-size:22px;font-weight:800;line-height:1}
+.dc-stat .lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+.contacts-list{max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:10px}
+.c-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.c-row:last-child{border-bottom:none}
+.c-name{flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-phone{font-size:12px;color:var(--muted);font-family:monospace}
+.c-st{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap}
+.c-sent{background:#dcfce7;color:#16a34a}
+.c-failed{background:#fee2e2;color:#dc2626}
+.c-pending{background:#f1f5f9;color:#64748b}
+
+/* countdown display */
+.countdown-bar{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 16px;display:none;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#92400e;margin-bottom:12px}
+.countdown-bar.show{display:flex}
+.cd-num{font-size:20px;font-weight:800;color:#d97706;min-width:28px;text-align:center}
+
+/* ── Create modal extras ── */
+.contact-hint{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#166534;margin-top:8px;line-height:1.6}
+.delay-row{display:flex;align-items:center;gap:10px}
+.delay-row input{width:80px}
+.delay-note{font-size:12px;color:var(--muted);flex:1}
+
+@media(max-width:900px){.camp-wrap{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div x-data="campApp()" x-init="init()">
+
+  <!-- Top actions bar -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <p class="text-sm text-muted">Send personalised WhatsApp messages to a list of contacts with a <strong>{{ "{{delay}}" }}</strong>-second delay between each message to stay safe.</p>
+    </div>
+    <button class="btn btn-p" @click="showCreate=true">＋ New Campaign</button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="grid g4 mb-4">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff">📣</div>
+      <div><div class="stat-val" x-text="stats.total">{{ campaigns|length }}</div><div class="stat-lbl">Total Campaigns</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4">▶</div>
+      <div><div class="stat-val" x-text="stats.running">0</div><div class="stat-lbl">Running</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dcfce7">✓</div>
+      <div><div class="stat-val" x-text="stats.sent">0</div><div class="stat-lbl">Messages Sent</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fee2e2">✕</div>
+      <div><div class="stat-val" x-text="stats.failed">0</div><div class="stat-lbl">Failed</div></div>
+    </div>
+  </div>
+
+  <div class="camp-wrap">
+
+    <!-- Campaign list -->
+    <div>
+      <div class="camp-header">
+        <h3>Campaigns <span class="badge bk" x-text="campaigns.length"></span></h3>
+      </div>
+
+      <template x-if="campaigns.length === 0">
+        <div class="empty"><div class="empty-icon">📣</div><p>No campaigns yet. Create your first one!</p></div>
+      </template>
+
+      <template x-for="c in campaigns" :key="c.id">
+        <div class="camp-row" :class="{selected: selected && selected.id===c.id}" @click="selectCampaign(c.id)">
+          <div class="cr-top">
+            <span class="run-dot" x-show="c.running"></span>
+            <span class="cr-name" x-text="c.name"></span>
+            <span class="badge" :class="'s-'+c.status" x-text="c.running ? 'sending…' : c.status"></span>
+          </div>
+          <div class="cr-meta">
+            <span x-text="c.date"></span>
+            <span>⏱ <span x-text="c.delay_secs"></span>s delay</span>
+          </div>
+          <div class="prog-wrap">
+            <div class="prog-bar" :style="`width:${c.total>0?Math.round(((c.sent+c.failed)/c.total)*100):0}%`"></div>
+          </div>
+          <div class="cr-counts mt-2">
+            <span class="cr-sent">✓ <span x-text="c.sent"></span> sent</span>
+            <span class="cr-fail">✕ <span x-text="c.failed"></span> failed</span>
+            <span class="cr-pend">⏳ <span x-text="c.total - c.sent - c.failed"></span> pending</span>
+            <span style="margin-left:auto;font-size:11px;color:var(--muted)" x-text="c.total + ' contacts'"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Detail panel -->
+    <div class="detail-card">
+      <div class="card">
+
+        <!-- Empty state -->
+        <template x-if="!selected">
+          <div class="detail-empty">
+            <div class="de-icon">📋</div>
+            <p>Select a campaign to view details and controls</p>
+          </div>
+        </template>
+
+        <!-- Campaign detail -->
+        <template x-if="selected">
+          <div>
+            <div class="dc-head">
+              <div>
+                <div class="dc-title" x-text="selected.name"></div>
+                <span class="badge mt-2" :class="'s-'+selected.status" x-text="selected.running ? '● Sending…' : selected.status"></span>
+              </div>
+              <div class="dc-actions">
+                <button class="btn btn-d btn-sm" @click="deleteCampaign(selected.id)" title="Delete campaign">🗑</button>
+              </div>
+            </div>
+
+            <!-- Live stats -->
+            <div class="dc-stat-row">
+              <div class="dc-stat">
+                <div class="val" style="color:#16a34a" x-text="liveStats.sent">0</div>
+                <div class="lbl">Sent</div>
+              </div>
+              <div class="dc-stat">
+                <div class="val" style="color:#dc2626" x-text="liveStats.failed">0</div>
+                <div class="lbl">Failed</div>
+              </div>
+              <div class="dc-stat">
+                <div class="val" style="color:#64748b" x-text="liveStats.pending">0</div>
+                <div class="lbl">Pending</div>
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="prog-wrap mb-3" style="height:8px">
+              <div class="prog-bar" :style="`width:${selected.total>0?Math.round(((liveStats.sent+liveStats.failed)/selected.total)*100):0}%`"></div>
+            </div>
+            <div class="text-xs text-muted mb-4" x-text="`${selected.total>0?Math.round(((liveStats.sent+liveStats.failed)/selected.total)*100):0}% complete · ${selected.delay_secs}s delay`"></div>
+
+            <!-- Countdown display (shown while running) -->
+            <div class="countdown-bar" :class="{show: selected.running && countdown>0}">
+              <span>⏱ Next message in</span>
+              <span class="cd-num" x-text="countdown"></span>
+              <span>seconds</span>
+            </div>
+
+            <!-- Message preview -->
+            <div class="fg mb-3">
+              <label>Message</label>
+              <div style="background:#f8fafc;border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13.5px;white-space:pre-wrap;max-height:100px;overflow-y:auto" x-text="selected.message"></div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-2 mb-4">
+              <button class="btn btn-p flex-1" x-show="!selected.running && selected.status !== 'completed'"
+                @click="startCampaign(selected.id)">▶ Start</button>
+              <button class="btn btn-a flex-1" x-show="selected.running"
+                @click="pauseCampaign(selected.id)">⏸ Pause</button>
+              <button class="btn btn-b flex-1" x-show="selected.status === 'paused'"
+                @click="startCampaign(selected.id)">↺ Resume</button>
+            </div>
+
+            <!-- Contacts list -->
+            <div class="section-header mb-2">
+              <h3 style="font-size:13px">Contacts (<span x-text="(selected.contacts||[]).length"></span>)</h3>
+            </div>
+            <div class="contacts-list">
+              <template x-for="c in (selected.contacts||[])" :key="c.id">
+                <div class="c-row">
+                  <div class="c-name" x-text="c.name || '—'"></div>
+                  <div class="c-phone" x-text="'+'+c.phone"></div>
+                  <span class="c-st" :class="'c-'+c.status" x-text="c.status"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Create Campaign Modal ── -->
+  <div class="overlay" x-show="showCreate" x-cloak @click.self="showCreate=false">
+    <div class="modal modal-lg">
+      <div class="modal-hd">
+        <h3>📣 New Campaign</h3>
+        <button class="modal-close" @click="showCreate=false">✕</button>
+      </div>
+
+      <div class="fg">
+        <label>Campaign Name</label>
+        <input type="text" x-model="form.name" placeholder="e.g. Diwali Sale Blast">
+      </div>
+
+      <div class="fg">
+        <label>Message <span style="font-size:11px;color:var(--muted);font-weight:400">— use <code>{{name}}</code> for personalisation</span></label>
+        <textarea x-model="form.message" placeholder="Hello {{name}}, we have a special offer for you! 🎉"></textarea>
+      </div>
+
+      <div class="fg">
+        <label>Contacts</label>
+        <textarea x-model="form.contacts" rows="6"
+          placeholder="Format: name,phone  (one per line)&#10;John,919876543210&#10;Jane,919876543211&#10;919876543212  ← name optional"></textarea>
+        <div class="contact-hint">
+          ✓ One contact per line &nbsp;·&nbsp;
+          ✓ Format: <strong>name,phone</strong> or just <strong>phone</strong> &nbsp;·&nbsp;
+          ✓ Phone without <code>+</code> (e.g. <code>919876543210</code>) &nbsp;·&nbsp;
+          ✓ Lines starting with <code>#</code> are ignored &nbsp;·&nbsp;
+          ✓ Use <code>{{name}}</code> in message for personalised greetings
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Delay between messages</label>
+        <div class="delay-row">
+          <input type="number" x-model="form.delay_secs" min="5" max="300" style="width:80px">
+          <span style="font-size:14px;font-weight:600">seconds</span>
+          <span class="delay-note">⚠️ Minimum 20s recommended to avoid WhatsApp ban. Never go below 5s.</span>
+        </div>
+      </div>
+
+      <div class="alert alert-warn" x-show="form.delay_secs < 20">
+        ⚠️ Delay below 20 seconds increases risk of WhatsApp ban. We recommend at least 20s.
+      </div>
+
+      <div class="alert alert-err" x-show="createErr" x-text="createErr"></div>
+
+      <div class="form-actions">
+        <button class="btn btn-o" @click="showCreate=false">Cancel</button>
+        <button class="btn btn-p" @click="createCampaign()" :disabled="creating">
+          <span x-show="creating">Creating…</span>
+          <span x-show="!creating">Create Campaign</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function campApp() {
+  return {
+    campaigns: {{ campaigns | tojson }},
+    selected:  null,
+    liveStats: {sent:0, failed:0, pending:0},
+    countdown: 0,
+    showCreate: false,
+    creating: false,
+    createErr: '',
+    _pollTimer: null,
+    _cdTimer: null,
+    form: { name:'', message:'', contacts:'', delay_secs: 20 },
+    stats: { total:0, running:0, sent:0, failed:0 },
+
+    init() {
+      this.recalcStats();
+      // Poll running campaigns every 3 seconds
+      this._pollTimer = setInterval(() => this.pollRunning(), 3000);
+    },
+
+    recalcStats() {
+      this.stats.total   = this.campaigns.length;
+      this.stats.running = this.campaigns.filter(c=>c.running).length;
+      this.stats.sent    = this.campaigns.reduce((a,c)=>a+c.sent,0);
+      this.stats.failed  = this.campaigns.reduce((a,c)=>a+c.failed,0);
+    },
+
+    async pollRunning() {
+      // Only poll if something is running
+      const running = this.campaigns.filter(c=>c.running);
+      if (!running.length && !(this.selected && this.selected.running)) return;
+      // Refresh list
+      try {
+        const r = await fetch('/api/campaigns');
+        const d = await r.json();
+        if (d.campaigns) {
+          this.campaigns = d.campaigns;
+          this.recalcStats();
+          // Refresh selected detail too
+          if (this.selected) {
+            const fresh = this.campaigns.find(c=>c.id===this.selected.id);
+            if (fresh) await this.loadDetail(this.selected.id);
+          }
+        }
+      } catch(e) {}
+    },
+
+    async selectCampaign(id) {
+      await this.loadDetail(id);
+      this.startCountdown();
+    },
+
+    async loadDetail(id) {
+      try {
+        const r = await fetch(`/api/campaigns/${id}/stats`);
+        const s = await r.json();
+        this.liveStats = { sent: s.live_sent||0, failed: s.live_failed||0, pending: s.live_pending||0 };
+        // Merge into campaigns list
+        const idx = this.campaigns.findIndex(c=>c.id===id);
+        if (idx>=0) {
+          this.campaigns[idx].running = s.running;
+          this.campaigns[idx].status  = s.status;
+          this.campaigns[idx].sent    = s.sent;
+          this.campaigns[idx].failed  = s.failed;
+        }
+        // Load full contacts
+        const r2 = await fetch(`/api/campaigns/${id}`);
+        const d2 = await r2.json();
+        this.selected = d2;
+        this.selected.running = s.running;
+        this.recalcStats();
+      } catch(e) { toast('Failed to load campaign', false); }
+    },
+
+    startCountdown() {
+      clearInterval(this._cdTimer);
+      if (!this.selected || !this.selected.running) { this.countdown=0; return; }
+      this.countdown = this.selected.delay_secs || 20;
+      this._cdTimer = setInterval(()=>{
+        if (!this.selected?.running) { this.countdown=0; clearInterval(this._cdTimer); return; }
+        this.countdown = Math.max(0, this.countdown-1);
+        if (this.countdown===0) this.countdown = this.selected.delay_secs || 20;
+      }, 1000);
+    },
+
+    async startCampaign(id) {
+      const r = await fetch(`/api/campaigns/${id}/start`, {method:'POST'});
+      const d = await r.json();
+      if (d.error) { toast(d.error, false); return; }
+      toast('Campaign started!');
+      await this.loadDetail(id);
+      this.startCountdown();
+    },
+
+    async pauseCampaign(id) {
+      await fetch(`/api/campaigns/${id}/pause`, {method:'POST'});
+      toast('Campaign pausing…');
+      setTimeout(()=>this.loadDetail(id), 2000);
+      clearInterval(this._cdTimer); this.countdown=0;
+    },
+
+    async deleteCampaign(id) {
+      if (!confirm('Delete this campaign? This cannot be undone.')) return;
+      const r = await fetch(`/api/campaigns/${id}`, {method:'DELETE'});
+      const d = await r.json();
+      if (d.error) { toast(d.error, false); return; }
+      this.campaigns = this.campaigns.filter(c=>c.id!==id);
+      this.selected = null;
+      this.recalcStats();
+      toast('Campaign deleted');
+    },
+
+    async createCampaign() {
+      this.createErr = '';
+      if (!this.form.name.trim())     { this.createErr='Campaign name is required'; return; }
+      if (!this.form.message.trim())  { this.createErr='Message is required'; return; }
+      if (!this.form.contacts.trim()) { this.createErr='At least one contact is required'; return; }
+      this.creating = true;
+      try {
+        const r = await fetch('/api/campaigns', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            name:        this.form.name,
+            message:     this.form.message,
+            contacts:    this.form.contacts,
+            delay_secs:  parseInt(this.form.delay_secs)||20,
+          })
+        });
+        const d = await r.json();
+        if (d.error) { this.createErr = d.error; return; }
+        this.campaigns.unshift(d);
+        this.recalcStats();
+        this.form = { name:'', message:'', contacts:'', delay_secs:20 };
+        this.showCreate = false;
+        toast('Campaign created!');
+        await this.selectCampaign(d.id);
+      } catch(e) { this.createErr = e.message; }
+      finally { this.creating = false; }
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -1,8 +1,11 @@
 from fastapi import FastAPI, Request, Form, Body, UploadFile, File, BackgroundTasks
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
 import sqlite3, hashlib, secrets, json, time, io, base64, threading, os
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 from pathlib import Path
 from datetime import datetime
@@ -29,6 +32,11 @@ except ImportError:
 _sender_last: dict = {}
 _sender_lock = threading.Lock()
 _SENDER_MIN_GAP = 3.0  # seconds between replies per sender
+
+def _is_network_err(e: Exception) -> bool:
+    cls = type(e).__name__
+    msg = str(e).lower()
+    return any(k in cls+msg for k in ("connect","getaddrinfo","network","timeout","apiconnection"))
 
 def _ai_call(messages: list, max_tokens: int = 400) -> str:
     """Call GLM with retry on 429 rate-limit (up to 3 attempts)."""
@@ -68,6 +76,14 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 DB_PATH  = BASE_DIR / "platform.db"
 API_BASE = os.environ.get("GO_SERVER_URL", "http://localhost:8080")
 
+# ── Email config ──────────────────────────────────────────────────────────────
+SMTP_HOST  = os.environ.get("SMTP_HOST",  "smtp.zoho.in")
+SMTP_PORT  = int(os.environ.get("SMTP_PORT", "465"))   # 465=SSL, 587=STARTTLS
+SMTP_USER  = os.environ.get("SMTP_USER",  "info@opendrap.website")
+SMTP_PASS  = os.environ.get("SMTP_PASS",  "h0LBrxNA4u4G")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "info@opendrap.website")
+APP_URL    = os.environ.get("APP_URL",    "http://localhost:5000")
+
 # token -> {uid, wa_verified, code, code_sent}
 _sessions: dict = {}
 
@@ -82,11 +98,13 @@ def _init():
     db = _db()
     db.executescript("""
         CREATE TABLE IF NOT EXISTS users (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            email         TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            name          TEXT DEFAULT '',
-            created_at    INTEGER DEFAULT (strftime('%s','now'))
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            email              TEXT UNIQUE NOT NULL,
+            password_hash      TEXT NOT NULL,
+            name               TEXT DEFAULT '',
+            email_verified     INTEGER DEFAULT 0,
+            verification_token TEXT DEFAULT '',
+            created_at         INTEGER DEFAULT (strftime('%s','now'))
         );
         CREATE TABLE IF NOT EXISTS grocery (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -154,10 +172,247 @@ def _init():
             created_at INTEGER DEFAULT (strftime('%s','now'))
         );
         CREATE INDEX IF NOT EXISTS idx_conv_sender ON conversations(sender, created_at);
+        CREATE TABLE IF NOT EXISTS campaigns (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL,
+            name        TEXT NOT NULL,
+            message     TEXT NOT NULL,
+            delay_secs  INTEGER DEFAULT 20,
+            status      TEXT DEFAULT 'draft',
+            total       INTEGER DEFAULT 0,
+            sent        INTEGER DEFAULT 0,
+            failed      INTEGER DEFAULT 0,
+            created_at  INTEGER DEFAULT (strftime('%s','now')),
+            started_at  INTEGER DEFAULT NULL,
+            finished_at INTEGER DEFAULT NULL
+        );
+        CREATE TABLE IF NOT EXISTS campaign_contacts (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER NOT NULL,
+            name        TEXT DEFAULT '',
+            phone       TEXT NOT NULL,
+            status      TEXT DEFAULT 'pending',
+            sent_at     INTEGER DEFAULT NULL,
+            error       TEXT DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_cc_campaign ON campaign_contacts(campaign_id, status);
     """)
     db.close()
 
 _init()
+
+# Migrate existing DB — add columns if missing
+def _migrate():
+    db = _db()
+    for stmt in [
+        "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN verification_token TEXT DEFAULT ''",
+    ]:
+        try: db.execute(stmt)
+        except: pass
+    db.commit()
+    db.close()
+
+_migrate()
+
+# ── Campaign runtime ──────────────────────────────────────────────────────────
+_campaign_threads: dict = {}   # cid -> Thread
+_campaign_stop:    dict = {}   # cid -> bool  (True = stop requested)
+_campaign_lock = threading.Lock()
+
+def _parse_contacts(raw: str) -> list:
+    """Parse contacts from textarea.
+    Formats supported per line:
+      name,phone   /   phone   /   +91xxxxxxxxxx
+    Lines starting with # are ignored.
+    """
+    out = []
+    for line in raw.strip().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) >= 2:
+            name, phone = parts[0], parts[1]
+        else:
+            name, phone = "", parts[0]
+        phone = phone.replace(" ", "").replace("-", "").replace("+", "").replace("(", "").replace(")", "")
+        if not phone.isdigit() or len(phone) < 7:
+            continue
+        out.append({"name": name, "phone": phone})
+    return out
+
+def _campaign_run(cid: int):
+    """Background worker — sends one message every delay_secs seconds."""
+    db = _db()
+    try:
+        db.execute("UPDATE campaigns SET status='running', started_at=? WHERE id=?",
+                   (int(time.time()), cid))
+        db.commit()
+
+        while True:
+            # Check stop flag
+            if _campaign_stop.get(cid):
+                db.execute("UPDATE campaigns SET status='paused' WHERE id=?", (cid,))
+                db.commit()
+                break
+
+            # Fetch next pending contact
+            row = db.execute(
+                "SELECT * FROM campaign_contacts WHERE campaign_id=? AND status='pending' ORDER BY id LIMIT 1",
+                (cid,)).fetchone()
+
+            if not row:
+                db.execute("UPDATE campaigns SET status='completed', finished_at=? WHERE id=?",
+                           (int(time.time()), cid))
+                db.commit()
+                break
+
+            row  = dict(row)
+            camp = db.execute("SELECT message, delay_secs FROM campaigns WHERE id=?", (cid,)).fetchone()
+            if not camp:
+                break
+
+            msg   = camp["message"]
+            delay = camp["delay_secs"] or 20
+            name  = (row.get("name") or "").strip()
+            if name:
+                msg = msg.replace("{{name}}", name).replace("{name}", name)
+
+            # Send
+            try:
+                result = _send_wa(row["phone"], msg)
+                if result.get("error"):
+                    db.execute(
+                        "UPDATE campaign_contacts SET status='failed', error=?, sent_at=? WHERE id=?",
+                        (str(result["error"])[:255], int(time.time()), row["id"]))
+                    db.execute("UPDATE campaigns SET failed=failed+1 WHERE id=?", (cid,))
+                else:
+                    db.execute(
+                        "UPDATE campaign_contacts SET status='sent', sent_at=? WHERE id=?",
+                        (int(time.time()), row["id"]))
+                    db.execute("UPDATE campaigns SET sent=sent+1 WHERE id=?", (cid,))
+            except Exception as e:
+                db.execute(
+                    "UPDATE campaign_contacts SET status='failed', error=?, sent_at=? WHERE id=?",
+                    (str(e)[:255], int(time.time()), row["id"]))
+                db.execute("UPDATE campaigns SET failed=failed+1 WHERE id=?", (cid,))
+            db.commit()
+
+            # Interruptible sleep — check stop flag every second
+            for _ in range(delay):
+                if _campaign_stop.get(cid):
+                    break
+                time.sleep(1)
+
+    except Exception as e:
+        print(f"[CAMPAIGN {cid}] Error: {e}")
+        try:
+            db.execute("UPDATE campaigns SET status='failed' WHERE id=?", (cid,))
+            db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
+        with _campaign_lock:
+            _campaign_threads.pop(cid, None)
+            _campaign_stop.pop(cid, None)
+
+# ── Email ─────────────────────────────────────────────────────────────────────
+
+def _build_msg(to_email: str, subject: str, html_body: str):
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = f"Whatfy | Opendrap <{FROM_EMAIL}>"
+    msg["To"]      = to_email
+    msg.attach(MIMEText(html_body, "html"))
+    return msg
+
+def _send_email(to_email: str, subject: str, html_body: str) -> bool:
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[EMAIL] SMTP not configured — skipping email to {to_email}")
+        return False
+
+    msg = _build_msg(to_email, subject, html_body)
+    raw = msg.as_string()
+
+    # Try all Zoho-compatible connection methods in order
+    attempts = [
+        ("SSL-465",     lambda: _try_ssl(SMTP_HOST,      465, to_email, raw)),
+        ("SSL-465-IN",  lambda: _try_ssl("smtp.zoho.in", 465, to_email, raw)),
+        ("TLS-587",     lambda: _try_tls(SMTP_HOST,      587, to_email, raw)),
+        ("TLS-587-IN",  lambda: _try_tls("smtp.zoho.in", 587, to_email, raw)),
+    ]
+
+    last_err = None
+    for label, fn in attempts:
+        try:
+            print(f"[EMAIL] Trying {label} …")
+            fn()
+            print(f"[EMAIL] ✓ Sent via {label} → {to_email}")
+            return True
+        except smtplib.SMTPAuthenticationError as e:
+            last_err = e
+            print(f"[EMAIL] {label} — Auth failed: {e}")
+            break            # wrong password — no point trying other ports/hosts
+        except Exception as e:
+            last_err = e
+            print(f"[EMAIL] {label} — {type(e).__name__}: {e}")
+            continue
+
+    print(f"[EMAIL] All attempts failed. Last error: {last_err}")
+    print("[EMAIL] ACTION REQUIRED: accounts.zoho.com → Security → App Passwords → generate one and update SMTP_PASS")
+    return False
+
+def _try_ssl(host: str, port: int, to_email: str, raw: str):
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP_SSL(host, port, context=ctx, timeout=10) as s:
+        s.ehlo()
+        s.login(SMTP_USER, SMTP_PASS)
+        s.sendmail(FROM_EMAIL, to_email, raw)
+
+def _try_tls(host: str, port: int, to_email: str, raw: str):
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP(host, port, timeout=10) as s:
+        s.ehlo()
+        s.starttls(context=ctx)
+        s.ehlo()
+        s.login(SMTP_USER, SMTP_PASS)
+        s.sendmail(FROM_EMAIL, to_email, raw)
+
+def _send_verification_email(name: str, to_email: str, token: str):
+    link = f"{APP_URL}/auth/verify-email/{token}"
+    html = f"""
+    <!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;background:#f1f5f9;padding:40px 0">
+    <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+      <div style="background:linear-gradient(135deg,#0f172a,#0d2f1e);padding:36px 36px 28px;text-align:center">
+        <div style="width:56px;height:56px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px">💬</div>
+        <h1 style="color:#fff;font-size:22px;margin:0;font-weight:800">Verify your email</h1>
+        <p style="color:rgba(255,255,255,.55);margin:8px 0 0;font-size:14px">One more step to activate your Whatfy account</p>
+      </div>
+      <div style="padding:36px">
+        <p style="color:#374151;font-size:15px;margin-bottom:24px">Hi <strong>{name}</strong>,</p>
+        <p style="color:#6b7280;font-size:14px;line-height:1.6;margin-bottom:28px">
+          Thanks for signing up! Click the button below to verify your email address and start using Whatfy.
+        </p>
+        <div style="text-align:center;margin-bottom:28px">
+          <a href="{link}" style="display:inline-block;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-weight:700;font-size:15px">
+            ✓ Verify Email Address
+          </a>
+        </div>
+        <p style="color:#9ca3af;font-size:12px;text-align:center;line-height:1.6">
+          Or copy this link:<br>
+          <a href="{link}" style="color:#25D366;word-break:break-all">{link}</a>
+        </p>
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+        <p style="color:#9ca3af;font-size:12px;text-align:center">
+          This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
+        </p>
+      </div>
+    </div>
+    </body></html>
+    """
+    _send_email(to_email, "Verify your Whatfy account", html)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -246,11 +501,6 @@ def _send_wa(number: str, msg: str):
                          json={"number": number, "message": msg}, timeout=15).json()
 
 # ── AI helpers ────────────────────────────────────────────────────────────────
-
-def _is_network_err(e: Exception) -> bool:
-    cls = type(e).__name__
-    msg = str(e).lower()
-    return any(k in cls+msg for k in ("connect","getaddrinfo","network","timeout","apiconnection"))
 
 def _ai_chat(prompt: str, system: str = "") -> str:
     if not AI_OK: return "AI unavailable."
@@ -348,21 +598,34 @@ def auth_page(request: Request):
 
 @app.post("/auth/register")
 def do_register(request: Request, name: str=Form(...), email: str=Form(...), password: str=Form(...)):
+    email_clean = email.lower().strip()
+    name_clean  = name.strip()
+    vtoken = secrets.token_urlsafe(32)
+    smtp_configured = bool(SMTP_USER and SMTP_PASS)
+    verified_default = 1 if not smtp_configured else 0  # auto-verify if no SMTP
     db = _db()
     try:
-        db.execute("INSERT INTO users (email,password_hash,name) VALUES (?,?,?)",
-                   (email.lower().strip(), _hash(password), name.strip()))
+        db.execute(
+            "INSERT INTO users (email,password_hash,name,email_verified,verification_token) VALUES (?,?,?,?,?)",
+            (email_clean, _hash(password), name_clean, verified_default, vtoken))
         db.commit()
-        row = db.execute("SELECT id FROM users WHERE email=?", (email.lower().strip(),)).fetchone()
+        row = db.execute("SELECT id FROM users WHERE email=?", (email_clean,)).fetchone()
     except sqlite3.IntegrityError:
         db.close()
         return templates.TemplateResponse(request, "auth.html",
             {"error": "Email already registered.", "tab": "reg"})
+    uid = row["id"]
     db.close()
-    t = secrets.token_hex(32)
-    _session_save(t, row["id"], wa_verified=True)
-    r = _home(); r.set_cookie("st", t, httponly=True, max_age=86400*30)
-    return r
+    if smtp_configured:
+        # Send verification email in background
+        threading.Thread(target=_send_verification_email, args=(name_clean, email_clean, vtoken), daemon=True).start()
+        return templates.TemplateResponse(request, "check_email.html", {"email": email_clean})
+    else:
+        # No SMTP — auto-verify and log straight in
+        t = secrets.token_hex(32)
+        _session_save(t, uid, wa_verified=True)
+        r = _home(); r.set_cookie("st", t, httponly=True, max_age=86400*30)
+        return r
 
 @app.post("/auth/login")
 def do_login(request: Request, email: str=Form(...), password: str=Form(...)):
@@ -373,10 +636,43 @@ def do_login(request: Request, email: str=Form(...), password: str=Form(...)):
     if not row:
         return templates.TemplateResponse(request, "auth.html",
             {"error": "Invalid email or password.", "tab": "login"})
+    if not row["email_verified"]:
+        return templates.TemplateResponse(request, "auth.html", {
+            "error": "Please verify your email first. Check your inbox for the verification link.",
+            "tab": "login", "unverified_email": row["email"]
+        })
     t = secrets.token_hex(32)
     _session_save(t, row["id"], wa_verified=True)
     r = _home(); r.set_cookie("st", t, httponly=True, max_age=86400*30)
     return r
+
+@app.get("/auth/verify-email/{token}")
+def verify_email(token: str, request: Request):
+    db = _db()
+    row = db.execute("SELECT * FROM users WHERE verification_token=?", (token,)).fetchone()
+    if not row:
+        db.close()
+        return templates.TemplateResponse(request, "auth.html",
+            {"error": "Invalid or expired verification link.", "tab": "login"})
+    db.execute("UPDATE users SET email_verified=1, verification_token='' WHERE id=?", (row["id"],))
+    db.commit()
+    db.close()
+    t = secrets.token_hex(32)
+    _session_save(t, row["id"], wa_verified=True)
+    r = templates.TemplateResponse(request, "email_verified.html", {"name": row["name"] or row["email"]})
+    r.set_cookie("st", t, httponly=True, max_age=86400*30)
+    return r
+
+@app.post("/auth/resend-verification")
+def resend_verification(request: Request, email: str=Form(...)):
+    db = _db()
+    row = db.execute("SELECT * FROM users WHERE email=?", (email.lower().strip(),)).fetchone()
+    db.close()
+    if row and not row["email_verified"] and row["verification_token"]:
+        threading.Thread(target=_send_verification_email,
+            args=(row["name"] or row["email"], row["email"], row["verification_token"]), daemon=True).start()
+    return templates.TemplateResponse(request, "check_email.html",
+        {"email": email.lower().strip(), "resent": True})
 
 @app.get("/auth/logout")
 def do_logout(request: Request):
@@ -500,18 +796,21 @@ def wa_logout(request: Request):
 # ── Pages ─────────────────────────────────────────────────────────────────────
 
 def _page_guard(request: Request):
-    """Returns (uid, user_dict) or raises redirect to login."""
+    """Returns (uid, user_dict) or (None, None) when unauthenticated."""
     uid = _uid(request)
-    if not uid: raise _auth()
+    if not uid:
+        return None, None
     db = _db()
-    user = dict(db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone())
+    row = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
     db.close()
-    return uid, user
+    if not row:
+        return None, None
+    return uid, dict(row)
 
 @app.get("/dashboard")
 def dashboard(request: Request):
-    try: uid, user = _page_guard(request)
-    except Exception as redir: return redir
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     db = _db()
     g_low = db.execute("SELECT COUNT(*) c FROM grocery WHERE user_id=? AND qty<=low_thresh AND ordered=0",(uid,)).fetchone()["c"]
     inv_draft = db.execute("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='draft'",(uid,)).fetchone()["c"]
@@ -529,8 +828,8 @@ def dashboard(request: Request):
 
 @app.get("/shop")
 def shop_page(request: Request):
-    try: uid, user = _page_guard(request)
-    except Exception as r: return r
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     db = _db()
     items = [dict(r) for r in db.execute("SELECT * FROM grocery WHERE user_id=? ORDER BY name",(uid,)).fetchall()]
     cfg = db.execute("SELECT * FROM agent_cfg WHERE user_id=? AND agent='shop'",(uid,)).fetchone()
@@ -544,8 +843,8 @@ def shop_page(request: Request):
 
 @app.get("/invoice")
 def invoice_page(request: Request):
-    try: uid, user = _page_guard(request)
-    except Exception as r: return r
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     db = _db()
     invs = [dict(r) for r in db.execute(
         "SELECT * FROM invoices WHERE user_id=? ORDER BY created_at DESC LIMIT 50",(uid,)).fetchall()]
@@ -564,8 +863,8 @@ def invoice_page(request: Request):
 
 @app.get("/health")
 def health_page(request: Request):
-    try: uid, user = _page_guard(request)
-    except Exception as r: return r
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     db = _db()
     patients = [dict(r) for r in db.execute("SELECT * FROM patients WHERE user_id=?",(uid,)).fetchall()]
     for p in patients:
@@ -582,8 +881,8 @@ def health_page(request: Request):
 
 @app.get("/appointment")
 def appt_page(request: Request):
-    try: uid, user = _page_guard(request)
-    except Exception as r: return r
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     db = _db()
     appts = [dict(r) for r in db.execute(
         "SELECT * FROM appointments WHERE user_id=? ORDER BY appt_date,appt_time",(uid,)).fetchall()]
@@ -1089,6 +1388,266 @@ def ai_appointment(request: Request, payload: Dict[str,Any]=Body(...)):
 Help with scheduling, rescheduling, cancellations, reminders, and appointment queries.
 Be professional, empathetic, and organised."""
     return {"reply": _ai_chat(payload.get("message",""), system)}
+
+# ── Campaign page ─────────────────────────────────────────────────────────────
+
+@app.get("/campaign")
+def campaign_page(request: Request):
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
+    _, wa_phone = _wa_status()
+    db = _db()
+    camps = [dict(r) for r in db.execute(
+        "SELECT * FROM campaigns WHERE user_id=? ORDER BY created_at DESC", (uid,)).fetchall()]
+    db.close()
+    # Attach live running flag
+    for c in camps:
+        c["running"] = c["id"] in _campaign_threads
+        c["date"] = datetime.fromtimestamp(c["created_at"]).strftime("%d %b %Y, %H:%M")
+    return templates.TemplateResponse(request, "campaign.html", {
+        "user": user, "wa_phone": wa_phone, "wa_ok": True, "active": "campaign",
+        "campaigns": camps,
+    })
+
+# ── Campaign API ──────────────────────────────────────────────────────────────
+
+@app.post("/api/campaigns")
+def campaign_create(request: Request, payload: Dict[str, Any] = Body(...)):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    name    = payload.get("name", "").strip()
+    message = payload.get("message", "").strip()
+    delay   = int(payload.get("delay_secs", 20))
+    raw     = payload.get("contacts", "")
+    if not name or not message or not raw:
+        return JSONResponse({"error": "name, message and contacts are required"}, 400)
+    contacts = _parse_contacts(raw)
+    if not contacts:
+        return JSONResponse({"error": "No valid contacts found. Use format: name,phone  or just phone"}, 400)
+    db = _db()
+    db.execute(
+        "INSERT INTO campaigns (user_id,name,message,delay_secs,total) VALUES (?,?,?,?,?)",
+        (uid, name, message, max(5, delay), len(contacts)))
+    db.commit()
+    cid = db.execute("SELECT last_insert_rowid() id").fetchone()["id"]
+    db.executemany(
+        "INSERT INTO campaign_contacts (campaign_id,name,phone) VALUES (?,?,?)",
+        [(cid, c["name"], c["phone"]) for c in contacts])
+    db.commit()
+    row = dict(db.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone())
+    db.close()
+    row["date"] = datetime.fromtimestamp(row["created_at"]).strftime("%d %b %Y, %H:%M")
+    return row
+
+@app.get("/api/campaigns")
+def campaign_list(request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    db = _db()
+    camps = [dict(r) for r in db.execute(
+        "SELECT * FROM campaigns WHERE user_id=? ORDER BY created_at DESC", (uid,)).fetchall()]
+    db.close()
+    for c in camps:
+        c["running"] = c["id"] in _campaign_threads
+        c["date"] = datetime.fromtimestamp(c["created_at"]).strftime("%d %b %Y, %H:%M")
+    return {"campaigns": camps}
+
+@app.get("/api/campaigns/{cid}")
+def campaign_get(cid: int, request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    db = _db()
+    camp = db.execute("SELECT * FROM campaigns WHERE id=? AND user_id=?", (cid, uid)).fetchone()
+    if not camp: db.close(); return JSONResponse({"error": "not found"}, 404)
+    camp = dict(camp)
+    contacts = [dict(r) for r in db.execute(
+        "SELECT * FROM campaign_contacts WHERE campaign_id=? ORDER BY id", (cid,)).fetchall()]
+    db.close()
+    camp["running"]  = cid in _campaign_threads
+    camp["contacts"] = contacts
+    camp["date"] = datetime.fromtimestamp(camp["created_at"]).strftime("%d %b %Y, %H:%M")
+    return camp
+
+@app.delete("/api/campaigns/{cid}")
+def campaign_delete(cid: int, request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    # Stop if running
+    with _campaign_lock:
+        if cid in _campaign_threads:
+            _campaign_stop[cid] = True
+    db = _db()
+    db.execute("DELETE FROM campaign_contacts WHERE campaign_id=?", (cid,))
+    db.execute("DELETE FROM campaigns WHERE id=? AND user_id=?", (cid, uid))
+    db.commit()
+    db.close()
+    return {"status": "deleted"}
+
+@app.post("/api/campaigns/{cid}/start")
+def campaign_start(cid: int, request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    with _campaign_lock:
+        if cid in _campaign_threads:
+            return {"status": "already_running"}
+        db = _db()
+        camp = db.execute("SELECT * FROM campaigns WHERE id=? AND user_id=?", (cid, uid)).fetchone()
+        db.close()
+        if not camp: return JSONResponse({"error": "not found"}, 404)
+        if camp["status"] == "completed":
+            return JSONResponse({"error": "Campaign already completed"}, 400)
+        _campaign_stop[cid] = False
+        t = threading.Thread(target=_campaign_run, args=(cid,), daemon=True)
+        _campaign_threads[cid] = t
+        t.start()
+    return {"status": "started"}
+
+@app.post("/api/campaigns/{cid}/pause")
+def campaign_pause(cid: int, request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    with _campaign_lock:
+        if cid not in _campaign_threads:
+            return {"status": "not_running"}
+        _campaign_stop[cid] = True
+    return {"status": "pausing"}
+
+@app.get("/api/campaigns/{cid}/stats")
+def campaign_stats(cid: int, request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error": "unauthorized"}, 401)
+    db = _db()
+    camp = db.execute("SELECT * FROM campaigns WHERE id=? AND user_id=?", (cid, uid)).fetchone()
+    if not camp: db.close(); return JSONResponse({"error": "not found"}, 404)
+    camp = dict(camp)
+    # Get live counts direct from contacts table
+    row = db.execute(
+        "SELECT SUM(status='sent') sent, SUM(status='failed') failed, SUM(status='pending') pending "
+        "FROM campaign_contacts WHERE campaign_id=?", (cid,)).fetchone()
+    db.close()
+    camp["running"]  = cid in _campaign_threads
+    camp["live_sent"]    = row[0] or 0
+    camp["live_failed"]  = row[1] or 0
+    camp["live_pending"] = row[2] or 0
+    return camp
+
+# ── Dev: test email ───────────────────────────────────────────────────────────
+
+@app.get("/api/test-email")
+def test_email(request: Request):
+    """Diagnose SMTP — tries all connection methods and reports which one works."""
+
+    results = []
+    configs = [
+        ("smtp.zoho.com",  465, "SSL"),
+        ("smtp.zoho.in",   465, "SSL"),
+        ("smtp.zoho.com",  587, "STARTTLS"),
+        ("smtp.zoho.in",   587, "STARTTLS"),
+    ]
+    msg = _build_msg(FROM_EMAIL, "Whatfy SMTP Test", "<p>Test OK</p>")
+    raw = msg.as_string()
+
+    for host, port, mode in configs:
+        label = f"{host}:{port} ({mode})"
+        try:
+            if mode == "SSL":
+                _try_ssl(host, port, FROM_EMAIL, raw)
+            else:
+                _try_tls(host, port, FROM_EMAIL, raw)
+            results.append({"config": label, "status": "✓ SUCCESS"})
+            break   # stop on first success
+        except smtplib.SMTPAuthenticationError as e:
+            results.append({"config": label, "status": f"✗ AUTH FAILED: {e}"})
+        except Exception as e:
+            results.append({"config": label, "status": f"✗ {type(e).__name__}: {e}"})
+
+    success = any("SUCCESS" in r["status"] for r in results)
+    return {
+        "user":    SMTP_USER,
+        "host":    SMTP_HOST,
+        "port":    SMTP_PORT,
+        "results": results,
+        "fix": None if success else (
+            "Auth failed — go to accounts.zoho.com → Security → App Passwords → "
+            "generate a password for 'Mail' and update SMTP_PASS in fastapi_app.py"
+        )
+    }
+
+# ── Chat page ─────────────────────────────────────────────────────────────────
+
+@app.get("/chat")
+def chat_page(request: Request):
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
+    _, wa_phone = _wa_status()
+    return templates.TemplateResponse(request, "chat.html", {
+        "user": user, "wa_phone": wa_phone, "wa_ok": True, "active": "chat",
+        "api_base": API_BASE
+    })
+
+# ── WA message proxy (chat UI) ────────────────────────────────────────────────
+
+@app.get("/api/messages")
+def api_messages(request: Request):
+    if not _uid(request): return JSONResponse({"error":"unauthorized"},401)
+    try:
+        r = requests.get(f"{API_BASE}/messages", timeout=5)
+        return JSONResponse(r.json())
+    except Exception as e:
+        return JSONResponse({"messages":[], "error": str(e)})
+
+@app.post("/api/send")
+async def api_send(request: Request, payload: Dict[str,Any]=Body(...)):
+    if not _uid(request): return JSONResponse({"error":"unauthorized"},401)
+    try:
+        r = requests.post(f"{API_BASE}/send", json=payload, timeout=15)
+        return JSONResponse(r.json())
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+@app.post("/api/send-media")
+async def api_send_media(request: Request):
+    if not _uid(request): return JSONResponse({"error":"unauthorized"},401)
+    try:
+        form = await request.form()
+        files = {}
+        data  = {}
+        for key, val in form.items():
+            if hasattr(val, "read"):
+                content = await val.read()
+                files[key] = (val.filename, content, val.content_type)
+            else:
+                data[key] = val
+        r = requests.post(f"{API_BASE}/send-media", files=files, data=data, timeout=30)
+        return JSONResponse(r.json())
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+@app.get("/api/events")
+async def api_events_proxy(request: Request):
+    """Proxy SSE events from Go server so chat.html can use relative URL."""
+    if not _uid(request): return JSONResponse({"error":"unauthorized"},401)
+    try:
+        def event_generator():
+            with requests.get(f"{API_BASE}/events", stream=True, timeout=None) as r:
+                for chunk in r.iter_content(chunk_size=None):
+                    if chunk:
+                        yield chunk
+        return StreamingResponse(event_generator(), media_type="text/event-stream",
+                                  headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
+
+@app.get("/api/media/{path:path}")
+def api_media_proxy(path: str, request: Request):
+    """Proxy media files from Go server."""
+    if not _uid(request): return JSONResponse({"error":"unauthorized"},401)
+    try:
+        r = requests.get(f"{API_BASE}/{path}", stream=True, timeout=15)
+        return StreamingResponse(r.iter_content(chunk_size=8192),
+                                  media_type=r.headers.get("content-type","application/octet-stream"))
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
 if __name__ == "__main__":
     uvicorn.run("fastapi_app:app", host="0.0.0.0", port=5000, reload=True)

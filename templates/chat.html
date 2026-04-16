@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WhatsApp · Chats</title>
+<title>Conversations — Whatfy</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -18,6 +18,20 @@
 html,body{height:100%;overflow:hidden;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
 
+/* ── Top nav bar ── */
+.chat-topbar{height:50px;background:rgba(9,18,20,.97);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:16px;padding:0 18px;flex-shrink:0;z-index:200;position:relative}
+.back-btn{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(0,230,118,.08);border:1px solid var(--bd);border-radius:8px;color:var(--sub);font-size:12.5px;font-weight:600;text-decoration:none;transition:.15s;cursor:pointer}
+.back-btn:hover{background:rgba(0,230,118,.15);color:var(--g)}
+.ct-brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#fff}
+.ct-logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--g),var(--gx));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 10px rgba(0,230,118,.25)}
+.ct-sep{color:#1e3d2e;font-size:14px}
+.ct-page{font-size:14px;color:var(--sub);font-weight:500}
+.ct-user{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ct-avatar{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--g),var(--gx));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000}
+.ct-uname{font-size:12.5px;color:var(--sub);font-weight:500}
+.ct-logout{padding:4px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;color:#3d6347;font-size:12px;text-decoration:none;transition:.15s}
+.ct-logout:hover{color:#f87171;border-color:rgba(239,68,68,.25)}
+
 .bg-fx{position:fixed;inset:0;pointer-events:none;z-index:0;}
 .bg-grid{position:absolute;inset:0;background-image:
   linear-gradient(rgba(0,230,118,.025) 1px,transparent 1px),
@@ -27,7 +41,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
   background:radial-gradient(circle,rgba(0,200,83,.06) 0%,transparent 65%);
   top:-200px;right:-100px;}
 
-.shell{position:relative;z-index:1;display:flex;height:100vh;overflow:hidden;}
+.shell{position:relative;z-index:1;display:flex;height:calc(100vh - 50px);overflow:hidden;}
 
 /* ── SIDEBAR ── */
 .sidebar{width:360px;min-width:320px;display:flex;flex-direction:column;
@@ -220,6 +234,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
 </head>
 <body>
 <div class="bg-fx"><div class="bg-grid"></div><div class="bg-glow"></div></div>
+
+<!-- Top nav -->
+<div class="chat-topbar">
+  <a href="/dashboard" class="back-btn">← Dashboard</a>
+  <span class="ct-sep">|</span>
+  <div class="ct-brand">
+    <div class="ct-logo">💬</div>
+    Whatfy
+  </div>
+  <span class="ct-sep">/</span>
+  <span class="ct-page">Conversations</span>
+  <div class="ct-user">
+    {% if user is defined %}
+    <div class="ct-avatar">{{ user.name[0].upper() if user.name else user.email[0].upper() }}</div>
+    <span class="ct-uname">{{ user.name or user.email.split('@')[0] }}</span>
+    {% endif %}
+    <a href="/auth/logout" class="ct-logout">Sign Out</a>
+  </div>
+</div>
+
 <div class="shell">
 
   <!-- SIDEBAR -->
@@ -488,7 +522,7 @@ function buildIncomingMsg(lm,t){
   const rawType=lm.type||'text';
   let type=rawType,content=lm.message||'',fileName=lm.fileName||'',fileSize=lm.fileSize||'';
   if(lm.mediaURL){
-    content='http://localhost:8080'+lm.mediaURL;
+    content='/api/media'+lm.mediaURL;
     if(rawType==='video')type='image'; // show video as image (thumbnail)
   }
   return{from:'them',type,content,fileName,fileSize,time:t};
@@ -507,7 +541,7 @@ function handleIncoming(lm){
 }
 function connectSSE(){
   try{
-    const es=new EventSource('http://localhost:8080/events');
+    const es=new EventSource('/api/events');
     es.onopen=()=>{sseActive=true;};
     es.onmessage=e=>{try{handleIncoming(JSON.parse(e.data));}catch(_){}};
     es.onerror=()=>{sseActive=false;es.close();setTimeout(connectSSE,5000);};

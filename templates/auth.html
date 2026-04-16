@@ -2,73 +2,114 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WhatsApp Agent Platform — Sign In</title>
+<title>Whatfy — Sign In</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh;display:flex}
-.left{flex:1;background:linear-gradient(135deg,#0f172a 0%,#1a2e4a 50%,#0d2f1e 100%);display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;overflow:hidden}
-.left::before{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(37,211,102,.15) 0%,transparent 70%);pointer-events:none}
-.left::after{content:'';position:absolute;bottom:-60px;left:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(99,102,241,.1) 0%,transparent 70%);pointer-events:none}
-.brand{display:flex;align-items:center;gap:14px;margin-bottom:52px}
-.brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
-.brand-name{font-size:22px;font-weight:800;color:#fff;line-height:1.2}
-.brand-name span{display:block;font-size:13px;font-weight:400;color:rgba(255,255,255,.5);margin-top:2px}
-.tagline{font-size:36px;font-weight:800;color:#fff;line-height:1.25;margin-bottom:20px}
-.tagline em{font-style:normal;color:#25D366}
-.sub{font-size:15px;color:rgba(255,255,255,.55);line-height:1.7;max-width:400px;margin-bottom:44px}
-.features{display:flex;flex-direction:column;gap:16px}
-.feat{display:flex;align-items:flex-start;gap:14px}
-.feat-dot{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
-.feat-text strong{display:block;font-size:14px;font-weight:600;color:#fff}
-.feat-text span{font-size:13px;color:rgba(255,255,255,.45)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;min-height:100vh;display:flex}
 
-.right{width:480px;display:flex;align-items:center;justify-content:center;padding:40px 48px;background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.08)}
+/* ── Left panel ── */
+.left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 56px;position:relative;overflow:hidden;background:linear-gradient(160deg,#0f1117 0%,#0b1d14 60%,#0f1117 100%)}
+.left::before{content:'';position:absolute;top:-120px;right:-120px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(37,211,102,.1) 0%,transparent 65%);pointer-events:none}
+.left::after{content:'';position:absolute;bottom:-80px;left:0;width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(18,140,126,.07) 0%,transparent 65%);pointer-events:none}
+
+/* grid bg */
+.left-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(37,211,102,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(37,211,102,.025) 1px,transparent 1px);background-size:52px 52px;pointer-events:none}
+
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:56px;position:relative}
+.brand-icon{width:52px;height:52px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 30px rgba(37,211,102,.3)}
+.brand-name{font-size:22px;font-weight:800;color:#fff;line-height:1.2}
+.brand-name span{display:block;font-size:13px;font-weight:400;color:rgba(255,255,255,.45);margin-top:2px}
+
+.tagline{font-size:38px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:18px;position:relative}
+.tagline em{font-style:normal;background:linear-gradient(135deg,#25D366,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:15px;color:rgba(255,255,255,.5);line-height:1.7;max-width:420px;margin-bottom:48px;position:relative}
+
+.features{display:flex;flex-direction:column;gap:18px;position:relative}
+.feat{display:flex;align-items:flex-start;gap:14px}
+.feat-dot{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.feat-text strong{display:block;font-size:14px;font-weight:600;color:#f1f5f9}
+.feat-text span{font-size:13px;color:rgba(255,255,255,.4);margin-top:2px;display:block}
+
+/* flow nodes decoration */
+.flow-deco{position:absolute;bottom:60px;right:60px;opacity:.12;pointer-events:none}
+.node-deco{width:90px;height:52px;border:1.5px solid #25D366;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#25D366;font-weight:600;position:absolute}
+.nd1{bottom:0;right:0}
+.nd2{bottom:70px;right:110px}
+.nd3{bottom:0;right:220px}
+.conn{position:absolute;stroke:#25D366;stroke-width:1.5;stroke-dasharray:4 3;fill:none}
+
+/* ── Right panel ── */
+.right{width:500px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:48px 52px;background:#111827;border-left:1px solid rgba(255,255,255,.06)}
+
 .form-box{width:100%}
-.form-box h2{font-size:26px;font-weight:800;color:#1e293b;margin-bottom:6px}
+.form-box h2{font-size:26px;font-weight:800;color:#f1f5f9;margin-bottom:6px}
 .form-box p{font-size:14px;color:#64748b;margin-bottom:28px}
-.tabs{display:flex;gap:0;border:1.5px solid #e2e8f0;border-radius:10px;padding:4px;margin-bottom:28px;background:#f8fafc}
+
+.tabs{display:flex;gap:0;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:4px;margin-bottom:28px;background:rgba(255,255,255,.03)}
 .tab{flex:1;padding:9px;text-align:center;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#64748b;transition:all .15s}
-.tab.active{background:#fff;color:#1e293b;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tab.active{background:#1e293b;color:#f1f5f9;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
 .form-group{margin-bottom:18px}
-label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
-input{width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:14px;outline:none;transition:border-color .15s;background:#fff}
+label{display:block;font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:6px}
+input[type=email],input[type=password],input[type=text]{width:100%;padding:11px 14px;border:1.5px solid rgba(255,255,255,.09);border-radius:9px;font-size:14px;outline:none;transition:border-color .15s;background:#1e293b;color:#f1f5f9;font-family:inherit}
 input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.1)}
-.btn-submit{width:100%;padding:13px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:4px}
-.btn-submit:hover{opacity:.9}
-.error-box{background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:12px 16px;font-size:13px;color:#dc2626;margin-bottom:20px;display:flex;align-items:center;gap:8px}
-.divider{text-align:center;font-size:13px;color:#94a3b8;margin:20px 0;position:relative}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:#e2e8f0}
-.divider::before{left:0}.divider::after{right:0}
-.terms-warn{background:#fff8ed;border:1.5px solid #fbbf24;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#92400e;line-height:1.6}
-.terms-warn strong{display:block;font-size:13px;font-weight:700;color:#b45309;margin-bottom:4px}
-.terms-check{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:12px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px}
-.terms-check input[type=checkbox]{width:17px;height:17px;margin-top:1px;accent-color:#16a34a;flex-shrink:0;cursor:pointer}
-.terms-check label{font-size:13px;color:#166534;line-height:1.5;font-weight:500;cursor:pointer;margin:0}
-.terms-check a{color:#16a34a;font-weight:700;text-decoration:underline}
+input::placeholder{color:#475569}
+
+.btn-submit{width:100%;padding:13px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;box-shadow:0 4px 20px rgba(37,211,102,.2)}
+.btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(37,211,102,.3)}
+
+.error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:9px;padding:12px 16px;font-size:13px;color:#f87171;margin-bottom:20px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.error-box a{color:#4ade80;text-decoration:underline;cursor:pointer}
+
+.terms-warn{background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#d97706;line-height:1.6}
+.terms-warn strong{display:block;font-size:13px;font-weight:700;color:#f59e0b;margin-bottom:4px}
+.terms-check{display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;padding:12px 14px;background:rgba(37,211,102,.05);border:1.5px solid rgba(37,211,102,.2);border-radius:9px}
+.terms-check input[type=checkbox]{width:17px;height:17px;margin-top:1px;accent-color:#25D366;flex-shrink:0;cursor:pointer}
+.terms-check label{font-size:13px;color:#94a3b8;line-height:1.5;font-weight:500;cursor:pointer;margin:0}
+.terms-check a{color:#25D366;font-weight:700;text-decoration:underline}
+
+@media(max-width:900px){
+  .left{display:none}
+  .right{width:100%;border-left:none;background:#0f1117}
+}
 </style>
 </head>
 <body>
+
 <div class="left">
+  <div class="left-grid"></div>
   <div class="brand">
     <div class="brand-icon">💬</div>
-    <div class="brand-name">WA Agent Platform<span>Powered by WhatsApp</span></div>
+    <div class="brand-name">Whatfy<span>WhatsApp AI Platform</span></div>
   </div>
   <h1 class="tagline">Your Business on<br><em>WhatsApp</em>, Automated.</h1>
-  <p class="sub">Manage inventory, send invoices, and send health reminders — all through WhatsApp with intelligent AI agents.</p>
+  <p class="sub">Connect AI agents to WhatsApp. Manage inventory, billing, health reminders, and appointments — all from a single dashboard.</p>
   <div class="features">
-    <div class="feat"><div class="feat-dot">🛒</div><div class="feat-text"><strong>Shop Agent</strong><span>Inventory tracking, low-stock alerts & order management</span></div></div>
-    <div class="feat"><div class="feat-dot">🧾</div><div class="feat-text"><strong>Invoice Agent</strong><span>Auto-generate & send invoices as images via WhatsApp</span></div></div>
-    <div class="feat"><div class="feat-dot">💊</div><div class="feat-text"><strong>Health Agent</strong><span>Medication reminders & health alerts for patients</span></div></div>
+    <div class="feat"><div class="feat-dot">🛒</div><div class="feat-text"><strong>Shop Agent</strong><span>Inventory tracking, low-stock alerts & reorder management</span></div></div>
+    <div class="feat"><div class="feat-dot">🧾</div><div class="feat-text"><strong>Invoice Agent</strong><span>Auto-generate invoices & send as images via WhatsApp</span></div></div>
+    <div class="feat"><div class="feat-dot">💊</div><div class="feat-text"><strong>Health Agent</strong><span>Medication reminders & patient health monitoring</span></div></div>
+    <div class="feat"><div class="feat-dot">🏥</div><div class="feat-text"><strong>Appointment Agent</strong><span>Schedule, remind & manage medical appointments via chat</span></div></div>
   </div>
 </div>
 
 <div class="right">
   <div class="form-box">
     <h2>Welcome back 👋</h2>
-    <p>Sign in to your agent platform</p>
+    <p>Sign in to your Whatfy platform</p>
 
     {% if error %}
-    <div class="error-box">⚠️ {{ error }}</div>
+    <div class="error-box">
+      ⚠️
+      <span>
+        {{ error }}
+        {% if unverified_email %}
+        <br><form method="POST" action="/auth/resend-verification" style="display:inline">
+          <input type="hidden" name="email" value="{{ unverified_email }}">
+          <button type="submit" style="background:none;border:none;cursor:pointer;padding:0;font-size:13px;color:#4ade80;text-decoration:underline;font-family:inherit">Resend verification email</button>
+        </form>
+        {% endif %}
+      </span>
+    </div>
     {% endif %}
 
     <div class="tabs">
@@ -109,12 +150,12 @@ input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.1)}
 
         <div class="terms-warn">
           <strong>⚠️ Important — Read Before Registering</strong>
-          This tool uses the unofficial WhatsApp Web protocol. Sending bulk or spam messages may result in your WhatsApp number being permanently banned. Use responsibly.
+          This platform uses the WhatsApp Web protocol. Sending bulk or spam messages may result in your WhatsApp number being permanently banned. Use responsibly and only for legitimate business use.
         </div>
 
         <div class="terms-check">
           <input type="checkbox" id="termsChk" name="terms_accepted" value="1" required>
-          <label for="termsChk">I have read and agree to the <a href="/terms" target="_blank">Terms of Use & Responsible Use Policy</a>. I understand bulk misuse may result in a WhatsApp ban.</label>
+          <label for="termsChk">I have read and agree to the <a href="/terms" target="_blank">Terms of Use & Responsible Use Policy</a>. I understand misuse may result in a WhatsApp ban.</label>
         </div>
 
         <button type="submit" class="btn-submit">Create Account →</button>

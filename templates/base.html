@@ -163,11 +163,17 @@ tbody tr:hover{background:#f8fafc}
   <nav class="sb-nav">
     <div class="sb-section">Main</div>
     <a class="sb-item {% if active=='dashboard' %}active{% endif %}" href="/dashboard">
-      <span class="sb-icon">🏠</span> Dashboard
+      <span class="sb-icon">⬡</span> Dashboard
     </a>
     <a class="sb-item {% if active=='connect' %}active{% endif %}" href="/connect">
       <span class="sb-icon">📱</span> Connect WhatsApp
       {% if not wa_ok %}<span class="sb-badge danger">!</span>{% endif %}
+    </a>
+    <a class="sb-item {% if active=='chat' %}active{% endif %}" href="/chat">
+      <span class="sb-icon">💬</span> Conversations
+    </a>
+    <a class="sb-item {% if active=='campaign' %}active{% endif %}" href="/campaign">
+      <span class="sb-icon">📣</span> Bulk Campaign
     </a>
     <div class="sb-section">AI Agents</div>
     <a class="sb-item {% if active=='shop' %}active{% endif %}" href="/shop">
@@ -182,6 +188,10 @@ tbody tr:hover{background:#f8fafc}
     </a>
     <a class="sb-item {% if active=='appointment' %}active{% endif %}" href="/appointment">
       <span class="sb-icon">🏥</span> Appointment Agent
+    </a>
+    <div class="sb-section">Docs</div>
+    <a class="sb-item {% if active=='docs' %}active{% endif %}" href="/docs-api">
+      <span class="sb-icon">📖</span> API Docs
     </a>
   </nav>
   <div class="sb-bottom">

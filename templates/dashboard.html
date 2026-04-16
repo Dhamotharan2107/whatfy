@@ -5,90 +5,149 @@
 <title>Dashboard — Whatfy</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;min-height:100vh;color:#e2e8f0;overflow-x:hidden}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e2e8f0}
 
-/* Top bar */
-.topbar{height:56px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
-.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;color:#fff}
-.brand-dot{width:10px;height:10px;background:#25D366;border-radius:50%;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.4)}70%{box-shadow:0 0 0 8px rgba(37,211,102,0)}}
-.topbar-right{display:flex;align-items:center;gap:14px}
-.wa-connected{display:flex;align-items:center;gap:7px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;color:#4ade80}
-.user-chip{display:flex;align-items:center;gap:8px;cursor:pointer}
-.avatar{width:32px;height:32px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
-.username{font-size:14px;font-weight:600;color:#94a3b8}
-.btn-logout{padding:6px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;text-decoration:none;transition:.15s}
-.btn-logout:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#f87171}
+/* ── Top bar ── */
+.topbar{height:52px;background:rgba(17,24,39,.95);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 0;position:sticky;top:0;z-index:200;backdrop-filter:blur(8px);flex-shrink:0}
+.tb-left{display:flex;align-items:center;gap:0}
+.tb-logo{width:200px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 18px;border-right:1px solid rgba(255,255,255,.07);height:52px}
+.tb-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 14px rgba(37,211,102,.3)}
+.tb-logo-text{font-size:15px;font-weight:800;color:#fff}
+.tb-breadcrumb{display:flex;align-items:center;gap:8px;padding:0 20px;font-size:13px;color:#475569}
+.tb-breadcrumb span{color:#94a3b8;font-weight:500}
+.tb-breadcrumb .sep{color:#334155}
 
-/* Flow canvas */
-.flow-wrap{position:relative;flex:1;padding:40px 48px;min-height:calc(100vh - 56px);display:flex;align-items:center}
-.flow-canvas{position:relative;width:100%;display:flex;align-items:center;gap:0}
+.tb-center{display:flex;align-items:center;gap:12px}
+.tb-tag{padding:4px 12px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);border-radius:20px;font-size:12px;font-weight:600;color:#4ade80;display:flex;align-items:center;gap:6px}
+.tb-tag::before{content:'';width:6px;height:6px;background:#25D366;border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* Hub node */
-.hub-col{width:240px;flex-shrink:0;display:flex;justify-content:center}
-.hub-node{width:210px;background:linear-gradient(145deg,#0d2818,#0f2d1e);border:2px solid #25D366;border-radius:20px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 0 40px rgba(37,211,102,.18),0 8px 32px rgba(0,0,0,.4);position:relative}
-.hub-node:hover{transform:scale(1.03);box-shadow:0 0 60px rgba(37,211,102,.3),0 8px 32px rgba(0,0,0,.4)}
-.hub-icon{font-size:44px;margin-bottom:12px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
-.hub-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:4px}
-.hub-phone{font-size:12px;color:#4ade80;margin-bottom:10px;font-family:monospace}
-.hub-status{display:inline-flex;align-items:center;gap:6px;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.35);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;color:#4ade80}
-.hub-status::before{content:'';width:6px;height:6px;background:#25D366;border-radius:50%;animation:pulse 2s infinite}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-user{display:flex;align-items:center;gap:8px}
+.tb-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tb-username{font-size:13px;font-weight:600;color:#94a3b8}
+.btn-logout{padding:5px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#64748b;font-size:12px;cursor:pointer;text-decoration:none;transition:.15s}
+.btn-logout:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#f87171}
 
-/* SVG connections */
-.flow-svg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.flow-path{fill:none;stroke:#25D366;stroke-width:1.5;stroke-dasharray:6 4;opacity:.6;animation:dash 20s linear infinite}
-.flow-path.active{opacity:.9;stroke:#4ade80}
-@keyframes dash{to{stroke-dashoffset:-100}}
+/* ── Layout ── */
+.shell{display:flex;height:calc(100vh - 52px)}
 
-/* Agents col */
-.agents-col{flex:1;display:flex;flex-direction:column;gap:20px;padding-left:100px}
-.agent-node{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;position:relative;text-decoration:none;color:inherit}
-.agent-node:hover{background:rgba(255,255,255,.07);border-color:rgba(37,211,102,.5);transform:translateX(6px);box-shadow:0 4px 24px rgba(37,211,102,.12)}
-.agent-node.enabled{border-color:rgba(37,211,102,.35)}
-.agent-icon-wrap{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
-.agent-body{flex:1}
-.agent-name{font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:3px}
-.agent-desc{font-size:12.5px;color:#64748b}
-.agent-badge{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
-.badge-on{background:rgba(37,211,102,.15);color:#4ade80;border:1px solid rgba(37,211,102,.3)}
-.badge-off{background:rgba(255,255,255,.06);color:#64748b;border:1px solid rgba(255,255,255,.1)}
-.badge-warn{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
-.node-arrow{color:#334155;font-size:16px;flex-shrink:0;transition:.15s}
-.agent-node:hover .node-arrow{color:#4ade80;transform:translateX(3px)}
+/* ── Left nav panel ── */
+.lnav{width:200px;flex-shrink:0;background:#111827;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow-y:auto}
+.ln-section{padding:16px 14px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.1em}
+.ln-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 6px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;text-decoration:none;transition:all .15s;cursor:pointer}
+.ln-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.ln-item.active{background:rgba(37,211,102,.12);color:#4ade80;border:1px solid rgba(37,211,102,.15)}
+.ln-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.ln-badge{margin-left:auto;background:rgba(239,68,68,.2);color:#f87171;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px}
 
-/* Stats bar */
-.stats-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(15,17,23,.95);border-top:1px solid rgba(255,255,255,.07);padding:12px 48px;display:flex;gap:40px;align-items:center;backdrop-filter:blur(8px)}
-.stat-item{display:flex;align-items:center;gap:8px}
-.stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.stat-text{font-size:13px;color:#94a3b8}
-.stat-text strong{color:#e2e8f0}
+/* ── Canvas area ── */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:#0f1117}
+.canvas-grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+.canvas-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(37,211,102,.04) 0%,transparent 65%);pointer-events:none}
 
-/* ── Mobile Responsive ── */
-@media(max-width:768px){
-  body{min-height:100vh;overflow-y:auto;}
-  .topbar{padding:0 16px;height:52px;}
-  .brand{font-size:15px;}
-  .wa-connected{padding:4px 10px;font-size:12px;}
-  .username{display:none;}
-  .flow-wrap{padding:20px 16px 80px;min-height:auto;align-items:flex-start;overflow-y:auto;}
-  .flow-canvas{flex-direction:column;align-items:center;gap:24px;}
-  .flow-svg{display:none;}
-  .hub-col{width:100%;justify-content:center;}
-  .hub-node{width:100%;max-width:320px;}
-  .agents-col{padding-left:0;width:100%;max-width:420px;}
-  .stats-bar{padding:10px 16px;gap:16px;flex-wrap:wrap;}
-  .stat-item:last-child{display:none;}
+.canvas{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+
+/* ── Flow nodes ── */
+.flow-row{display:flex;align-items:center;gap:0;position:relative}
+
+/* Trigger node */
+.node-trigger{
+  width:160px;background:linear-gradient(145deg,#0b1e12,#0d2618);
+  border:1.5px solid rgba(37,211,102,.5);border-radius:14px;padding:18px 16px;
+  text-align:center;cursor:pointer;transition:all .25s;
+  box-shadow:0 0 32px rgba(37,211,102,.15),0 8px 32px rgba(0,0,0,.4);
+  position:relative;flex-shrink:0;z-index:10
 }
+.node-trigger:hover{transform:scale(1.04);box-shadow:0 0 48px rgba(37,211,102,.28),0 8px 32px rgba(0,0,0,.5)}
+.node-trigger .nt-icon{font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+.node-trigger .nt-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.node-trigger .nt-phone{font-size:11px;color:#4ade80;font-family:monospace;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.node-trigger .nt-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#4ade80}
+.node-trigger .nt-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#25D366;animation:blink 2s infinite}
+.node-trigger .nt-disc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.disconnect-btn{margin-top:10px;width:100%;padding:6px 0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;color:#f87171;font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
+.disconnect-btn:hover{background:rgba(239,68,68,.22)}
 
-@media(max-width:480px){
-  .topbar{padding:0 12px;height:48px;}
-  .wa-connected{display:none;}
-  .hub-node{padding:20px 16px;}
-  .hub-icon{font-size:36px;}
-  .agent-node{padding:14px 16px;}
-  .agent-icon-wrap{width:40px;height:40px;font-size:20px;}
-  .stats-bar{gap:10px;}
-  .stat-text{font-size:11.5px;}
+/* connector */
+.connector{display:flex;align-items:center;position:relative;z-index:5;flex-shrink:0}
+.conn-line{height:2px;background:linear-gradient(90deg,rgba(37,211,102,.4),rgba(37,211,102,.2));position:relative;overflow:visible}
+.conn-line::after{content:'▶';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:rgba(37,211,102,.5);font-size:10px}
+.conn-pulse{position:absolute;width:8px;height:8px;border-radius:50%;background:#25D366;top:50%;transform:translateY(-50%);animation:travel linear infinite;box-shadow:0 0 8px rgba(37,211,102,.6)}
+@keyframes travel{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - 8px);opacity:0}}
+
+/* Agent nodes column */
+.agents-col{display:flex;flex-direction:column;gap:14px;position:relative;z-index:10}
+
+/* Agent node */
+.agent-node{
+  width:240px;background:rgba(255,255,255,.03);
+  border:1.5px solid rgba(255,255,255,.09);border-radius:13px;
+  padding:14px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all .22s;text-decoration:none;color:inherit;
+  position:relative;
+}
+.agent-node:hover{background:rgba(255,255,255,.06);border-color:rgba(37,211,102,.3);transform:translateX(5px);box-shadow:0 4px 20px rgba(37,211,102,.08)}
+.agent-node.on{border-color:rgba(37,211,102,.3);background:rgba(37,211,102,.04)}
+.an-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.an-body{flex:1;min-width:0}
+.an-name{font-size:13.5px;font-weight:700;color:#f1f5f9;margin-bottom:2px}
+.an-desc{font-size:11.5px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.an-badge{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.badge-on{background:rgba(37,211,102,.12);color:#4ade80;border:1px solid rgba(37,211,102,.2)}
+.badge-off{background:rgba(255,255,255,.05);color:#475569;border:1px solid rgba(255,255,255,.07)}
+.badge-warn{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.an-arrow{color:#1e293b;font-size:14px;flex-shrink:0;transition:.15s}
+.agent-node:hover .an-arrow{color:#4ade80}
+
+/* Node input/output dots */
+.agent-node::before{content:'';position:absolute;left:-7px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:#1a2535;border:2px solid rgba(37,211,102,.3)}
+.agent-node.on::before{border-color:#25D366;background:#0d2618;box-shadow:0 0 8px rgba(37,211,102,.3)}
+
+/* Chat node */
+.chat-node{
+  width:180px;background:rgba(59,130,246,.04);
+  border:1.5px solid rgba(59,130,246,.2);border-radius:13px;
+  padding:14px 16px;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;transition:all .22s;text-decoration:none;color:inherit;
+  position:relative;margin-left:48px;flex-shrink:0;z-index:10;
+  text-align:center;
+}
+.chat-node:hover{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.4);transform:translateY(-3px);box-shadow:0 8px 24px rgba(59,130,246,.12)}
+.chat-node .cn-icon{font-size:30px;margin-bottom:8px}
+.chat-node .cn-title{font-size:13px;font-weight:700;color:#93c5fd;margin-bottom:3px}
+.chat-node .cn-sub{font-size:11px;color:#475569}
+
+/* Stats strip */
+.stats-strip{position:absolute;bottom:0;left:0;right:0;background:rgba(15,17,23,.92);border-top:1px solid rgba(255,255,255,.06);padding:10px 32px;display:flex;gap:36px;align-items:center;backdrop-filter:blur(6px);z-index:100;flex-shrink:0}
+.ss-item{display:flex;align-items:center;gap:8px}
+.ss-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ss-text{font-size:12.5px;color:#64748b}
+.ss-text strong{color:#94a3b8}
+.ss-time{margin-left:auto;font-size:11.5px;color:#334155}
+
+/* SVG overlay */
+.flow-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+
+/* right panel */
+.rpanel{width:280px;flex-shrink:0;background:#111827;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow-y:auto}
+.rp-section{padding:16px 16px 8px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid rgba(255,255,255,.05)}
+.rp-stat{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
+.rps-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.rps-body{flex:1}
+.rps-val{font-size:22px;font-weight:800;color:#f1f5f9;line-height:1}
+.rps-lbl{font-size:11.5px;color:#475569;margin-top:3px}
+
+/* mobile */
+@media(max-width:900px){
+  .lnav{display:none}
+  .rpanel{display:none}
+  .flow-row{flex-direction:column;gap:24px;align-items:center;padding:24px 16px 80px}
+  .connector{transform:rotate(90deg)}
+  .agents-col{gap:12px;width:100%;max-width:300px}
+  .agent-node{width:100%}
+  .chat-node{margin-left:0;margin-top:24px}
 }
 </style>
 </head>
@@ -96,185 +155,296 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- Top bar -->
 <div class="topbar">
-  <div class="brand">
-    <div class="brand-dot"></div>
-    Whatfy
+  <div class="tb-left">
+    <div class="tb-logo">
+      <div class="tb-logo-icon">💬</div>
+      <span class="tb-logo-text">Whatfy</span>
+    </div>
+    <div class="tb-breadcrumb">
+      <span>Workflows</span>
+      <span class="sep">/</span>
+      <span style="color:#f1f5f9">Dashboard</span>
+    </div>
   </div>
-  <div class="topbar-right">
-    <div class="wa-connected">📱 {{ wa_phone }}</div>
-    <div class="user-chip">
-      <div class="avatar">{{ user.name[0].upper() if user.name else user.email[0].upper() }}</div>
-      <span class="username">{{ user.name or user.email.split('@')[0] }}</span>
+  <div class="tb-center">
+    <div class="tb-tag" id="wa-tag">WhatsApp · {{ wa_phone or 'Not Connected' }}</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-user">
+      <div class="tb-avatar">{{ user.name[0].upper() if user.name else user.email[0].upper() }}</div>
+      <span class="tb-username">{{ user.name or user.email.split('@')[0] }}</span>
     </div>
     <a href="/auth/logout" class="btn-logout">Sign Out</a>
   </div>
 </div>
 
-<!-- Flow canvas -->
-<div class="flow-wrap">
-  <div class="flow-canvas" id="flowCanvas">
+<div class="shell">
 
-    <!-- SVG connections (drawn by JS) -->
+  <!-- Left nav -->
+  <nav class="lnav">
+    <div class="ln-section">Workspace</div>
+    <a class="ln-item active" href="/dashboard"><span class="ln-icon">⬡</span>Dashboard</a>
+    <a class="ln-item" href="/connect"><span class="ln-icon">📱</span>Connect WA</a>
+    <a class="ln-item" href="/chat"><span class="ln-icon">💬</span>Conversations</a>
+    <a class="ln-item" href="/campaign"><span class="ln-icon">📣</span>Bulk Campaign</a>
+    <div class="ln-section">AI Agents</div>
+    <a class="ln-item" href="/shop"><span class="ln-icon">🛒</span>Shop Agent<span class="ln-badge" id="nav-low" style="display:none">0</span></a>
+    <a class="ln-item" href="/invoice"><span class="ln-icon">🧾</span>Invoice Agent</a>
+    <a class="ln-item" href="/health"><span class="ln-icon">💊</span>Health Agent</a>
+    <a class="ln-item" href="/appointment"><span class="ln-icon">🏥</span>Appointment</a>
+    <div class="ln-section">Docs</div>
+    <a class="ln-item" href="/docs-api"><span class="ln-icon">📖</span>API Docs</a>
+  </nav>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <div class="canvas-grid"></div>
+    <div class="canvas-glow"></div>
+
     <svg class="flow-svg" id="flowSvg"></svg>
 
-    <!-- WhatsApp Hub -->
-    <div class="hub-col">
-      <div class="hub-node" id="hubNode">
-        <div class="hub-icon" onclick="location.href='/connect'" style="cursor:pointer">💬</div>
-        <div class="hub-title">WhatsApp</div>
-        <div class="hub-phone">{{ wa_phone }}</div>
-        <div class="hub-status">Connected</div>
-        <button onclick="disconnectWA()" style="margin-top:14px;width:100%;padding:7px 0;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);border-radius:10px;color:#f87171;font-size:12px;font-weight:700;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(239,68,68,.28)'" onmouseout="this.style.background='rgba(239,68,68,.15)'">⏏ Disconnect</button>
+    <div class="canvas" id="flowCanvas">
+      <div class="flow-row" id="flowRow">
+
+        <!-- WhatsApp Hub node -->
+        <div class="node-trigger" id="hubNode" onclick="location.href='/connect'">
+          <div class="nt-icon">💬</div>
+          <div class="nt-title">WhatsApp</div>
+          <div class="nt-phone" id="hub-phone">{{ wa_phone or '—' }}</div>
+          <div class="nt-status" id="hub-status">Connected</div>
+          <button class="disconnect-btn" onclick="event.stopPropagation();disconnectWA()">⏏ Disconnect</button>
+        </div>
+
+        <!-- Connector -->
+        <div class="connector" id="mainConn">
+          <div class="conn-line" style="width:80px;position:relative">
+            <div class="conn-pulse" style="animation-duration:2s"></div>
+          </div>
+        </div>
+
+        <!-- Agents column -->
+        <div class="agents-col" id="agentsCol">
+
+          <a class="agent-node" href="/shop" id="an-shop">
+            <div class="an-icon" style="background:rgba(34,197,94,.1)">🛒</div>
+            <div class="an-body">
+              <div class="an-name">Shop Agent</div>
+              <div class="an-desc">Inventory · Alerts · Orders</div>
+            </div>
+            <span class="an-badge badge-off" id="badge-shop">—</span>
+            <span class="an-arrow">›</span>
+          </a>
+
+          <a class="agent-node" href="/invoice" id="an-invoice">
+            <div class="an-icon" style="background:rgba(59,130,246,.1)">🧾</div>
+            <div class="an-body">
+              <div class="an-name">Invoice Agent</div>
+              <div class="an-desc">Bills · Send via WhatsApp</div>
+            </div>
+            <span class="an-badge badge-off" id="badge-invoice">—</span>
+            <span class="an-arrow">›</span>
+          </a>
+
+          <a class="agent-node" href="/health" id="an-health">
+            <div class="an-icon" style="background:rgba(239,68,68,.1)">💊</div>
+            <div class="an-body">
+              <div class="an-name">Health Agent</div>
+              <div class="an-desc">Medications · Patients</div>
+            </div>
+            <span class="an-badge badge-off" id="badge-health">—</span>
+            <span class="an-arrow">›</span>
+          </a>
+
+          <a class="agent-node" href="/appointment" id="an-appt">
+            <div class="an-icon" style="background:rgba(168,85,247,.1)">🏥</div>
+            <div class="an-body">
+              <div class="an-name">Appointment Agent</div>
+              <div class="an-desc">Schedule · Remind</div>
+            </div>
+            <span class="an-badge badge-off" id="badge-appt">—</span>
+            <span class="an-arrow">›</span>
+          </a>
+
+        </div>
+
+        <!-- Chat + Campaign nodes -->
+        <div style="display:flex;flex-direction:column;gap:14px;margin-left:48px;flex-shrink:0;z-index:10">
+          <a class="chat-node" href="/chat" style="margin-left:0">
+            <div class="cn-icon">💬</div>
+            <div class="cn-title">Conversations</div>
+            <div class="cn-sub">View · Send messages</div>
+          </a>
+          <a class="chat-node" href="/campaign" style="margin-left:0;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)">
+            <div class="cn-icon">📣</div>
+            <div class="cn-title" style="color:#fbbf24">Bulk Campaign</div>
+            <div class="cn-sub" id="camp-stat">Send to lists</div>
+          </a>
+        </div>
+
       </div>
     </div>
 
-    <!-- Agent nodes -->
-    <div class="agents-col" id="agentsCol">
-
-      <!-- Agent nodes rendered by JS after stats load -->
-      <a class="agent-node" href="/shop" id="an0">
-        <div class="agent-icon-wrap" style="background:rgba(34,197,94,.1)">🛒</div>
-        <div class="agent-body">
-          <div class="agent-name">Shop Agent</div>
-          <div class="agent-desc">Inventory · Low-stock alerts · Order management</div>
-        </div>
-        <span class="agent-badge badge-off" id="badge-shop">—</span>
-        <span class="node-arrow">›</span>
-      </a>
-
-      <a class="agent-node" href="/invoice" id="an1">
-        <div class="agent-icon-wrap" style="background:rgba(59,130,246,.1)">🧾</div>
-        <div class="agent-body">
-          <div class="agent-name">Invoice Agent</div>
-          <div class="agent-desc">Create invoices · Send as image via WhatsApp</div>
-        </div>
-        <span class="agent-badge badge-off" id="badge-invoice">—</span>
-        <span class="node-arrow">›</span>
-      </a>
-
-      <a class="agent-node" href="/health" id="an2">
-        <div class="agent-icon-wrap" style="background:rgba(239,68,68,.1)">💊</div>
-        <div class="agent-body">
-          <div class="agent-name">Health Agent</div>
-          <div class="agent-desc">Medication reminders · Image analysis · Patient care</div>
-        </div>
-        <span class="agent-badge badge-off" id="badge-health">—</span>
-        <span class="node-arrow">›</span>
-      </a>
-
-      <a class="agent-node" href="/appointment" id="an3">
-        <div class="agent-icon-wrap" style="background:rgba(168,85,247,.1)">🏥</div>
-        <div class="agent-body">
-          <div class="agent-name">Appointment Agent</div>
-          <div class="agent-desc">Schedule · Remind · Manage medical appointments</div>
-        </div>
-        <span class="agent-badge badge-off" id="badge-appointment">—</span>
-        <span class="node-arrow">›</span>
-      </a>
-
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="ss-item"><div class="ss-dot" style="background:#25D366"></div><div class="ss-text">WhatsApp <strong id="ss-wa">—</strong></div></div>
+      <div class="ss-item"><div class="ss-dot" style="background:#f59e0b"></div><div class="ss-text">Low Stock <strong id="ss-low">—</strong></div></div>
+      <div class="ss-item"><div class="ss-dot" style="background:#ef4444"></div><div class="ss-text">Patients <strong id="ss-pts">—</strong></div></div>
+      <div class="ss-item"><div class="ss-dot" style="background:#a855f7"></div><div class="ss-text">Appts Today <strong id="ss-appt">—</strong></div></div>
+      <div class="ss-time" id="ss-time">—</div>
     </div>
   </div>
-</div>
 
-<!-- Stats bar -->
-<div class="stats-bar">
-  <div class="stat-item"><div class="stat-dot" style="background:#25D366"></div><div class="stat-text">WhatsApp <strong id="stat-wa">—</strong></div></div>
-  <div class="stat-item"><div class="stat-dot" style="background:#f59e0b"></div><div class="stat-text">Low Stock <strong id="stat-low">—</strong></div></div>
-  <div class="stat-item"><div class="stat-dot" style="background:#3b82f6"></div><div class="stat-text">Patients <strong id="stat-patients">—</strong></div></div>
-  <div class="stat-item"><div class="stat-dot" style="background:#a855f7"></div><div class="stat-text">Appointments Today <strong id="stat-appt">—</strong></div></div>
-  <div style="margin-left:auto;font-size:12px;color:#334155">Whatfy · <span id="stat-time">loading…</span></div>
+  <!-- Right panel -->
+  <div class="rpanel">
+    <div class="rp-section">Stats</div>
+    <div class="rp-stat">
+      <div class="rps-icon" style="background:rgba(245,158,11,.1)">📦</div>
+      <div class="rps-body">
+        <div class="rps-val" id="rp-low">—</div>
+        <div class="rps-lbl">Low Stock Items</div>
+      </div>
+    </div>
+    <div class="rp-stat">
+      <div class="rps-icon" style="background:rgba(59,130,246,.1)">🧾</div>
+      <div class="rps-body">
+        <div class="rps-val" id="rp-draft">—</div>
+        <div class="rps-lbl">Draft Invoices</div>
+      </div>
+    </div>
+    <div class="rp-stat">
+      <div class="rps-icon" style="background:rgba(239,68,68,.1)">💊</div>
+      <div class="rps-body">
+        <div class="rps-val" id="rp-pts">—</div>
+        <div class="rps-lbl">Patients</div>
+      </div>
+    </div>
+    <div class="rp-stat">
+      <div class="rps-icon" style="background:rgba(168,85,247,.1)">🏥</div>
+      <div class="rps-body">
+        <div class="rps-val" id="rp-appt">—</div>
+        <div class="rps-lbl">Appointments Today</div>
+      </div>
+    </div>
+
+    <div class="rp-section" style="margin-top:8px">Active Agents</div>
+    <div id="rp-agents" style="padding:8px"></div>
+
+    <div class="rp-section" style="margin-top:8px">Quick Links</div>
+    <div style="padding:8px;display:flex;flex-direction:column;gap:6px">
+      <a href="/connect" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(37,211,102,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📱 Connect WhatsApp</a>
+      <a href="/chat" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(59,130,246,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">💬 Open Conversations</a>
+      <a href="/campaign" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(245,158,11,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📣 Bulk Campaign</a>
+      <a href="/docs-api" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(255,255,255,.15)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📖 API Docs</a>
+    </div>
+  </div>
+
 </div>
 
 <script>
-async function loadStats() {
-  try {
+const AGENT_DEFS = [
+  {id:'shop',    el:'an-shop',    badge:'badge-shop',    label:'Shop Agent',       warn: s=> s.g_low>0 ? `⚠ ${s.g_low} low` : null},
+  {id:'invoice', el:'an-invoice', badge:'badge-invoice', label:'Invoice Agent',    warn: s=> s.inv_draft>0 ? `${s.inv_draft} draft` : null},
+  {id:'health',  el:'an-health',  badge:'badge-health',  label:'Health Agent',     warn: _=> null},
+  {id:'appointment',el:'an-appt', badge:'badge-appt',    label:'Appt Agent',       warn: s=> s.appt_today>0 ? `${s.appt_today} today` : null},
+];
+
+async function loadStats(){
+  try{
     const r = await fetch('/api/dashboard/stats');
     const s = await r.json();
-    if (s.error) return;
+    if(s.error) return;
 
-    // Stats bar
-    document.getElementById('stat-wa').textContent = s.wa_phone || 'Connected';
-    document.getElementById('stat-low').textContent = s.g_low + ' items';
-    document.getElementById('stat-patients').textContent = s.p_total;
-    document.getElementById('stat-appt').textContent = s.appt_today;
-    document.getElementById('stat-time').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    // Top bar & stats strip
+    const waTag = document.getElementById('wa-tag');
+    if(waTag) waTag.textContent = 'WhatsApp · ' + (s.wa_phone || 'Connected');
+    document.getElementById('hub-phone').textContent = s.wa_phone || '—';
+    document.getElementById('ss-wa').textContent    = s.wa_phone ? 'Connected' : 'Offline';
+    document.getElementById('ss-low').textContent   = s.g_low + ' items';
+    document.getElementById('ss-pts').textContent   = s.p_total;
+    document.getElementById('ss-appt').textContent  = s.appt_today;
+    document.getElementById('ss-time').textContent  = 'Updated ' + new Date().toLocaleTimeString();
 
-    // Agent badges + enabled class
-    const agentDefs = [
-      {id: 'shop',        node: 'an0', warn: s.g_low > 0 ? `⚠ ${s.g_low} low` : null},
-      {id: 'invoice',     node: 'an1', warn: s.inv_draft > 0 ? `${s.inv_draft} draft` : null},
-      {id: 'health',      node: 'an2', warn: null},
-      {id: 'appointment', node: 'an3', warn: s.appt_today > 0 ? `${s.appt_today} today` : null},
-    ];
+    // Right panel stats
+    document.getElementById('rp-low').textContent   = s.g_low;
+    document.getElementById('rp-draft').textContent = s.inv_draft;
+    document.getElementById('rp-pts').textContent   = s.p_total;
+    document.getElementById('rp-appt').textContent  = s.appt_today;
 
-    agentDefs.forEach(({id, node, warn}) => {
-      const badge = document.getElementById('badge-' + id);
-      const el    = document.getElementById(node);
+    // Low-stock nav badge
+    const navLow = document.getElementById('nav-low');
+    if(s.g_low>0){navLow.textContent=s.g_low;navLow.style.display='';}
+    else navLow.style.display='none';
+
+    // Agent badges + right panel list
+    let agentHtml = '';
+    AGENT_DEFS.forEach(({id,el,badge,label,warn})=>{
+      const node  = document.getElementById(el);
+      const bdge  = document.getElementById(badge);
       const on    = s.agents[id]?.enabled;
-      el.classList.toggle('enabled', !!on);
-      if (warn) {
-        badge.textContent = warn;
-        badge.className = 'agent-badge badge-warn';
-      } else if (on) {
-        badge.textContent = 'Active';
-        badge.className = 'agent-badge badge-on';
+      const warnT = warn(s);
+      node.classList.toggle('on', !!on);
+      if(warnT){
+        bdge.textContent = warnT; bdge.className='an-badge badge-warn';
+      } else if(on){
+        bdge.textContent = 'Active'; bdge.className='an-badge badge-on';
       } else {
-        badge.textContent = 'Inactive';
-        badge.className = 'agent-badge badge-off';
+        bdge.textContent = 'Inactive'; bdge.className='an-badge badge-off';
       }
+      agentHtml += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.02);margin-bottom:4px">
+        <span style="font-size:12.5px;color:#94a3b8">${label}</span>
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;${on?'background:rgba(37,211,102,.1);color:#4ade80':'background:rgba(255,255,255,.04);color:#475569'}">${on?'ON':'OFF'}</span>
+      </div>`;
     });
+    document.getElementById('rp-agents').innerHTML = agentHtml;
 
     drawConnections();
-  } catch(e) { console.warn('Stats error', e); }
+  } catch(e){ console.warn('stats error',e); }
 }
 
-function drawConnections() {
+function drawConnections(){
   const svg    = document.getElementById('flowSvg');
   const canvas = document.getElementById('flowCanvas');
   const hub    = document.getElementById('hubNode');
   const agents = document.querySelectorAll('.agent-node');
-  const canvasRect = canvas.getBoundingClientRect();
-  const hubRect    = hub.getBoundingClientRect();
-  const startX = hubRect.right  - canvasRect.left;
-  const startY = hubRect.top + hubRect.height / 2 - canvasRect.top;
-  svg.innerHTML = '';
-  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-  defs.innerHTML = `<marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-    <path d="M0,0 L0,6 L8,3 z" fill="#25D366" opacity=".7"/></marker>`;
-  svg.appendChild(defs);
-  agents.forEach((agent, i) => {
-    const agentRect = agent.getBoundingClientRect();
-    const endX = agentRect.left - canvasRect.left;
-    const endY = agentRect.top + agentRect.height / 2 - canvasRect.top;
-    const midX = (startX + endX) / 2;
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M${startX},${startY} C${midX},${startY} ${midX},${endY} ${endX},${endY}`);
-    path.setAttribute('stroke','#25D366');
-    path.setAttribute('stroke-width','1.5');
-    path.setAttribute('fill','none');
-    path.setAttribute('stroke-dasharray','6 4');
-    path.setAttribute('opacity', agent.classList.contains('enabled') ? '0.85' : '0.35');
-    path.setAttribute('marker-end','url(#arrow)');
-    path.style.animation = `dash ${18+i*3}s linear infinite`;
-    svg.appendChild(path);
-    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    dot.setAttribute('cx',startX); dot.setAttribute('cy',startY);
-    dot.setAttribute('r','4'); dot.setAttribute('fill','#25D366'); dot.setAttribute('opacity','0.6');
-    svg.appendChild(dot);
+  if(!svg||!canvas||!hub||!agents.length) return;
+  const cr = canvas.getBoundingClientRect();
+  const hr = hub.getBoundingClientRect();
+  const startX = hr.right - cr.left;
+  const startY = hr.top + hr.height/2 - cr.top;
+  svg.innerHTML = `<defs>
+    <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L7,3 z" fill="#25D366" opacity=".55"/>
+    </marker></defs>`;
+  agents.forEach((ag,i)=>{
+    const ar  = ag.getBoundingClientRect();
+    const ex  = ar.left - cr.left;
+    const ey  = ar.top + ar.height/2 - cr.top;
+    const mx  = (startX + ex)/2;
+    const on  = ag.classList.contains('on');
+    const p   = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',`M${startX},${startY} C${mx},${startY} ${mx},${ey} ${ex},${ey}`);
+    p.setAttribute('stroke','#25D366');
+    p.setAttribute('stroke-width','1.5');
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke-dasharray','5 4');
+    p.setAttribute('opacity', on?'0.7':'0.25');
+    p.setAttribute('marker-end','url(#arr)');
+    p.style.animation=`dash${i} ${16+i*3}s linear infinite`;
+    const style=document.createElementNS('http://www.w3.org/2000/svg','style');
+    style.textContent=`@keyframes dash${i}{to{stroke-dashoffset:-${60+i*20}}}`;
+    svg.appendChild(style);
+    svg.appendChild(p);
   });
 }
 
-async function disconnectWA() {
-  if (!confirm('Disconnect WhatsApp? You will need to scan the QR code again to reconnect.')) return;
-  try {
-    await fetch('/api/wa/logout');
-    location.href = '/connect';
-  } catch(e) { alert('Disconnect failed: ' + e); }
+async function disconnectWA(){
+  if(!confirm('Disconnect WhatsApp? You will need to scan QR again to reconnect.')) return;
+  try{ await fetch('/api/wa/logout'); location.href='/connect'; }
+  catch(e){ alert('Error: '+e); }
 }
 
-window.addEventListener('load', () => { loadStats(); setInterval(loadStats, 30000); });
+window.addEventListener('load', ()=>{ loadStats(); setInterval(loadStats, 25000); });
 window.addEventListener('resize', drawConnections);
 </script>
-
 </body>
 </html>
