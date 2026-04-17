@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, Body, UploadFile, File, BackgroundTa
 from fastapi.responses import RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict, Any
-import sqlite3, hashlib, secrets, json, time, io, base64, threading, os
+import sqlite3, hashlib, secrets, json, time, io, base64, threading, os, random
 import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -128,6 +128,14 @@ def _init():
             created_at INTEGER DEFAULT (strftime('%s','now')),
             sent_at    INTEGER DEFAULT NULL
         );
+        CREATE TABLE IF NOT EXISTS shop_profile (
+            user_id      INTEGER PRIMARY KEY,
+            shop_name    TEXT DEFAULT '',
+            shop_phone   TEXT DEFAULT '',
+            shop_address TEXT DEFAULT '',
+            shop_email   TEXT DEFAULT '',
+            logo_data    TEXT DEFAULT ''
+        );
         CREATE TABLE IF NOT EXISTS patients (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL,
@@ -196,17 +204,35 @@ def _init():
             error       TEXT DEFAULT ''
         );
         CREATE INDEX IF NOT EXISTS idx_cc_campaign ON campaign_contacts(campaign_id, status);
+        CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_grocery_user ON grocery(user_id);
+        CREATE INDEX IF NOT EXISTS idx_grocery_low ON grocery(user_id, qty, low_thresh, ordered);
+        CREATE INDEX IF NOT EXISTS idx_patients_user ON patients(user_id);
+        CREATE INDEX IF NOT EXISTS idx_appts_user ON appointments(user_id, appt_date);
+        CREATE INDEX IF NOT EXISTS idx_appts_status ON appointments(user_id, status, appt_date);
+        CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(user_id, status);
+        CREATE INDEX IF NOT EXISTS idx_agent_cfg_user ON agent_cfg(user_id);
+        CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
     """)
     db.close()
 
 _init()
 
-# Migrate existing DB — add columns if missing
+# Migrate existing DB — add columns/tables if missing
 def _migrate():
     db = _db()
     for stmt in [
         "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN verification_token TEXT DEFAULT ''",
+        # shop_profile table (added later — create if missing)
+        """CREATE TABLE IF NOT EXISTS shop_profile (
+            user_id      INTEGER PRIMARY KEY,
+            shop_name    TEXT DEFAULT '',
+            shop_phone   TEXT DEFAULT '',
+            shop_address TEXT DEFAULT '',
+            shop_email   TEXT DEFAULT '',
+            logo_data    TEXT DEFAULT ''
+        )""",
     ]:
         try: db.execute(stmt)
         except: pass
@@ -274,7 +300,7 @@ def _campaign_run(cid: int):
                 break
 
             msg   = camp["message"]
-            delay = camp["delay_secs"] or 20
+            delay = random.randint(20, 60)   # random 20–60s — reduces spam detection
             name  = (row.get("name") or "").strip()
             if name:
                 msg = msg.replace("{{name}}", name).replace("{name}", name)
@@ -479,22 +505,33 @@ def _connect(): return RedirectResponse("/connect",  status_code=302)
 def _verify():  return RedirectResponse("/verify",   status_code=302)
 def _home():    return RedirectResponse("/dashboard", status_code=302)
 
+_wa_cache: dict = {"connected": False, "phone": ""}
+
 def _wa_status():
-    try:
-        r = requests.get(f"{API_BASE}/status", timeout=2)
-        s = r.json()
-        connected = bool(s.get("connected") and s.get("loggedIn"))
-        phone = ""
-        if connected:
-            try:
-                u = requests.get(f"{API_BASE}/user", timeout=2).json()
-                # /user returns {"phone": "919876543210", "jid": "...", "name": "..."}
-                phone = u.get("phone", "")
-            except:
-                pass
-        return connected, phone
-    except:
-        return False, ""
+    """Instant read — always returns cached value, never blocks."""
+    return _wa_cache["connected"], _wa_cache["phone"]
+
+def _wa_poll():
+    """Background thread: refreshes WA status every 20 s."""
+    while True:
+        try:
+            r = requests.get(f"{API_BASE}/status", timeout=3)
+            s = r.json()
+            connected = bool(s.get("connected") and s.get("loggedIn"))
+            phone = ""
+            if connected:
+                try:
+                    u = requests.get(f"{API_BASE}/user", timeout=3).json()
+                    phone = u.get("phone", "")
+                except Exception:
+                    pass
+            _wa_cache.update({"connected": connected, "phone": phone})
+        except Exception:
+            _wa_cache.update({"connected": False, "phone": ""})
+        time.sleep(20)
+
+# Start background WA poller once
+threading.Thread(target=_wa_poll, daemon=True).start()
 
 def _send_wa(number: str, msg: str):
     return requests.post(f"{API_BASE}/send",
@@ -532,47 +569,168 @@ def _ai_vision(image_b64: str, prompt: str) -> str:
 
 # ── Invoice image ─────────────────────────────────────────────────────────────
 
-def _invoice_image(inv_no, cust_name, items, total):
-    _fonts = [
-        ("C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/arial.ttf"),
+def _invoice_image(inv_no, cust_name, cust_phone, items, total,
+                   shop_name="", shop_address="", shop_phone="",
+                   shop_email="", logo_data=""):
+    # ── Fonts ──────────────────────────────────────────────────────────────────
+    _font_pairs = [
+        ("C:/Windows/Fonts/arialbd.ttf",  "C:/Windows/Fonts/arial.ttf"),
+        ("C:/Windows/Fonts/calibrib.ttf", "C:/Windows/Fonts/calibri.ttf"),
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        ("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
     ]
-    fb = fr = fs = None
-    for bold, reg in _fonts:
+    def _font(path, size):
+        try: return ImageFont.truetype(path, size)
+        except: return None
+
+    f_title = f_hdr = f_reg = f_sm = f_xs = None
+    for bold, reg in _font_pairs:
+        f_title = _font(bold, 28)
+        f_hdr   = _font(bold, 14)
+        f_reg   = _font(reg,  14)
+        f_sm    = _font(reg,  12)
+        f_xs    = _font(reg,  11)
+        if f_title: break
+    if not f_title:
+        d_ = ImageFont.load_default()
+        f_title = f_hdr = f_reg = f_sm = f_xs = d_
+
+    # ── Colours ────────────────────────────────────────────────────────────────
+    C_BRAND   = (18, 140, 126)   # WhatsApp teal header
+    C_ACCENT  = (37, 211, 102)   # green highlights
+    C_TBL_HD  = (30, 55, 45)     # table header dark
+    C_ROW_A   = (245, 250, 247)  # even row
+    C_ROW_B   = (255, 255, 255)  # odd row
+    C_TEXT    = (25,  25,  25)
+    C_MUTED   = (100, 115, 108)
+    C_WHITE   = (255, 255, 255)
+    C_TOTAL   = (20,  90,  60)
+    C_BORDER  = (210, 225, 218)
+    C_BG      = (252, 254, 252)
+
+    # ── Layout constants ───────────────────────────────────────────────────────
+    W          = 720
+    PAD        = 40
+    ROW_H      = 36
+    LOGO_SZ    = 80
+    HDR_H      = 130       # header block height
+    INFO_H     = 70        # invoice info + customer row
+    COL_W      = [300, 60, 100, 120]  # Item | Qty | Rate | Amount
+    TABLE_TOP  = HDR_H + INFO_H + 20
+    n_rows     = len(items)
+    H = TABLE_TOP + ROW_H + n_rows * ROW_H + ROW_H + 80  # tbl header+rows+total+footer
+
+    img = Image.new("RGB", (W, H), C_BG)
+    d   = ImageDraw.Draw(img)
+
+    # ── HEADER BAR ─────────────────────────────────────────────────────────────
+    d.rectangle([0, 0, W, HDR_H], fill=C_BRAND)
+    # gradient-ish: lighter stripe
+    d.rectangle([0, HDR_H - 8, W, HDR_H], fill=(22, 160, 145))
+
+    logo_x_end = PAD  # where text starts (may shift right if logo present)
+
+    # Shop logo (if provided)
+    if logo_data:
         try:
-            fb = ImageFont.truetype(bold, 22)
-            fr = ImageFont.truetype(reg, 18)
-            fs = ImageFont.truetype(reg, 14)
-            break
+            logo_bytes = base64.b64decode(logo_data.split(",")[-1])
+            logo_img   = Image.open(io.BytesIO(logo_bytes)).convert("RGBA")
+            logo_img.thumbnail((LOGO_SZ, LOGO_SZ), Image.LANCZOS)
+            # white circle mask background
+            mask = Image.new("L", (LOGO_SZ, LOGO_SZ), 0)
+            from PIL import ImageDraw as _ID
+            _ID.Draw(mask).ellipse([0, 0, LOGO_SZ, LOGO_SZ], fill=255)
+            bg_circle = Image.new("RGB", (LOGO_SZ, LOGO_SZ), C_WHITE)
+            bg_circle.paste(logo_img.resize((LOGO_SZ, LOGO_SZ)), mask=logo_img.split()[3] if logo_img.mode == "RGBA" else None)
+            lx = PAD
+            ly = (HDR_H - LOGO_SZ) // 2
+            img.paste(bg_circle, (lx, ly))
+            logo_x_end = PAD + LOGO_SZ + 16
         except:
-            continue
-    if fb is None:
-        fb = fr = fs = ImageFont.load_default()
-    pad=40; col=[280,70,100,110]; rh=42
-    W=sum(col)+2*pad; H=180+(len(items)+3)*rh+60
-    img=Image.new("RGB",(W,H),(255,255,255)); d=ImageDraw.Draw(img)
-    d.rectangle([0,0,W,160],fill=(37,211,102))
-    d.text((pad,18),"INVOICE",font=fb,fill=(255,255,255))
-    d.text((pad,52),f"#{inv_no}",font=fr,fill=(255,255,255))
-    d.text((pad,82),f"To: {cust_name}",font=fr,fill=(255,255,255))
-    d.text((pad,112),datetime.now().strftime("%d %b %Y"),font=fs,fill=(210,255,210))
-    y=160+pad; x=pad
-    for h,cw in zip(["Item","Qty","Rate","Amt"],col):
-        d.rectangle([x,y,x+cw,y+rh],fill=(20,160,80))
-        d.text((x+8,y+12),h,font=fs,fill=(255,255,255)); x+=cw
-    for ri,item in enumerate(items):
-        y+=rh; x=pad; bg=(248,252,248) if ri%2==0 else (255,255,255)
-        amt=item.get("qty",0)*item.get("price",0)
-        for v,cw in zip([item.get("name",""),str(item.get("qty",0)),
-                         f"{item.get('price',0):.2f}",f"{amt:.2f}"],col):
-            d.rectangle([x,y,x+cw,y+rh],fill=bg)
-            d.text((x+8,y+12),str(v),font=fs,fill=(30,30,30)); x+=cw
-    y+=rh; x=pad
-    d.rectangle([x,y,x+sum(col),y+rh],fill=(37,211,102))
-    d.text((x+8,y+12),"TOTAL",font=fb,fill=(255,255,255))
-    d.text((x+sum(col[:3])+8,y+12),f"Rs. {total:.2f}",font=fb,fill=(255,255,255))
-    buf=io.BytesIO(); img.save(buf,"JPEG",quality=95)
+            pass
+
+    # Shop name & details on the header
+    sn = shop_name or "Your Shop"
+    d.text((logo_x_end, 24), sn, font=f_title, fill=C_WHITE)
+    detail_y = 62
+    for detail in [shop_phone, shop_address, shop_email]:
+        if detail:
+            d.text((logo_x_end, detail_y), detail, font=f_sm, fill=(200, 240, 220))
+            detail_y += 18
+
+    # "INVOICE" label — right side of header
+    lbl = "INVOICE"
+    bb  = d.textbbox((0, 0), lbl, font=f_title)
+    lbl_w = bb[2] - bb[0]
+    d.text((W - PAD - lbl_w, 24), lbl, font=f_title, fill=C_WHITE)
+    # Sub-label: inv no + date
+    sub_lines = [f"# {inv_no}", datetime.now().strftime("%d %b %Y")]
+    sy = 62
+    for sl in sub_lines:
+        bb2 = d.textbbox((0, 0), sl, font=f_sm)
+        d.text((W - PAD - (bb2[2] - bb2[0]), sy), sl, font=f_sm, fill=(200, 240, 220))
+        sy += 18
+
+    # ── BILL-TO / INVOICE INFO STRIP ──────────────────────────────────────────
+    strip_y = HDR_H + 12
+    d.rectangle([PAD, strip_y, W - PAD, strip_y + INFO_H - 4], fill=C_WHITE,
+                outline=C_BORDER, width=1)
+    # Bill To
+    d.text((PAD + 12, strip_y + 10), "BILL TO", font=f_hdr, fill=C_MUTED)
+    d.text((PAD + 12, strip_y + 28), cust_name, font=f_hdr, fill=C_TEXT)
+    if cust_phone:
+        d.text((PAD + 12, strip_y + 46), cust_phone, font=f_sm, fill=C_MUTED)
+
+    # ── TABLE HEADER ──────────────────────────────────────────────────────────
+    ty = TABLE_TOP
+    x  = PAD
+    headers = ["Item / Description", "Qty", "Rate (₹)", "Amount (₹)"]
+    for hdr, cw in zip(headers, COL_W):
+        d.rectangle([x, ty, x + cw, ty + ROW_H], fill=C_TBL_HD)
+        d.text((x + 8, ty + 10), hdr, font=f_xs, fill=C_WHITE)
+        x += cw
+
+    # ── TABLE ROWS ────────────────────────────────────────────────────────────
+    for ri, item in enumerate(items):
+        ty += ROW_H
+        x   = PAD
+        bg  = C_ROW_A if ri % 2 == 0 else C_ROW_B
+        amt = item.get("qty", 0) * item.get("price", 0)
+        vals = [
+            item.get("name", ""),
+            str(item.get("qty", 0)),
+            f"{item.get('price', 0):.2f}",
+            f"{amt:.2f}",
+        ]
+        for v, cw in zip(vals, COL_W):
+            d.rectangle([x, ty, x + cw, ty + ROW_H], fill=bg, outline=C_BORDER, width=1)
+            d.text((x + 8, ty + 10), str(v), font=f_sm, fill=C_TEXT)
+            x += cw
+
+    # ── TOTAL ROW ─────────────────────────────────────────────────────────────
+    ty += ROW_H
+    x   = PAD
+    d.rectangle([x, ty, x + sum(COL_W), ty + ROW_H], fill=C_TOTAL)
+    d.text((x + 8, ty + 10), "TOTAL", font=f_hdr, fill=C_WHITE)
+    total_str = f"Rs. {total:.2f}"
+    bb3 = d.textbbox((0, 0), total_str, font=f_hdr)
+    tw  = bb3[2] - bb3[0]
+    d.text((x + sum(COL_W) - tw - 12, ty + 10), total_str, font=f_hdr, fill=C_ACCENT)
+
+    # ── FOOTER ────────────────────────────────────────────────────────────────
+    fy = ty + ROW_H + 16
+    d.line([PAD, fy, W - PAD, fy], fill=C_BORDER, width=1)
+    thank = "Thank you for your business!"
+    bb4   = d.textbbox((0, 0), thank, font=f_sm)
+    d.text(((W - (bb4[2] - bb4[0])) // 2, fy + 10), thank, font=f_sm, fill=C_MUTED)
+    if shop_name:
+        pw = d.textbbox((0, 0), shop_name, font=f_xs)
+        d.text(((W - (pw[2] - pw[0])) // 2, fy + 30), shop_name, font=f_xs, fill=C_MUTED)
+
+    buf = io.BytesIO()
+    img.save(buf, "JPEG", quality=95)
     return buf.getvalue()
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -586,6 +744,50 @@ def root(request: Request):
 @app.get("/docs-api")
 def docs_page(request: Request):
     return templates.TemplateResponse(request, "docs.html")
+
+@app.get("/settings")
+def settings_page(request: Request):
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
+    wa_ok, wa_phone = _wa_status()
+    return templates.TemplateResponse(request, "settings.html", {
+        "user": user, "wa_ok": wa_ok, "wa_phone": wa_phone,
+        "active": "settings", "g_low": 0,
+    })
+
+@app.post("/api/settings/profile")
+async def update_profile(request: Request):
+    uid, user = _page_guard(request)
+    if not uid: return JSONResponse({"error": "Unauthorized"}, 401)
+    body = await request.json()
+    name = (body.get("name") or "").strip()
+    if not name:
+        return JSONResponse({"error": "Name is required"})
+    db = _db()
+    db.execute("UPDATE users SET name=? WHERE id=?", (name, uid))
+    db.commit(); db.close()
+    return JSONResponse({"ok": True, "name": name})
+
+@app.post("/api/settings/password")
+async def change_password(request: Request):
+    uid, user = _page_guard(request)
+    if not uid: return JSONResponse({"error": "Unauthorized"}, 401)
+    body = await request.json()
+    current = body.get("current_password", "")
+    new_pw  = body.get("new_password", "")
+    if not current or not new_pw:
+        return JSONResponse({"error": "Both fields required"})
+    if len(new_pw) < 6:
+        return JSONResponse({"error": "Password must be at least 6 characters"})
+    import bcrypt
+    db = _db()
+    row = db.execute("SELECT password_hash FROM users WHERE id=?", (uid,)).fetchone()
+    if not row or not bcrypt.checkpw(current.encode(), row["password_hash"].encode()):
+        db.close(); return JSONResponse({"error": "Current password is incorrect"})
+    new_hash = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+    db.execute("UPDATE users SET password_hash=? WHERE id=?", (new_hash, uid))
+    db.commit(); db.close()
+    return JSONResponse({"ok": True})
 
 @app.get("/terms")
 def terms_page(request: Request):
@@ -684,14 +886,12 @@ def do_logout(request: Request):
 
 @app.get("/connect")
 def connect_page(request: Request):
-    if not _uid(request): return _auth()
+    uid, user = _page_guard(request)
+    if not uid: return _auth()
     wa_ok, wa_phone = _wa_status()
-    uid = _uid(request)
-    db = _db()
-    user = dict(db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone())
-    db.close()
     return templates.TemplateResponse(request, "connect.html", {
-        "user": user, "wa_ok": wa_ok, "wa_phone": wa_phone
+        "user": user, "wa_ok": wa_ok, "wa_phone": wa_phone,
+        "active": "connect", "g_low": 0,
     })
 
 @app.get("/verify")
@@ -801,29 +1001,43 @@ def _page_guard(request: Request):
     if not uid:
         return None, None
     db = _db()
-    row = db.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
+    row = db.execute("SELECT id,email,name,email_verified FROM users WHERE id=?", (uid,)).fetchone()
     db.close()
     if not row:
         return None, None
     return uid, dict(row)
+
+def _get_dashboard_stats(uid: int, db) -> dict:
+    """Single-connection helper: returns all dashboard counters + agent config."""
+    today = datetime.now().strftime("%Y-%m-%d")
+    row = db.execute("""
+        SELECT
+            (SELECT COUNT(*) FROM grocery     WHERE user_id=? AND qty<=low_thresh AND ordered=0) AS g_low,
+            (SELECT COUNT(*) FROM invoices    WHERE user_id=? AND status='draft')               AS inv_draft,
+            (SELECT COUNT(*) FROM patients    WHERE user_id=?)                                  AS p_total,
+            (SELECT COUNT(*) FROM appointments WHERE user_id=? AND appt_date=? AND status='scheduled') AS appt_today
+    """, (uid, uid, uid, uid, today)).fetchone()
+    agents = {r["agent"]: {"enabled": bool(r["enabled"]), "wa_number": r["wa_number"]}
+              for r in db.execute("SELECT agent,enabled,wa_number FROM agent_cfg WHERE user_id=?", (uid,)).fetchall()}
+    return {
+        "g_low":      row["g_low"],
+        "inv_draft":  row["inv_draft"],
+        "p_total":    row["p_total"],
+        "appt_today": row["appt_today"],
+        "agents":     agents,
+    }
 
 @app.get("/dashboard")
 def dashboard(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
     db = _db()
-    g_low = db.execute("SELECT COUNT(*) c FROM grocery WHERE user_id=? AND qty<=low_thresh AND ordered=0",(uid,)).fetchone()["c"]
-    inv_draft = db.execute("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='draft'",(uid,)).fetchone()["c"]
-    p_total = db.execute("SELECT COUNT(*) c FROM patients WHERE user_id=?",(uid,)).fetchone()["c"]
-    appt_today = db.execute("SELECT COUNT(*) c FROM appointments WHERE user_id=? AND appt_date=? AND status='scheduled'",
-                             (uid,datetime.now().strftime("%Y-%m-%d"))).fetchone()["c"]
-    agents = {r["agent"]:dict(r) for r in db.execute("SELECT * FROM agent_cfg WHERE user_id=?",(uid,)).fetchall()}
+    stats = _get_dashboard_stats(uid, db)
     db.close()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "dashboard.html", {
-        "user": user, "wa_phone": wa_phone, "wa_ok": True,
-        "g_low": g_low, "inv_draft": inv_draft, "p_total": p_total,
-        "appt_today": appt_today, "agents": agents,
+        "user": user, "wa_phone": wa_phone, "wa_ok": wa_connected,
+        **stats,
     })
 
 @app.get("/shop")
@@ -831,14 +1045,16 @@ def shop_page(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
     db = _db()
-    items = [dict(r) for r in db.execute("SELECT * FROM grocery WHERE user_id=? ORDER BY name",(uid,)).fetchall()]
-    cfg = db.execute("SELECT * FROM agent_cfg WHERE user_id=? AND agent='shop'",(uid,)).fetchone()
+    items = [dict(r) for r in db.execute(
+        "SELECT id,name,qty,unit,low_thresh,price,ordered FROM grocery WHERE user_id=? ORDER BY name",(uid,)).fetchall()]
+    cfg = db.execute("SELECT enabled,wa_number,notes FROM agent_cfg WHERE user_id=? AND agent='shop'",(uid,)).fetchone()
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
+    g_low = sum(1 for i in items if i["qty"] <= i["low_thresh"] and not i["ordered"])
     db.close()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "shop.html", {
-        "user": user, "items": items, "cfg": cfg,
-        "wa_ok": True, "wa_phone": wa_phone, "active": "shop"
+        "user": user, "items": items, "cfg": cfg, "g_low": g_low,
+        "wa_ok": wa_connected, "wa_phone": wa_phone, "active": "shop"
     })
 
 @app.get("/invoice")
@@ -846,19 +1062,38 @@ def invoice_page(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
     db = _db()
+    # Only select the columns we actually render in the list — skip the heavy items JSON
     invs = [dict(r) for r in db.execute(
-        "SELECT * FROM invoices WHERE user_id=? ORDER BY created_at DESC LIMIT 50",(uid,)).fetchall()]
+        "SELECT id,inv_no,cust_name,cust_phone,total,status,created_at FROM invoices "
+        "WHERE user_id=? ORDER BY created_at DESC LIMIT 50", (uid,)).fetchall()]
     for inv in invs:
-        try: inv["items"] = json.loads(inv["items"])
-        except: inv["items"] = []
+        inv["items"] = []   # items loaded on demand (preview/send)
         inv["date"] = datetime.fromtimestamp(inv["created_at"]).strftime("%d %b %Y")
-    cfg = db.execute("SELECT * FROM agent_cfg WHERE user_id=? AND agent='invoice'",(uid,)).fetchone()
+    cfg = db.execute("SELECT enabled,wa_number,notes FROM agent_cfg WHERE user_id=? AND agent='invoice'",(uid,)).fetchone()
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
+    # Fetch profile WITHOUT logo_data — logo loads async via /api/invoice/logo
+    try:
+        profile = db.execute(
+            "SELECT shop_name,shop_phone,shop_address,shop_email FROM shop_profile WHERE user_id=?",
+            (uid,)).fetchone()
+        profile = dict(profile) if profile else {}
+        has_logo = bool(db.execute(
+            "SELECT 1 FROM shop_profile WHERE user_id=? AND logo_data!=''", (uid,)).fetchone())
+    except Exception:
+        profile = {}
+        has_logo = False
     db.close()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "invoice.html", {
         "user": user, "invoices": invs, "cfg": cfg,
-        "wa_ok": True, "wa_phone": wa_phone, "active": "invoice"
+        "profile": {
+            "shop_name":    profile.get("shop_name",""),
+            "shop_phone":   profile.get("shop_phone",""),
+            "shop_address": profile.get("shop_address",""),
+            "shop_email":   profile.get("shop_email",""),
+            "has_logo":     has_logo,
+        },
+        "wa_ok": wa_connected, "wa_phone": wa_phone, "active": "invoice", "g_low": 0
     })
 
 @app.get("/health")
@@ -866,17 +1101,19 @@ def health_page(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
     db = _db()
-    patients = [dict(r) for r in db.execute("SELECT * FROM patients WHERE user_id=?",(uid,)).fetchall()]
+    patients = [dict(r) for r in db.execute(
+        "SELECT id,name,phone,age,condition,medications FROM patients WHERE user_id=? ORDER BY name LIMIT 200",(uid,)).fetchall()]
     for p in patients:
         try: p["medications"] = json.loads(p["medications"])
         except: p["medications"] = []
-    cfg = db.execute("SELECT * FROM agent_cfg WHERE user_id=? AND agent='health'",(uid,)).fetchone()
+    cfg = db.execute("SELECT enabled,wa_number,notes FROM agent_cfg WHERE user_id=? AND agent='health'",(uid,)).fetchone()
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
+    g_low = db.execute("SELECT COUNT(*) c FROM grocery WHERE user_id=? AND qty<=low_thresh AND ordered=0",(uid,)).fetchone()["c"]
     db.close()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "health.html", {
-        "user": user, "patients": patients, "cfg": cfg,
-        "wa_ok": True, "wa_phone": wa_phone, "active": "health"
+        "user": user, "patients": patients, "cfg": cfg, "g_low": g_low,
+        "wa_ok": wa_connected, "wa_phone": wa_phone, "active": "health"
     })
 
 @app.get("/appointment")
@@ -885,14 +1122,16 @@ def appt_page(request: Request):
     if not uid: return _auth()
     db = _db()
     appts = [dict(r) for r in db.execute(
-        "SELECT * FROM appointments WHERE user_id=? ORDER BY appt_date,appt_time",(uid,)).fetchall()]
-    cfg = db.execute("SELECT * FROM agent_cfg WHERE user_id=? AND agent='appointment'",(uid,)).fetchone()
+        "SELECT id,patient_name,patient_phone,doctor,appt_type,appt_date,appt_time,status,notes "
+        "FROM appointments WHERE user_id=? ORDER BY appt_date DESC,appt_time LIMIT 200",(uid,)).fetchall()]
+    cfg = db.execute("SELECT enabled,wa_number,notes FROM agent_cfg WHERE user_id=? AND agent='appointment'",(uid,)).fetchone()
     cfg = dict(cfg) if cfg else {"enabled":0,"wa_number":"","notes":""}
+    g_low = db.execute("SELECT COUNT(*) c FROM grocery WHERE user_id=? AND qty<=low_thresh AND ordered=0",(uid,)).fetchone()["c"]
     db.close()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "appointment.html", {
-        "user": user, "appointments": appts, "cfg": cfg,
-        "wa_ok": True, "wa_phone": wa_phone, "active": "appointment"
+        "user": user, "appointments": appts, "cfg": cfg, "g_low": g_low,
+        "wa_ok": wa_connected, "wa_phone": wa_phone, "active": "appointment"
     })
 
 # ── Grocery API ───────────────────────────────────────────────────────────────
@@ -971,8 +1210,17 @@ def invoice_send(inv_id: int, request: Request):
     inv = db.execute("SELECT * FROM invoices WHERE id=? AND user_id=?",(inv_id,uid)).fetchone()
     if not inv: db.close(); return JSONResponse({"error":"not found"},404)
     inv = dict(inv); items = json.loads(inv["items"] or "[]")
+    profile = db.execute("SELECT * FROM shop_profile WHERE user_id=?",(uid,)).fetchone()
+    profile = dict(profile) if profile else {}
     if PIL_OK:
-        img_b = _invoice_image(inv["inv_no"],inv["cust_name"],items,inv["total"])
+        img_b = _invoice_image(
+            inv["inv_no"], inv["cust_name"], inv["cust_phone"], items, inv["total"],
+            shop_name=profile.get("shop_name",""),
+            shop_address=profile.get("shop_address",""),
+            shop_phone=profile.get("shop_phone",""),
+            shop_email=profile.get("shop_email",""),
+            logo_data=profile.get("logo_data",""),
+        )
         try:
             r = requests.post(f"{API_BASE}/send-media",
                 files={"file":("invoice.jpg",img_b,"image/jpeg")},
@@ -995,6 +1243,116 @@ def invoice_delete(inv_id: int, request: Request):
     if not uid: return JSONResponse({"error":"unauthorized"},401)
     db = _db(); db.execute("DELETE FROM invoices WHERE id=? AND user_id=?",(inv_id,uid))
     db.commit(); db.close(); return {"status":"deleted"}
+
+@app.get("/api/invoice/logo")
+def get_logo(request: Request):
+    """Return only the logo base64 — called async after page load."""
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    try:
+        db = _db()
+        row = db.execute("SELECT logo_data FROM shop_profile WHERE user_id=?",(uid,)).fetchone()
+        db.close()
+        return {"logo_data": row["logo_data"] if row and row["logo_data"] else ""}
+    except Exception:
+        return {"logo_data": ""}
+
+@app.get("/api/invoice/shop-profile")
+def get_shop_profile(request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    try:
+        db = _db()
+        row = db.execute(
+            "SELECT shop_name,shop_phone,shop_address,shop_email,logo_data FROM shop_profile WHERE user_id=?",
+            (uid,)).fetchone()
+        db.close()
+    except Exception:
+        return {"shop_name":"","shop_phone":"","shop_address":"","shop_email":"","has_logo":False}
+    if row:
+        p = dict(row)
+        p["has_logo"] = bool(p.pop("logo_data",""))
+        return p
+    return {"shop_name":"","shop_phone":"","shop_address":"","shop_email":"","has_logo":False}
+
+@app.post("/api/invoice/shop-profile")
+def save_shop_profile(request: Request, payload: Dict[str,Any]=Body(...)):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    db = _db()
+    existing = db.execute("SELECT user_id FROM shop_profile WHERE user_id=?",(uid,)).fetchone()
+    if existing:
+        db.execute("""UPDATE shop_profile SET shop_name=?,shop_phone=?,shop_address=?,shop_email=?
+                      WHERE user_id=?""",
+                   (payload.get("shop_name",""), payload.get("shop_phone",""),
+                    payload.get("shop_address",""), payload.get("shop_email",""), uid))
+    else:
+        db.execute("""INSERT INTO shop_profile (user_id,shop_name,shop_phone,shop_address,shop_email)
+                      VALUES (?,?,?,?,?)""",
+                   (uid, payload.get("shop_name",""), payload.get("shop_phone",""),
+                    payload.get("shop_address",""), payload.get("shop_email","")))
+    db.commit(); db.close()
+    return {"status":"saved"}
+
+@app.post("/api/invoice/logo")
+async def upload_logo(request: Request, file: UploadFile = File(...)):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    data = await file.read()
+    if len(data) > 2 * 1024 * 1024:
+        return JSONResponse({"error":"Image too large (max 2MB)"},400)
+    # Resize to max 400x400 using Pillow if available
+    if PIL_OK:
+        try:
+            img = Image.open(io.BytesIO(data)).convert("RGBA")
+            img.thumbnail((400, 400), Image.LANCZOS)
+            buf = io.BytesIO()
+            img.save(buf, "PNG")
+            data = buf.getvalue()
+        except:
+            pass
+    b64 = "data:image/png;base64," + base64.b64encode(data).decode()
+    db = _db()
+    existing = db.execute("SELECT user_id FROM shop_profile WHERE user_id=?",(uid,)).fetchone()
+    if existing:
+        db.execute("UPDATE shop_profile SET logo_data=? WHERE user_id=?",(b64,uid))
+    else:
+        db.execute("INSERT INTO shop_profile (user_id,logo_data) VALUES (?,?)",(uid,b64))
+    db.commit(); db.close()
+    return {"status":"saved","preview":b64}
+
+@app.delete("/api/invoice/logo")
+def delete_logo(request: Request):
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    db = _db()
+    db.execute("UPDATE shop_profile SET logo_data='' WHERE user_id=?",(uid,))
+    db.commit(); db.close()
+    return {"status":"deleted"}
+
+@app.get("/api/invoice/preview/{inv_id}")
+def invoice_preview(inv_id: int, request: Request):
+    """Return the invoice as a JPEG image for in-browser preview."""
+    uid = _uid(request)
+    if not uid: return JSONResponse({"error":"unauthorized"},401)
+    if not PIL_OK: return JSONResponse({"error":"PIL not installed"},500)
+    db = _db()
+    inv = db.execute("SELECT * FROM invoices WHERE id=? AND user_id=?",(inv_id,uid)).fetchone()
+    if not inv: db.close(); return JSONResponse({"error":"not found"},404)
+    inv = dict(inv); items = json.loads(inv["items"] or "[]")
+    profile = db.execute("SELECT * FROM shop_profile WHERE user_id=?",(uid,)).fetchone()
+    profile = dict(profile) if profile else {}
+    db.close()
+    img_b = _invoice_image(
+        inv["inv_no"], inv["cust_name"], inv["cust_phone"], items, inv["total"],
+        shop_name=profile.get("shop_name",""),
+        shop_address=profile.get("shop_address",""),
+        shop_phone=profile.get("shop_phone",""),
+        shop_email=profile.get("shop_email",""),
+        logo_data=profile.get("logo_data",""),
+    )
+    return StreamingResponse(io.BytesIO(img_b), media_type="image/jpeg",
+                             headers={"Content-Disposition":f"inline; filename=invoice-{inv['inv_no']}.jpg"})
 
 # ── Patient API ───────────────────────────────────────────────────────────────
 
@@ -1299,16 +1657,10 @@ def dashboard_stats(request: Request):
     uid = _uid(request)
     if not uid: return JSONResponse({"error":"unauthorized"}, 401)
     db = _db()
-    today = datetime.now().strftime("%Y-%m-%d")
-    g_low     = db.execute("SELECT COUNT(*) c FROM grocery WHERE user_id=? AND qty<=low_thresh AND ordered=0",(uid,)).fetchone()["c"]
-    inv_draft = db.execute("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='draft'",(uid,)).fetchone()["c"]
-    p_total   = db.execute("SELECT COUNT(*) c FROM patients WHERE user_id=?",(uid,)).fetchone()["c"]
-    appt_today= db.execute("SELECT COUNT(*) c FROM appointments WHERE user_id=? AND appt_date=? AND status='scheduled'",(uid,today)).fetchone()["c"]
-    agents    = {r["agent"]: {"enabled": bool(r["enabled"])} for r in db.execute("SELECT agent,enabled FROM agent_cfg WHERE user_id=?",(uid,)).fetchall()}
+    stats = _get_dashboard_stats(uid, db)
     db.close()
     _, wa_phone = _wa_status()
-    return {"g_low": g_low, "inv_draft": inv_draft, "p_total": p_total,
-            "appt_today": appt_today, "agents": agents, "wa_phone": wa_phone}
+    return {**stats, "wa_phone": wa_phone}
 
 # ── Agent config ──────────────────────────────────────────────────────────────
 
@@ -1395,18 +1747,18 @@ Be professional, empathetic, and organised."""
 def campaign_page(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
-    _, wa_phone = _wa_status()
     db = _db()
     camps = [dict(r) for r in db.execute(
-        "SELECT * FROM campaigns WHERE user_id=? ORDER BY created_at DESC", (uid,)).fetchall()]
+        "SELECT id,name,message,status,total,sent,failed,created_at FROM campaigns "
+        "WHERE user_id=? ORDER BY created_at DESC LIMIT 100", (uid,)).fetchall()]
     db.close()
-    # Attach live running flag
     for c in camps:
         c["running"] = c["id"] in _campaign_threads
         c["date"] = datetime.fromtimestamp(c["created_at"]).strftime("%d %b %Y, %H:%M")
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "campaign.html", {
-        "user": user, "wa_phone": wa_phone, "wa_ok": True, "active": "campaign",
-        "campaigns": camps,
+        "user": user, "wa_phone": wa_phone, "wa_ok": wa_connected, "active": "campaign",
+        "campaigns": camps, "g_low": 0,
     })
 
 # ── Campaign API ──────────────────────────────────────────────────────────────
@@ -1579,10 +1931,10 @@ def test_email(request: Request):
 def chat_page(request: Request):
     uid, user = _page_guard(request)
     if not uid: return _auth()
-    _, wa_phone = _wa_status()
+    wa_connected, wa_phone = _wa_status()
     return templates.TemplateResponse(request, "chat.html", {
-        "user": user, "wa_phone": wa_phone, "wa_ok": True, "active": "chat",
-        "api_base": API_BASE
+        "user": user, "wa_phone": wa_phone, "wa_ok": wa_connected, "active": "chat",
+        "api_base": API_BASE, "g_low": 0,
     })
 
 # ── WA message proxy (chat UI) ────────────────────────────────────────────────

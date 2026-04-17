@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Shop Agent{% endblock %}
-{% block page_title %}🛒 Shop Agent — Grocery & Inventory{% endblock %}
+{% block page_title %}Shop Agent{% endblock %}
 
 {% block content %}
 <div x-data="shopApp()" x-init="init()">
@@ -9,7 +9,7 @@
   <div class="card mb-4">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
-        <div style="font-size:28px">🛒</div>
+        <div style="width:42px;height:42px;border-radius:11px;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🛒</div>
         <div>
           <div style="font-weight:700;font-size:15px">Shop Agent</div>
           <div class="text-sm text-muted">Inventory management & WhatsApp alerts</div>
@@ -21,8 +21,8 @@
         <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <input class="fg" style="margin:0;padding:8px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;width:200px" x-model="cfg.wa_number" placeholder="+91... (alert number)" @blur="saveCfg()">
-        <button @click="sendAlert()" class="btn btn-a btn-sm" :disabled="!cfg.wa_number">⚠️ Send Low-Stock Alert</button>
+        <input class="fg" style="margin:0;padding:8px 13px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:9px;font-size:13px;width:200px;color:var(--text);outline:none" x-model="cfg.wa_number" placeholder="+91... (alert number)" @blur="saveCfg()">
+        <button @click="sendAlert()" class="btn btn-a btn-sm" :disabled="!cfg.wa_number">Send Low-Stock Alert</button>
         <button @click="showAdd=true" class="btn btn-p btn-sm">+ Add Item</button>
       </div>
     </div>
@@ -31,25 +31,25 @@
   <!-- Stats Row -->
   <div class="grid g4 mb-4">
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4">📦</div>
+      <div class="stat-icon" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.15)">📦</div>
       <div><div class="stat-val" x-text="items.length">{{ items|length }}</div><div class="stat-lbl">Total Items</div></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef2f2">⚠️</div>
+      <div class="stat-icon" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.15)">⚠️</div>
       <div>
-        <div class="stat-val" x-text="lowItems.length" style="color:var(--red)">{{ items | selectattr('qty', 'le', items[0].low_thresh if items else 0) | list | length }}</div>
+        <div class="stat-val" x-text="lowItems.length" style="color:var(--red)">0</div>
         <div class="stat-lbl">Low Stock</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fffbeb">🛍️</div>
+      <div class="stat-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.15)">🛍️</div>
       <div>
         <div class="stat-val" x-text="orderedItems.length" style="color:var(--amber)">0</div>
         <div class="stat-lbl">Ordered</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#eff6ff">💰</div>
+      <div class="stat-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15)">💰</div>
       <div>
         <div class="stat-val" x-text="'₹'+totalValue" style="font-size:20px">₹0</div>
         <div class="stat-lbl">Stock Value</div>
@@ -70,12 +70,12 @@
     <div class="section-header">
       <h3>Inventory</h3>
       <div style="display:flex;gap:8px;align-items:center">
-        <input x-model="search" placeholder="Search items..." style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;width:180px">
-        <select x-model="filter" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none">
-          <option value="all">All Items</option>
-          <option value="low">Low Stock</option>
-          <option value="ordered">Ordered</option>
-          <option value="ok">In Stock</option>
+        <input x-model="search" placeholder="Search items..." style="padding:7px 12px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;width:180px;color:var(--text)">
+        <select x-model="filter" style="padding:7px 12px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;color:var(--text)">
+          <option value="all" style="background:#1a2332">All Items</option>
+          <option value="low" style="background:#1a2332">Low Stock</option>
+          <option value="ordered" style="background:#1a2332">Ordered</option>
+          <option value="ok" style="background:#1a2332">In Stock</option>
         </select>
       </div>
     </div>
@@ -90,14 +90,14 @@
         <tbody>
           <template x-for="item in filteredItems" :key="item.id">
             <tr>
-              <td style="font-weight:600" x-text="item.name"></td>
+              <td style="font-weight:600;color:var(--text)" x-text="item.name"></td>
               <td>
-                <span x-text="item.qty" :style="item.qty <= item.low_thresh && !item.ordered ? 'color:var(--red);font-weight:700' : ''"></span>
+                <span x-text="item.qty" :style="item.qty <= item.low_thresh && !item.ordered ? 'color:var(--red);font-weight:700' : 'color:var(--text)'"></span>
                 <span class="text-muted text-xs" x-text="' ' + item.unit"></span>
               </td>
               <td class="text-muted" x-text="item.unit"></td>
               <td class="text-muted" x-text="item.low_thresh + ' ' + item.unit"></td>
-              <td x-text="'₹' + item.price"></td>
+              <td style="color:var(--text)" x-text="'₹' + item.price"></td>
               <td>
                 <template x-if="item.ordered">
                   <span class="badge bb">Ordered</span>
@@ -128,22 +128,25 @@
 
   <!-- Bot Preview Card -->
   <div class="card mt-4">
-    <div class="card-title">🤖 Agent Preview — How it responds on WhatsApp</div>
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.6"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M4.93 19.07a10 10 0 010-14.14"/></svg>
+      Agent Preview — How it responds on WhatsApp
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">Customer asks:</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Customer asks</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">How much rice is available?</div>
-          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">What items are low in stock?</div>
-          <div style="background:#f0fdf4;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-left-radius:2px">What is the price of sugar?</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text)">How much rice is available?</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text)">What items are low in stock?</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text)">What is the price of sugar?</div>
         </div>
       </div>
       <div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">Agent replies:</div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Agent replies</div>
         <div style="display:flex;flex-direction:column;gap:8px">
-          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">🌾 Rice: <strong x-text="items.find(i=>i.name.toLowerCase().includes('rice'))?.qty || 'N/A'"></strong> kg available</div>
-          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">⚠️ <strong x-text="lowItems.length"></strong> item(s) need restocking</div>
-          <div style="background:#dcf8c6;border-radius:10px;padding:10px 14px;font-size:13px;border-bottom-right-radius:2px">🍬 Sugar: ₹<strong x-text="items.find(i=>i.name.toLowerCase().includes('sugar'))?.price || 'N/A'"></strong> per kg</div>
+          <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:10px 14px;font-size:13px;color:#4ade80">🌾 Rice: <strong x-text="items.find(i=>i.name.toLowerCase().includes('rice'))?.qty || 'N/A'"></strong> kg available</div>
+          <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:10px 14px;font-size:13px;color:#4ade80">⚠️ <strong x-text="lowItems.length"></strong> item(s) need restocking</div>
+          <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:10px 14px;font-size:13px;color:#4ade80">🍬 Sugar: ₹<strong x-text="items.find(i=>i.name.toLowerCase().includes('sugar'))?.price || 'N/A'"></strong> per kg</div>
         </div>
       </div>
     </div>
@@ -277,6 +280,5 @@ function shopApp() {
     }
   }
 }
-
 </script>
 {% endblock %}

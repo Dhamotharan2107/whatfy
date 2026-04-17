@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Settings — Whatfy{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block extra_head %}
+<style>
+.settings-wrap{max-width:720px}
+.settings-section{margin-bottom:8px}
+.section-label{
+  font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--muted);
+  padding:0 2px;margin-bottom:8px;margin-top:22px;
+}
+.settings-section:first-child .section-label{margin-top:0}
+
+/* Profile header */
+.profile-header{
+  display:flex;align-items:center;gap:18px;
+  padding:22px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r);
+  margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(37,211,102,.04),rgba(14,165,233,.03)),var(--surface);
+}
+.profile-av-wrap{position:relative;flex-shrink:0}
+.profile-av{
+  width:64px;height:64px;border-radius:16px;
+  background:linear-gradient(135deg,#25D366,#0ea5e9);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:800;color:#fff;
+  box-shadow:0 6px 20px rgba(37,211,102,.3);
+}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:18px;font-weight:800;color:var(--text);margin-bottom:3px}
+.profile-email{font-size:13px;color:var(--muted)}
+.profile-badge{margin-top:8px}
+
+/* Settings card */
+.s-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+}
+.s-card-hd{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.015);
+}
+.s-card-hd-icon{
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.s-card-hd-title{font-size:13.5px;font-weight:700;color:var(--text)}
+.s-card-body{padding:18px}
+.s-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0;border-bottom:1px solid rgba(255,255,255,.04);
+  gap:12px;
+}
+.s-row:last-child{border-bottom:none;padding-bottom:0}
+.s-row:first-child{padding-top:0}
+.s-row-label{font-size:13px;color:var(--sub);flex:1}
+.s-row-val{font-size:13px;font-weight:600;color:var(--text)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-wrap" x-data="settingsApp()">
+
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-av-wrap">
+      <div class="profile-av">{{ user.name[0].upper() if user.name else user.email[0].upper() }}</div>
+    </div>
+    <div class="profile-info">
+      <div class="profile-name">{{ user.name or 'Your Name' }}</div>
+      <div class="profile-email">{{ user.email }}</div>
+      <div class="profile-badge">
+        <span class="badge bg">Active Account</span>
+        {% if wa_phone %}
+        <span class="badge bg" style="margin-left:6px">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#4ade80"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/></svg>
+          WhatsApp Connected
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Settings -->
+  <div class="section-label">Profile</div>
+  <div class="s-card settings-section">
+    <div class="s-card-hd">
+      <div class="s-card-hd-icon" style="background:rgba(37,211,102,.1)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#4ade80" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <span class="s-card-hd-title">Account Profile</span>
+    </div>
+    <div class="s-card-body">
+      <div class="form-row">
+        <div class="fg">
+          <label>Display Name</label>
+          <input x-model="profile.name" placeholder="Your full name">
+        </div>
+        <div class="fg">
+          <label>Email Address</label>
+          <input value="{{ user.email }}" disabled style="opacity:.4;cursor:not-allowed">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:4px">
+        <button @click="saveProfile()" class="btn btn-p btn-sm" :disabled="saving">
+          <span x-show="!saving">Save Profile</span>
+          <span x-show="saving">Saving…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password -->
+  <div class="section-label">Security</div>
+  <div class="s-card settings-section">
+    <div class="s-card-hd">
+      <div class="s-card-hd-icon" style="background:rgba(59,130,246,.1)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#93c5fd" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <span class="s-card-hd-title">Change Password</span>
+    </div>
+    <div class="s-card-body">
+      <div class="fg">
+        <label>Current Password</label>
+        <input type="password" x-model="pw.current" placeholder="Enter current password">
+      </div>
+      <div class="form-row">
+        <div class="fg">
+          <label>New Password</label>
+          <input type="password" x-model="pw.new_pw" placeholder="Min. 6 characters">
+        </div>
+        <div class="fg">
+          <label>Confirm Password</label>
+          <input type="password" x-model="pw.confirm" placeholder="Repeat new password">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:4px">
+        <button @click="changePassword()" class="btn btn-p btn-sm" :disabled="changingPw">
+          <span x-show="!changingPw">Update Password</span>
+          <span x-show="changingPw">Updating…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Connection -->
+  <div class="section-label">WhatsApp</div>
+  <div class="s-card settings-section">
+    <div class="s-card-hd">
+      <div class="s-card-hd-icon" style="background:rgba(37,211,102,.1)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </div>
+      <span class="s-card-hd-title">WhatsApp Connection</span>
+    </div>
+    <div class="s-card-body">
+      {% if wa_phone %}
+      <div class="alert alert-ok mb-4">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><polyline points="20,6 9,17 4,12"/></svg>
+        Connected as <strong style="margin-left:4px">{{ wa_phone }}</strong>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/connect" class="btn btn-o btn-sm">Manage Connection</a>
+        <button onclick="disconnectWA()" class="btn btn-d btn-sm">Disconnect</button>
+      </div>
+      {% else %}
+      <div class="alert alert-warn mb-4">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        WhatsApp is not connected. Connect to send messages and use AI agents.
+      </div>
+      <a href="/connect" class="btn btn-p btn-sm">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Connect WhatsApp
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Account Info -->
+  <div class="section-label">Account</div>
+  <div class="s-card settings-section">
+    <div class="s-card-hd">
+      <div class="s-card-hd-icon" style="background:rgba(168,85,247,.1)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#c084fc" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <span class="s-card-hd-title">Account Information</span>
+    </div>
+    <div class="s-card-body" style="padding:14px 18px">
+      <div class="s-row">
+        <span class="s-row-label">Account Email</span>
+        <span class="s-row-val">{{ user.email }}</span>
+      </div>
+      <div class="s-row">
+        <span class="s-row-label">Account Status</span>
+        <span class="badge bg">Active</span>
+      </div>
+      <div class="s-row">
+        <span class="s-row-label">Email Verified</span>
+        {% if user.email_verified %}
+        <span class="badge bg">Verified</span>
+        {% else %}
+        <span class="badge br">Not Verified</span>
+        {% endif %}
+      </div>
+      <div class="s-row">
+        <span class="s-row-label">Sign out of your account</span>
+        <a href="/auth/logout" class="btn btn-d btn-xs">Sign Out</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function settingsApp() {
+  return {
+    profile: { name: {{ user.name | tojson }} },
+    pw: { current: '', new_pw: '', confirm: '' },
+    saving: false,
+    changingPw: false,
+
+    async saveProfile() {
+      if (!this.profile.name.trim()) { toast('Name is required', false); return; }
+      this.saving = true;
+      try {
+        const d = await api('POST', '/api/settings/profile', { name: this.profile.name });
+        if (d.ok) toast('Profile updated successfully');
+        else toast(d.error || 'Failed to save', false);
+      } finally { this.saving = false; }
+    },
+
+    async changePassword() {
+      if (!this.pw.current || !this.pw.new_pw) { toast('All fields are required', false); return; }
+      if (this.pw.new_pw.length < 6) { toast('Password must be at least 6 characters', false); return; }
+      if (this.pw.new_pw !== this.pw.confirm) { toast('Passwords do not match', false); return; }
+      this.changingPw = true;
+      try {
+        const d = await api('POST', '/api/settings/password', {
+          current_password: this.pw.current,
+          new_password: this.pw.new_pw
+        });
+        if (d.ok) { toast('Password updated successfully'); this.pw = { current:'', new_pw:'', confirm:'' }; }
+        else toast(d.error || 'Failed to update password', false);
+      } finally { this.changingPw = false; }
+    }
+  };
+}
+
+async function disconnectWA() {
+  if (!confirm('Disconnect WhatsApp? You will need to reconnect to send messages.')) return;
+  try {
+    await fetch('/api/wa/logout');
+    toast('WhatsApp disconnected');
+    setTimeout(() => location.href = '/connect', 800);
+  } catch(e) { toast('Error disconnecting', false); }
+}
+</script>
+{% endblock %}

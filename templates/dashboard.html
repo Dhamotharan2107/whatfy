@@ -1,450 +1,420 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard — Whatfy</title>
+{% extends "base.html" %}
+{% block title %}Dashboard — Whatfy{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_head %}
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e2e8f0}
-
-/* ── Top bar ── */
-.topbar{height:52px;background:rgba(17,24,39,.95);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 0;position:sticky;top:0;z-index:200;backdrop-filter:blur(8px);flex-shrink:0}
-.tb-left{display:flex;align-items:center;gap:0}
-.tb-logo{width:200px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 18px;border-right:1px solid rgba(255,255,255,.07);height:52px}
-.tb-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 14px rgba(37,211,102,.3)}
-.tb-logo-text{font-size:15px;font-weight:800;color:#fff}
-.tb-breadcrumb{display:flex;align-items:center;gap:8px;padding:0 20px;font-size:13px;color:#475569}
-.tb-breadcrumb span{color:#94a3b8;font-weight:500}
-.tb-breadcrumb .sep{color:#334155}
-
-.tb-center{display:flex;align-items:center;gap:12px}
-.tb-tag{padding:4px 12px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);border-radius:20px;font-size:12px;font-weight:600;color:#4ade80;display:flex;align-items:center;gap:6px}
-.tb-tag::before{content:'';width:6px;height:6px;background:#25D366;border-radius:50%;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-.tb-right{display:flex;align-items:center;gap:10px}
-.tb-user{display:flex;align-items:center;gap:8px}
-.tb-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#25D366,#128C7E);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
-.tb-username{font-size:13px;font-weight:600;color:#94a3b8}
-.btn-logout{padding:5px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;color:#64748b;font-size:12px;cursor:pointer;text-decoration:none;transition:.15s}
-.btn-logout:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.25);color:#f87171}
-
-/* ── Layout ── */
-.shell{display:flex;height:calc(100vh - 52px)}
-
-/* ── Left nav panel ── */
-.lnav{width:200px;flex-shrink:0;background:#111827;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow-y:auto}
-.ln-section{padding:16px 14px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.1em}
-.ln-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 6px;border-radius:7px;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;text-decoration:none;transition:all .15s;cursor:pointer}
-.ln-item:hover{background:rgba(255,255,255,.05);color:#fff}
-.ln-item.active{background:rgba(37,211,102,.12);color:#4ade80;border:1px solid rgba(37,211,102,.15)}
-.ln-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
-.ln-badge{margin-left:auto;background:rgba(239,68,68,.2);color:#f87171;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px}
-
-/* ── Canvas area ── */
-.canvas-wrap{flex:1;position:relative;overflow:hidden;background:#0f1117}
-.canvas-grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
-.canvas-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(37,211,102,.04) 0%,transparent 65%);pointer-events:none}
-
-.canvas{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-
-/* ── Flow nodes ── */
-.flow-row{display:flex;align-items:center;gap:0;position:relative}
-
-/* Trigger node */
-.node-trigger{
-  width:160px;background:linear-gradient(145deg,#0b1e12,#0d2618);
-  border:1.5px solid rgba(37,211,102,.5);border-radius:14px;padding:18px 16px;
-  text-align:center;cursor:pointer;transition:all .25s;
-  box-shadow:0 0 32px rgba(37,211,102,.15),0 8px 32px rgba(0,0,0,.4);
-  position:relative;flex-shrink:0;z-index:10
+/* ── Welcome bar ── */
+.welcome-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:22px;flex-wrap:wrap;gap:12px;
 }
-.node-trigger:hover{transform:scale(1.04);box-shadow:0 0 48px rgba(37,211,102,.28),0 8px 32px rgba(0,0,0,.5)}
-.node-trigger .nt-icon{font-size:36px;margin-bottom:10px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
-.node-trigger .nt-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
-.node-trigger .nt-phone{font-size:11px;color:#4ade80;font-family:monospace;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.node-trigger .nt-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#4ade80}
-.node-trigger .nt-status::before{content:'';width:5px;height:5px;border-radius:50%;background:#25D366;animation:blink 2s infinite}
-.node-trigger .nt-disc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#f87171}
-.disconnect-btn{margin-top:10px;width:100%;padding:6px 0;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:8px;color:#f87171;font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
-.disconnect-btn:hover{background:rgba(239,68,68,.22)}
-
-/* connector */
-.connector{display:flex;align-items:center;position:relative;z-index:5;flex-shrink:0}
-.conn-line{height:2px;background:linear-gradient(90deg,rgba(37,211,102,.4),rgba(37,211,102,.2));position:relative;overflow:visible}
-.conn-line::after{content:'▶';position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:rgba(37,211,102,.5);font-size:10px}
-.conn-pulse{position:absolute;width:8px;height:8px;border-radius:50%;background:#25D366;top:50%;transform:translateY(-50%);animation:travel linear infinite;box-shadow:0 0 8px rgba(37,211,102,.6)}
-@keyframes travel{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - 8px);opacity:0}}
-
-/* Agent nodes column */
-.agents-col{display:flex;flex-direction:column;gap:14px;position:relative;z-index:10}
-
-/* Agent node */
-.agent-node{
-  width:240px;background:rgba(255,255,255,.03);
-  border:1.5px solid rgba(255,255,255,.09);border-radius:13px;
-  padding:14px 16px;display:flex;align-items:center;gap:12px;
-  cursor:pointer;transition:all .22s;text-decoration:none;color:inherit;
-  position:relative;
+.welcome-text h1{
+  font-size:20px;font-weight:800;color:var(--text);margin-bottom:3px;
+  background:linear-gradient(135deg,#fff,#94a3b8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
-.agent-node:hover{background:rgba(255,255,255,.06);border-color:rgba(37,211,102,.3);transform:translateX(5px);box-shadow:0 4px 20px rgba(37,211,102,.08)}
-.agent-node.on{border-color:rgba(37,211,102,.3);background:rgba(37,211,102,.04)}
-.an-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.an-body{flex:1;min-width:0}
-.an-name{font-size:13.5px;font-weight:700;color:#f1f5f9;margin-bottom:2px}
-.an-desc{font-size:11.5px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.an-badge{padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.badge-on{background:rgba(37,211,102,.12);color:#4ade80;border:1px solid rgba(37,211,102,.2)}
-.badge-off{background:rgba(255,255,255,.05);color:#475569;border:1px solid rgba(255,255,255,.07)}
-.badge-warn{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
-.an-arrow{color:#1e293b;font-size:14px;flex-shrink:0;transition:.15s}
-.agent-node:hover .an-arrow{color:#4ade80}
+.welcome-text p{font-size:12.5px;color:var(--muted)}
+.welcome-actions{display:flex;gap:9px;flex-wrap:wrap}
 
-/* Node input/output dots */
-.agent-node::before{content:'';position:absolute;left:-7px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:#1a2535;border:2px solid rgba(37,211,102,.3)}
-.agent-node.on::before{border-color:#25D366;background:#0d2618;box-shadow:0 0 8px rgba(37,211,102,.3)}
-
-/* Chat node */
-.chat-node{
-  width:180px;background:rgba(59,130,246,.04);
-  border:1.5px solid rgba(59,130,246,.2);border-radius:13px;
-  padding:14px 16px;display:flex;flex-direction:column;align-items:center;
-  cursor:pointer;transition:all .22s;text-decoration:none;color:inherit;
-  position:relative;margin-left:48px;flex-shrink:0;z-index:10;
-  text-align:center;
+/* ── Setup banner ── */
+.setup-bar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 18px;margin-bottom:22px;
+  background:rgba(245,158,11,.06);
+  border:1px solid rgba(245,158,11,.18);border-radius:var(--r);
+  animation:fadeIn .4s ease;
 }
-.chat-node:hover{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.4);transform:translateY(-3px);box-shadow:0 8px 24px rgba(59,130,246,.12)}
-.chat-node .cn-icon{font-size:30px;margin-bottom:8px}
-.chat-node .cn-title{font-size:13px;font-weight:700;color:#93c5fd;margin-bottom:3px}
-.chat-node .cn-sub{font-size:11px;color:#475569}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.setup-bar-txt{flex:1;min-width:0}
+.setup-bar-txt strong{font-size:13.5px;font-weight:700;color:#fbbf24;display:block}
+.setup-bar-txt span{font-size:12px;color:rgba(245,158,11,.55)}
 
-/* Stats strip */
-.stats-strip{position:absolute;bottom:0;left:0;right:0;background:rgba(15,17,23,.92);border-top:1px solid rgba(255,255,255,.06);padding:10px 32px;display:flex;gap:36px;align-items:center;backdrop-filter:blur(6px);z-index:100;flex-shrink:0}
-.ss-item{display:flex;align-items:center;gap:8px}
-.ss-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.ss-text{font-size:12.5px;color:#64748b}
-.ss-text strong{color:#94a3b8}
-.ss-time{margin-left:auto;font-size:11.5px;color:#334155}
+/* ── Metric cards ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.m-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 18px 16px;cursor:default;transition:.2s;
+  position:relative;overflow:hidden;
+}
+.m-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--mc),transparent);
+  opacity:.5;
+}
+.m-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.m-glow{
+  position:absolute;top:-30px;right:-20px;
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,var(--mc),.3),transparent);
+  opacity:.08;pointer-events:none;
+}
+.m-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.m-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.m-pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.pill-g{background:rgba(37,211,102,.12);color:#4ade80;border:1px solid rgba(37,211,102,.18)}
+.pill-a{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.18)}
+.pill-b{background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.18)}
+.pill-k{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border)}
+.m-val{font-size:30px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.m-lbl{font-size:11.5px;color:var(--muted);font-weight:500}
 
-/* SVG overlay */
-.flow-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+/* ── Two-col layout ── */
+.dash-cols{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
 
-/* right panel */
-.rpanel{width:280px;flex-shrink:0;background:#111827;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;overflow-y:auto}
-.rp-section{padding:16px 16px 8px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid rgba(255,255,255,.05)}
-.rp-stat{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
-.rps-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.rps-body{flex:1}
-.rps-val{font-size:22px;font-weight:800;color:#f1f5f9;line-height:1}
-.rps-lbl{font-size:11.5px;color:#475569;margin-top:3px}
+/* ── Block ── */
+.dash-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:.15s}
+.dash-block:hover{border-color:var(--border2)}
+.db-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+}
+.db-head-title{font-size:13.5px;font-weight:700;color:var(--text)}
+.db-head-link{font-size:12px;color:var(--g);text-decoration:none;font-weight:600}
+.db-head-link:hover{opacity:.8}
 
-/* mobile */
-@media(max-width:900px){
-  .lnav{display:none}
-  .rpanel{display:none}
-  .flow-row{flex-direction:column;gap:24px;align-items:center;padding:24px 16px 80px}
-  .connector{transform:rotate(90deg)}
-  .agents-col{gap:12px;width:100%;max-width:300px}
-  .agent-node{width:100%}
-  .chat-node{margin-left:0;margin-top:24px}
+/* ── Agent rows ── */
+.ag-row{
+  display:flex;align-items:center;gap:13px;
+  padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.04);
+  text-decoration:none;color:inherit;transition:.14s;
+}
+.ag-row:last-child{border-bottom:none}
+.ag-row:hover{background:rgba(255,255,255,.025)}
+.ag-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ag-info{flex:1;min-width:0}
+.ag-name{font-size:13px;font-weight:600;color:var(--text)}
+.ag-desc{font-size:11.5px;color:var(--muted);margin-top:1px}
+.ag-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.ag-extra{font-size:11.5px;color:var(--sub)}
+.status-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.chip-on{background:rgba(37,211,102,.1);color:#4ade80;border:1px solid rgba(37,211,102,.16)}
+.chip-off{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border)}
+.chip-warn{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.16)}
+.sc-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.chip-on .sc-dot{background:#25D366;animation:pulse 2s infinite;box-shadow:0 0 4px #25D366}
+.chip-off .sc-dot{background:rgba(255,255,255,.2)}
+.chip-warn .sc-dot{background:#f59e0b}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Right column ── */
+.right-col{display:flex;flex-direction:column;gap:14px}
+.info-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:12.5px;color:var(--sub)}
+.info-val{font-size:13px;font-weight:700;color:var(--text)}
+.qa-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:9px;
+  color:var(--sub);font-size:13px;text-decoration:none;
+  transition:.14s;border:1px solid transparent;margin:3px 8px;
+}
+.qa-btn:hover{background:rgba(37,211,102,.06);border-color:rgba(37,211,102,.12);color:#4ade80}
+.qa-btn svg{width:15px;height:15px;flex-shrink:0;opacity:.6}
+.qa-btn:hover svg{opacity:1}
+.qa-arr{margin-left:auto;opacity:.3;font-size:12px;transition:.14s}
+.qa-btn:hover .qa-arr{opacity:.8;transform:translateX(3px)}
+
+/* ── Alerts box ── */
+#alertBox .alert{animation:fadeIn .3s ease both}
+#alertBox .alert:nth-child(2){animation-delay:.08s}
+#alertBox .alert:nth-child(3){animation-delay:.14s}
+
+/* ── Responsive ── */
+@media(max-width:980px){
+  .dash-cols{grid-template-columns:1fr}
+  .right-col{flex-direction:row;flex-wrap:wrap}
+  .right-col .dash-block{flex:1;min-width:220px}
+}
+@media(max-width:600px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .m-val{font-size:24px}
+}
+@media(max-width:360px){
+  .metrics{grid-template-columns:1fr}
 }
 </style>
-</head>
-<body>
+{% endblock %}
 
-<!-- Top bar -->
-<div class="topbar">
-  <div class="tb-left">
-    <div class="tb-logo">
-      <div class="tb-logo-icon">💬</div>
-      <span class="tb-logo-text">Whatfy</span>
-    </div>
-    <div class="tb-breadcrumb">
-      <span>Workflows</span>
-      <span class="sep">/</span>
-      <span style="color:#f1f5f9">Dashboard</span>
-    </div>
+{% block content %}
+{% if not wa_phone %}
+<div class="setup-bar" id="setupBar">
+  <div style="font-size:24px;flex-shrink:0">⚡</div>
+  <div class="setup-bar-txt">
+    <strong>Connect your WhatsApp to get started</strong>
+    <span>Scan QR or use a pairing code — takes under 60 seconds</span>
   </div>
-  <div class="tb-center">
-    <div class="tb-tag" id="wa-tag">WhatsApp · {{ wa_phone or 'Not Connected' }}</div>
+  <a href="/connect" class="btn btn-p btn-sm">Connect Now →</a>
+  <button onclick="document.getElementById('setupBar').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:4px;flex-shrink:0">✕</button>
+</div>
+{% endif %}
+
+<!-- Welcome -->
+<div class="welcome-bar">
+  <div class="welcome-text">
+    <h1>Good <span id="gt">morning</span>, {{ user.name or user.email.split('@')[0] }} 👋</h1>
+    <p id="dt">—</p>
   </div>
-  <div class="tb-right">
-    <div class="tb-user">
-      <div class="tb-avatar">{{ user.name[0].upper() if user.name else user.email[0].upper() }}</div>
-      <span class="tb-username">{{ user.name or user.email.split('@')[0] }}</span>
-    </div>
-    <a href="/auth/logout" class="btn-logout">Sign Out</a>
+  <div class="welcome-actions">
+    <a href="/campaign" class="btn btn-o btn-sm">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+      Broadcast
+    </a>
+    <a href="/invoice" class="btn btn-p btn-sm">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Invoice
+    </a>
   </div>
 </div>
 
-<div class="shell">
-
-  <!-- Left nav -->
-  <nav class="lnav">
-    <div class="ln-section">Workspace</div>
-    <a class="ln-item active" href="/dashboard"><span class="ln-icon">⬡</span>Dashboard</a>
-    <a class="ln-item" href="/connect"><span class="ln-icon">📱</span>Connect WA</a>
-    <a class="ln-item" href="/chat"><span class="ln-icon">💬</span>Conversations</a>
-    <a class="ln-item" href="/campaign"><span class="ln-icon">📣</span>Bulk Campaign</a>
-    <div class="ln-section">AI Agents</div>
-    <a class="ln-item" href="/shop"><span class="ln-icon">🛒</span>Shop Agent<span class="ln-badge" id="nav-low" style="display:none">0</span></a>
-    <a class="ln-item" href="/invoice"><span class="ln-icon">🧾</span>Invoice Agent</a>
-    <a class="ln-item" href="/health"><span class="ln-icon">💊</span>Health Agent</a>
-    <a class="ln-item" href="/appointment"><span class="ln-icon">🏥</span>Appointment</a>
-    <div class="ln-section">Docs</div>
-    <a class="ln-item" href="/docs-api"><span class="ln-icon">📖</span>API Docs</a>
-  </nav>
-
-  <!-- Canvas -->
-  <div class="canvas-wrap">
-    <div class="canvas-grid"></div>
-    <div class="canvas-glow"></div>
-
-    <svg class="flow-svg" id="flowSvg"></svg>
-
-    <div class="canvas" id="flowCanvas">
-      <div class="flow-row" id="flowRow">
-
-        <!-- WhatsApp Hub node -->
-        <div class="node-trigger" id="hubNode" onclick="location.href='/connect'">
-          <div class="nt-icon">💬</div>
-          <div class="nt-title">WhatsApp</div>
-          <div class="nt-phone" id="hub-phone">{{ wa_phone or '—' }}</div>
-          <div class="nt-status" id="hub-status">Connected</div>
-          <button class="disconnect-btn" onclick="event.stopPropagation();disconnectWA()">⏏ Disconnect</button>
-        </div>
-
-        <!-- Connector -->
-        <div class="connector" id="mainConn">
-          <div class="conn-line" style="width:80px;position:relative">
-            <div class="conn-pulse" style="animation-duration:2s"></div>
-          </div>
-        </div>
-
-        <!-- Agents column -->
-        <div class="agents-col" id="agentsCol">
-
-          <a class="agent-node" href="/shop" id="an-shop">
-            <div class="an-icon" style="background:rgba(34,197,94,.1)">🛒</div>
-            <div class="an-body">
-              <div class="an-name">Shop Agent</div>
-              <div class="an-desc">Inventory · Alerts · Orders</div>
-            </div>
-            <span class="an-badge badge-off" id="badge-shop">—</span>
-            <span class="an-arrow">›</span>
-          </a>
-
-          <a class="agent-node" href="/invoice" id="an-invoice">
-            <div class="an-icon" style="background:rgba(59,130,246,.1)">🧾</div>
-            <div class="an-body">
-              <div class="an-name">Invoice Agent</div>
-              <div class="an-desc">Bills · Send via WhatsApp</div>
-            </div>
-            <span class="an-badge badge-off" id="badge-invoice">—</span>
-            <span class="an-arrow">›</span>
-          </a>
-
-          <a class="agent-node" href="/health" id="an-health">
-            <div class="an-icon" style="background:rgba(239,68,68,.1)">💊</div>
-            <div class="an-body">
-              <div class="an-name">Health Agent</div>
-              <div class="an-desc">Medications · Patients</div>
-            </div>
-            <span class="an-badge badge-off" id="badge-health">—</span>
-            <span class="an-arrow">›</span>
-          </a>
-
-          <a class="agent-node" href="/appointment" id="an-appt">
-            <div class="an-icon" style="background:rgba(168,85,247,.1)">🏥</div>
-            <div class="an-body">
-              <div class="an-name">Appointment Agent</div>
-              <div class="an-desc">Schedule · Remind</div>
-            </div>
-            <span class="an-badge badge-off" id="badge-appt">—</span>
-            <span class="an-arrow">›</span>
-          </a>
-
-        </div>
-
-        <!-- Chat + Campaign nodes -->
-        <div style="display:flex;flex-direction:column;gap:14px;margin-left:48px;flex-shrink:0;z-index:10">
-          <a class="chat-node" href="/chat" style="margin-left:0">
-            <div class="cn-icon">💬</div>
-            <div class="cn-title">Conversations</div>
-            <div class="cn-sub">View · Send messages</div>
-          </a>
-          <a class="chat-node" href="/campaign" style="margin-left:0;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)">
-            <div class="cn-icon">📣</div>
-            <div class="cn-title" style="color:#fbbf24">Bulk Campaign</div>
-            <div class="cn-sub" id="camp-stat">Send to lists</div>
-          </a>
-        </div>
-
-      </div>
+<!-- Metric Cards -->
+<div class="metrics">
+  <div class="m-card" style="--mc:#25D366">
+    <div class="m-glow"></div>
+    <div class="m-top">
+      <div class="m-icon" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.14)">🏥</div>
+      <span class="m-pill pill-g" id="mp-appt">—</span>
     </div>
-
-    <!-- Stats strip -->
-    <div class="stats-strip">
-      <div class="ss-item"><div class="ss-dot" style="background:#25D366"></div><div class="ss-text">WhatsApp <strong id="ss-wa">—</strong></div></div>
-      <div class="ss-item"><div class="ss-dot" style="background:#f59e0b"></div><div class="ss-text">Low Stock <strong id="ss-low">—</strong></div></div>
-      <div class="ss-item"><div class="ss-dot" style="background:#ef4444"></div><div class="ss-text">Patients <strong id="ss-pts">—</strong></div></div>
-      <div class="ss-item"><div class="ss-dot" style="background:#a855f7"></div><div class="ss-text">Appts Today <strong id="ss-appt">—</strong></div></div>
-      <div class="ss-time" id="ss-time">—</div>
-    </div>
+    <div class="m-val" id="mv-appt">—</div>
+    <div class="m-lbl">Appointments Today</div>
   </div>
-
-  <!-- Right panel -->
-  <div class="rpanel">
-    <div class="rp-section">Stats</div>
-    <div class="rp-stat">
-      <div class="rps-icon" style="background:rgba(245,158,11,.1)">📦</div>
-      <div class="rps-body">
-        <div class="rps-val" id="rp-low">—</div>
-        <div class="rps-lbl">Low Stock Items</div>
-      </div>
+  <div class="m-card" style="--mc:#3b82f6">
+    <div class="m-glow"></div>
+    <div class="m-top">
+      <div class="m-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.14)">👥</div>
+      <span class="m-pill pill-b">patients</span>
     </div>
-    <div class="rp-stat">
-      <div class="rps-icon" style="background:rgba(59,130,246,.1)">🧾</div>
-      <div class="rps-body">
-        <div class="rps-val" id="rp-draft">—</div>
-        <div class="rps-lbl">Draft Invoices</div>
-      </div>
-    </div>
-    <div class="rp-stat">
-      <div class="rps-icon" style="background:rgba(239,68,68,.1)">💊</div>
-      <div class="rps-body">
-        <div class="rps-val" id="rp-pts">—</div>
-        <div class="rps-lbl">Patients</div>
-      </div>
-    </div>
-    <div class="rp-stat">
-      <div class="rps-icon" style="background:rgba(168,85,247,.1)">🏥</div>
-      <div class="rps-body">
-        <div class="rps-val" id="rp-appt">—</div>
-        <div class="rps-lbl">Appointments Today</div>
-      </div>
-    </div>
-
-    <div class="rp-section" style="margin-top:8px">Active Agents</div>
-    <div id="rp-agents" style="padding:8px"></div>
-
-    <div class="rp-section" style="margin-top:8px">Quick Links</div>
-    <div style="padding:8px;display:flex;flex-direction:column;gap:6px">
-      <a href="/connect" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(37,211,102,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📱 Connect WhatsApp</a>
-      <a href="/chat" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(59,130,246,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">💬 Open Conversations</a>
-      <a href="/campaign" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(245,158,11,.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📣 Bulk Campaign</a>
-      <a href="/docs-api" style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:9px;color:#94a3b8;font-size:13px;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='rgba(255,255,255,.15)'" onmouseout="this.style.borderColor='rgba(255,255,255,.07)'">📖 API Docs</a>
-    </div>
+    <div class="m-val" id="mv-pts">—</div>
+    <div class="m-lbl">Total Patients</div>
   </div>
-
+  <div class="m-card" style="--mc:#f59e0b">
+    <div class="m-glow"></div>
+    <div class="m-top">
+      <div class="m-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.14)">📦</div>
+      <span class="m-pill pill-k" id="mp-low">items</span>
+    </div>
+    <div class="m-val" id="mv-low">—</div>
+    <div class="m-lbl">Low Stock Items</div>
+  </div>
+  <div class="m-card" style="--mc:#a855f7">
+    <div class="m-glow"></div>
+    <div class="m-top">
+      <div class="m-icon" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.14)">🤖</div>
+      <span class="m-pill pill-k" id="mp-ag">— / 4</span>
+    </div>
+    <div class="m-val" id="mv-ag">—</div>
+    <div class="m-lbl">Agents Active</div>
+  </div>
 </div>
 
+<!-- Two-column body -->
+<div class="dash-cols">
+
+  <!-- Left: agents + alerts -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="dash-block">
+      <div class="db-head">
+        <span class="db-head-title">AI Agents</span>
+        <a href="/shop" class="db-head-link">Manage →</a>
+      </div>
+
+      <a class="ag-row" href="/shop">
+        <div class="ag-ico" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.14)">🛒</div>
+        <div class="ag-info">
+          <div class="ag-name">Shop Agent</div>
+          <div class="ag-desc">Inventory · Low-stock alerts · Reorder</div>
+        </div>
+        <div class="ag-right">
+          <span class="ag-extra" id="ae-shop"></span>
+          <span class="status-chip chip-off" id="ac-shop"><span class="sc-dot"></span><span id="at-shop">—</span></span>
+        </div>
+      </a>
+
+      <a class="ag-row" href="/invoice">
+        <div class="ag-ico" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.14)">🧾</div>
+        <div class="ag-info">
+          <div class="ag-name">Invoice Agent</div>
+          <div class="ag-desc">Create & send invoices via WhatsApp</div>
+        </div>
+        <div class="ag-right">
+          <span class="ag-extra" id="ae-invoice"></span>
+          <span class="status-chip chip-off" id="ac-invoice"><span class="sc-dot"></span><span id="at-invoice">—</span></span>
+        </div>
+      </a>
+
+      <a class="ag-row" href="/health">
+        <div class="ag-ico" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.14)">💊</div>
+        <div class="ag-info">
+          <div class="ag-name">Health Agent</div>
+          <div class="ag-desc">Patients · Medication reminders</div>
+        </div>
+        <div class="ag-right">
+          <span class="ag-extra" id="ae-health"></span>
+          <span class="status-chip chip-off" id="ac-health"><span class="sc-dot"></span><span id="at-health">—</span></span>
+        </div>
+      </a>
+
+      <a class="ag-row" href="/appointment">
+        <div class="ag-ico" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.14)">🗓</div>
+        <div class="ag-info">
+          <div class="ag-name">Appointment Agent</div>
+          <div class="ag-desc">Scheduling · Automated reminders</div>
+        </div>
+        <div class="ag-right">
+          <span class="ag-extra" id="ae-appt"></span>
+          <span class="status-chip chip-off" id="ac-appt"><span class="sc-dot"></span><span id="at-appt">—</span></span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alertBox" style="display:none;flex-direction:column;gap:8px"></div>
+
+  </div>
+
+  <!-- Right: stats + actions -->
+  <div class="right-col">
+
+    <div class="dash-block">
+      <div class="db-head">
+        <span class="db-head-title">Overview</span>
+        <span style="font-size:11px;color:var(--muted)" id="upd-time">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Draft Invoices</span>
+        <span class="info-val" id="ir-draft">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Total Patients</span>
+        <span class="info-val" id="ir-pts">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Appts Today</span>
+        <span class="info-val" id="ir-appt">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Low Stock Items</span>
+        <span class="info-val" id="ir-low">—</span>
+      </div>
+    </div>
+
+    <div class="dash-block">
+      <div class="db-head"><span class="db-head-title">Quick Actions</span></div>
+      <a href="/chat" class="qa-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Conversations<span class="qa-arr">›</span>
+      </a>
+      <a href="/campaign" class="qa-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+        New Broadcast<span class="qa-arr">›</span>
+      </a>
+      <a href="/appointment" class="qa-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Book Appointment<span class="qa-arr">›</span>
+      </a>
+      <a href="/invoice" class="qa-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Create Invoice<span class="qa-arr">›</span>
+      </a>
+      <a href="/shop" class="qa-btn" style="margin-bottom:6px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        Check Inventory<span class="qa-arr">›</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-const AGENT_DEFS = [
-  {id:'shop',    el:'an-shop',    badge:'badge-shop',    label:'Shop Agent',       warn: s=> s.g_low>0 ? `⚠ ${s.g_low} low` : null},
-  {id:'invoice', el:'an-invoice', badge:'badge-invoice', label:'Invoice Agent',    warn: s=> s.inv_draft>0 ? `${s.inv_draft} draft` : null},
-  {id:'health',  el:'an-health',  badge:'badge-health',  label:'Health Agent',     warn: _=> null},
-  {id:'appointment',el:'an-appt', badge:'badge-appt',    label:'Appt Agent',       warn: s=> s.appt_today>0 ? `${s.appt_today} today` : null},
-];
+(()=>{
+  const h=new Date().getHours();
+  document.getElementById('gt').textContent=h<12?'morning':h<17?'afternoon':'evening';
+  document.getElementById('dt').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+})();
 
-async function loadStats(){
+const AG={
+  shop:   {chip:'ac-shop',   txt:'at-shop',   ex:'ae-shop'},
+  invoice:{chip:'ac-invoice',txt:'at-invoice',ex:'ae-invoice'},
+  health: {chip:'ac-health', txt:'at-health', ex:'ae-health'},
+  appt:   {chip:'ac-appt',   txt:'at-appt',   ex:'ae-appt'},
+};
+
+async function loadDash(){
   try{
-    const r = await fetch('/api/dashboard/stats');
-    const s = await r.json();
-    if(s.error) return;
+    const s=await(await fetch('/api/dashboard/stats')).json();
+    if(s.error)return;
+    const ag=s.agents||{};
 
-    // Top bar & stats strip
-    const waTag = document.getElementById('wa-tag');
-    if(waTag) waTag.textContent = 'WhatsApp · ' + (s.wa_phone || 'Connected');
-    document.getElementById('hub-phone').textContent = s.wa_phone || '—';
-    document.getElementById('ss-wa').textContent    = s.wa_phone ? 'Connected' : 'Offline';
-    document.getElementById('ss-low').textContent   = s.g_low + ' items';
-    document.getElementById('ss-pts').textContent   = s.p_total;
-    document.getElementById('ss-appt').textContent  = s.appt_today;
-    document.getElementById('ss-time').textContent  = 'Updated ' + new Date().toLocaleTimeString();
+    animCount('mv-appt',s.appt_today);
+    animCount('mv-pts', s.p_total);
+    animCount('mv-low', s.g_low);
+    const active=Object.values(ag).filter(a=>a.enabled).length;
+    animCount('mv-ag', active);
 
-    // Right panel stats
-    document.getElementById('rp-low').textContent   = s.g_low;
-    document.getElementById('rp-draft').textContent = s.inv_draft;
-    document.getElementById('rp-pts').textContent   = s.p_total;
-    document.getElementById('rp-appt').textContent  = s.appt_today;
+    pill('mp-appt', s.appt_today>0?s.appt_today+' today':'none', s.appt_today>0?'pill-g':'pill-k');
+    pill('mp-low',  s.g_low>0?'⚠ low stock':'all good', s.g_low>0?'pill-a':'pill-g');
+    pill('mp-ag',   active+' / 4', active>0?'pill-g':'pill-k');
 
-    // Low-stock nav badge
-    const navLow = document.getElementById('nav-low');
-    if(s.g_low>0){navLow.textContent=s.g_low;navLow.style.display='';}
-    else navLow.style.display='none';
+    set('ir-draft',s.inv_draft); set('ir-pts',s.p_total);
+    set('ir-appt', s.appt_today); set('ir-low',s.g_low);
+    document.getElementById('upd-time').textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 
-    // Agent badges + right panel list
-    let agentHtml = '';
-    AGENT_DEFS.forEach(({id,el,badge,label,warn})=>{
-      const node  = document.getElementById(el);
-      const bdge  = document.getElementById(badge);
-      const on    = s.agents[id]?.enabled;
-      const warnT = warn(s);
-      node.classList.toggle('on', !!on);
-      if(warnT){
-        bdge.textContent = warnT; bdge.className='an-badge badge-warn';
-      } else if(on){
-        bdge.textContent = 'Active'; bdge.className='an-badge badge-on';
-      } else {
-        bdge.textContent = 'Inactive'; bdge.className='an-badge badge-off';
-      }
-      agentHtml += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.02);margin-bottom:4px">
-        <span style="font-size:12.5px;color:#94a3b8">${label}</span>
-        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;${on?'background:rgba(37,211,102,.1);color:#4ade80':'background:rgba(255,255,255,.04);color:#475569'}">${on?'ON':'OFF'}</span>
-      </div>`;
-    });
-    document.getElementById('rp-agents').innerHTML = agentHtml;
+    setAgent('shop',    ag.shop?.enabled,       s.g_low>0?`${s.g_low} low`:null);
+    setAgent('invoice', ag.invoice?.enabled,    s.inv_draft>0?`${s.inv_draft} draft`:null);
+    setAgent('health',  ag.health?.enabled,     null);
+    setAgent('appt',    ag.appointment?.enabled,s.appt_today>0?`${s.appt_today} today`:null);
 
-    drawConnections();
-  } catch(e){ console.warn('stats error',e); }
+    const al=[];
+    if(s.g_low>0)      al.push({t:'warn',m:`<b>${s.g_low} item(s)</b> below stock threshold — <a href="/shop" style="color:#fbbf24;font-weight:700">Restock →</a>`});
+    if(s.inv_draft>0)  al.push({t:'ok',  m:`<b>${s.inv_draft} draft invoice(s)</b> ready to send — <a href="/invoice" style="color:#4ade80;font-weight:700">Send →</a>`});
+    if(s.appt_today>0) al.push({t:'info',m:`<b>${s.appt_today} appointment(s)</b> scheduled today — <a href="/appointment" style="color:#93c5fd;font-weight:700">View →</a>`});
+    const ab=document.getElementById('alertBox');
+    if(al.length){ab.style.display='flex';ab.innerHTML=al.map(a=>`<div class="alert alert-${a.t}">${a.m}</div>`).join('')}
+    else{ab.style.display='none'}
+  }catch(e){}
 }
 
-function drawConnections(){
-  const svg    = document.getElementById('flowSvg');
-  const canvas = document.getElementById('flowCanvas');
-  const hub    = document.getElementById('hubNode');
-  const agents = document.querySelectorAll('.agent-node');
-  if(!svg||!canvas||!hub||!agents.length) return;
-  const cr = canvas.getBoundingClientRect();
-  const hr = hub.getBoundingClientRect();
-  const startX = hr.right - cr.left;
-  const startY = hr.top + hr.height/2 - cr.top;
-  svg.innerHTML = `<defs>
-    <marker id="arr" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L7,3 z" fill="#25D366" opacity=".55"/>
-    </marker></defs>`;
-  agents.forEach((ag,i)=>{
-    const ar  = ag.getBoundingClientRect();
-    const ex  = ar.left - cr.left;
-    const ey  = ar.top + ar.height/2 - cr.top;
-    const mx  = (startX + ex)/2;
-    const on  = ag.classList.contains('on');
-    const p   = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',`M${startX},${startY} C${mx},${startY} ${mx},${ey} ${ex},${ey}`);
-    p.setAttribute('stroke','#25D366');
-    p.setAttribute('stroke-width','1.5');
-    p.setAttribute('fill','none');
-    p.setAttribute('stroke-dasharray','5 4');
-    p.setAttribute('opacity', on?'0.7':'0.25');
-    p.setAttribute('marker-end','url(#arr)');
-    p.style.animation=`dash${i} ${16+i*3}s linear infinite`;
-    const style=document.createElementNS('http://www.w3.org/2000/svg','style');
-    style.textContent=`@keyframes dash${i}{to{stroke-dashoffset:-${60+i*20}}}`;
-    svg.appendChild(style);
-    svg.appendChild(p);
-  });
+function animCount(id,target){
+  const el=document.getElementById(id);
+  if(!el||isNaN(target))return;
+  let cur=0,dur=600,steps=20,step=Math.ceil(target/steps)||1;
+  const t=setInterval(()=>{
+    cur=Math.min(cur+step,target);
+    el.textContent=cur;
+    if(cur>=target)clearInterval(t);
+  },dur/steps);
 }
 
-async function disconnectWA(){
-  if(!confirm('Disconnect WhatsApp? You will need to scan QR again to reconnect.')) return;
-  try{ await fetch('/api/wa/logout'); location.href='/connect'; }
-  catch(e){ alert('Error: '+e); }
+function setAgent(id,on,extra){
+  const c=document.getElementById(AG[id].chip);
+  const t=document.getElementById(AG[id].txt);
+  const dot=c.querySelector('.sc-dot');
+  if(extra){
+    c.className='status-chip chip-warn';dot.style.background='#f59e0b';dot.style.animation='none';
+    t.textContent=extra;
+  }else if(on){
+    c.className='status-chip chip-on';dot.style.background='';dot.style.animation='';
+    t.textContent='Active';
+  }else{
+    c.className='status-chip chip-off';dot.style.background='rgba(255,255,255,.2)';dot.style.animation='none';
+    t.textContent='Inactive';
+  }
+}
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v??'—'}
+function pill(id,txt,cls){
+  const e=document.getElementById(id);
+  if(!e)return;
+  e.textContent=txt;
+  e.className='m-pill '+cls;
 }
 
-window.addEventListener('load', ()=>{ loadStats(); setInterval(loadStats, 25000); });
-window.addEventListener('resize', drawConnections);
+loadDash();
+setInterval(loadDash,30000);
 </script>
-</body>
-</html>
+{% endblock %}

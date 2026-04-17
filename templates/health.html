@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Health Agent{% endblock %}
-{% block page_title %}💊 Health Agent — Medication Reminders{% endblock %}
+{% block page_title %}Health Agent{% endblock %}
+
+{% block extra_head %}
+<style>
+@media(max-width:480px){
+  .health-card-actions{flex-direction:column;gap:6px}
+  .health-card-actions button{width:100%}
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <div x-data="healthApp()" x-init="init()">
@@ -9,7 +18,7 @@
   <div class="card mb-4">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
-        <div style="font-size:28px">💊</div>
+        <div style="width:42px;height:42px;border-radius:11px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💊</div>
         <div>
           <div style="font-weight:700;font-size:15px">Health Agent</div>
           <div class="text-sm text-muted">Send personalised medication reminders & health alerts via WhatsApp</div>
@@ -21,7 +30,7 @@
         <span x-text="cfg.enabled ? 'Active' : 'Inactive'" class="badge" :class="cfg.enabled ? 'bg' : 'bk'"></span>
       </div>
       <div style="display:flex;gap:10px">
-        <button @click="sendAllReminders()" class="btn btn-a btn-sm" :disabled="patients.length===0">💬 Remind All</button>
+        <button @click="sendAllReminders()" class="btn btn-a btn-sm" :disabled="patients.length===0">Remind All</button>
         <button @click="showAdd=true" class="btn btn-p btn-sm">+ Add Patient</button>
       </div>
     </div>
@@ -30,25 +39,25 @@
   <!-- Stats -->
   <div class="grid g4 mb-4">
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fff7ed">👤</div>
+      <div class="stat-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.15)">👤</div>
       <div><div class="stat-val" x-text="patients.length">{{ patients|length }}</div><div class="stat-lbl">Patients</div></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef2f2">💊</div>
+      <div class="stat-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15)">💊</div>
       <div>
-        <div class="stat-val" x-text="totalMeds" style="color:#f59e0b">0</div>
+        <div class="stat-val" x-text="totalMeds" style="color:var(--amber)">0</div>
         <div class="stat-lbl">Medications Tracked</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4">📤</div>
+      <div class="stat-icon" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.15)">📤</div>
       <div>
         <div class="stat-val" x-text="patients.filter(p=>p.medications.length>0).length" style="color:#22c55e">0</div>
         <div class="stat-lbl">Active Reminders</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#eff6ff">🕐</div>
+      <div class="stat-icon" style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.15)">🕐</div>
       <div>
         <div class="stat-val" style="font-size:18px" x-text="nextReminder">—</div>
         <div class="stat-lbl">Next Reminder</div>
@@ -60,13 +69,13 @@
   <template x-if="patients.length > 0">
     <div class="grid g3 mb-4">
       <template x-for="p in patients" :key="p.id">
-        <div class="card" style="border-top:3px solid var(--g)">
+        <div class="card" style="border-top:2px solid rgba(37,211,102,.3)">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
             <div style="display:flex;align-items:center;gap:12px">
-              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g),var(--gd));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-weight:700;flex-shrink:0"
+              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--g),var(--gd));display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700;flex-shrink:0"
                    x-text="p.name.charAt(0).toUpperCase()"></div>
               <div>
-                <div style="font-weight:700;font-size:15px" x-text="p.name"></div>
+                <div style="font-weight:700;font-size:15px;color:var(--text)" x-text="p.name"></div>
                 <div class="text-sm text-muted" x-text="'Age: ' + p.age + (p.condition ? ' · ' + p.condition : '')"></div>
               </div>
             </div>
@@ -77,32 +86,32 @@
           </div>
 
           <!-- Phone -->
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-            <span style="font-size:16px">📞</span>
-            <span style="font-size:13px;color:var(--muted)" x-text="p.phone"></span>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+            <span style="font-size:13px;color:var(--muted2)" x-text="p.phone"></span>
           </div>
 
           <!-- Medications -->
           <div style="margin-bottom:14px">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Medications</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px">Medications</div>
             <template x-if="p.medications.length === 0">
-              <div style="font-size:13px;color:var(--muted);font-style:italic">No medications — click Edit to add</div>
+              <div style="font-size:13px;color:var(--muted);font-style:italic;padding:8px 0">No medications — click Edit to add</div>
             </template>
             <template x-for="med in p.medications" :key="med.name">
-              <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px">
+              <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
                 <span style="font-size:14px">💊</span>
                 <div style="flex:1">
-                  <span style="font-size:13px;font-weight:600" x-text="med.name"></span>
+                  <span style="font-size:13px;font-weight:600;color:var(--text)" x-text="med.name"></span>
                   <span style="font-size:12px;color:var(--muted)" x-text="' — ' + med.dose"></span>
                 </div>
-                <span style="font-size:12px;color:var(--blue);font-weight:600;background:#eff6ff;padding:2px 8px;border-radius:10px" x-text="med.time"></span>
+                <span style="font-size:11.5px;color:#93c5fd;font-weight:600;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15);padding:2px 8px;border-radius:10px" x-text="med.time"></span>
               </div>
             </template>
           </div>
 
           <!-- Send Reminder -->
           <button @click="remind(p)" class="btn btn-p btn-sm" style="width:100%;justify-content:center" :disabled="p.medications.length===0">
-            💬 Send Reminder via WhatsApp
+            Send Reminder via WhatsApp
           </button>
         </div>
       </template>
@@ -112,42 +121,45 @@
   <!-- Empty state -->
   <template x-if="patients.length === 0">
     <div class="card" style="text-align:center;padding:52px">
-      <div style="font-size:52px;margin-bottom:16px">🏥</div>
-      <h3 style="font-size:18px;font-weight:800;margin-bottom:8px">No patients yet</h3>
+      <div style="width:72px;height:72px;border-radius:20px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px">🏥</div>
+      <h3 style="font-size:18px;font-weight:800;margin-bottom:8px;color:var(--text)">No patients yet</h3>
       <p style="color:var(--muted);font-size:14px;max-width:360px;margin:0 auto 24px;line-height:1.6">Add patients to track their medications and send them WhatsApp reminders automatically.</p>
       <button @click="showAdd=true" class="btn btn-p">+ Add First Patient</button>
     </div>
   </template>
 
-  <!-- Bot Preview -->
+  <!-- WhatsApp Preview -->
   <template x-if="patients.length > 0">
     <div class="card mt-4">
-      <div class="card-title">🤖 Sample WhatsApp Message</div>
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.6"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Sample WhatsApp Message
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
         <div>
-          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">Message Preview</div>
-          <div style="background:#e5ddd5;border-radius:12px;padding:16px;font-family:monospace">
-            <div style="background:#dcf8c6;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;border-bottom-right-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.1)">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Message Preview</div>
+          <div style="background:#0d1117;border:1px solid rgba(37,211,102,.15);border-radius:12px;padding:16px">
+            <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:12px;font-size:13px;line-height:1.7;color:var(--text)">
               💊 <strong>Medication Reminder</strong><br>
               Hello <span x-text="patients[0]?.name.split(' ')[0] || 'Patient'"></span>! 👋<br><br>
               <template x-for="med in (patients[0]?.medications || []).slice(0,3)">
                 <span>• <strong x-text="med.name"></strong> — <span x-text="med.dose"></span> at <span x-text="med.time"></span><br></span>
               </template>
               <br>
-              <em style="color:#5a7a5a">Take your medications on time for good health! 🌿</em>
+              <em style="color:var(--muted2)">Take your medications on time for good health! 🌿</em>
             </div>
           </div>
         </div>
         <div>
-          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">Health Tips</div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Health Tips</div>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+            <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.12);border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start;color:var(--text)">
               <span>💧</span><span>Always take medicines with a full glass of water</span>
             </div>
-            <div style="background:#eff6ff;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+            <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.12);border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start;color:var(--text)">
               <span>⏰</span><span>Set a daily alarm to ensure on-time medication</span>
             </div>
-            <div style="background:#fff7ed;border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start">
+            <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:10px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:flex-start;color:var(--text)">
               <span>📋</span><span>Keep a log of missed doses to share with your doctor</span>
             </div>
           </div>
@@ -159,10 +171,14 @@
   <!-- Medical Image Analysis -->
   <div class="mt-4">
     <div class="card">
-      <div class="card-title">🔬 Medical Image Analysis <span class="badge ba" style="font-size:11px;margin-left:6px">GLM-4V Vision</span></div>
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.6"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Medical Image Analysis
+        <span class="badge ba" style="font-size:11px;margin-left:4px">GLM-4V Vision</span>
+      </div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Upload an X-ray, scan, report or any medical image for AI analysis.</p>
-      <div id="imgDropZone" style="border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px;transition:.15s" onclick="document.getElementById('imgFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--g)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleImgDrop(event)">
-        <div id="imgPreview" style="font-size:13px;color:var(--muted)">📷 Click or drag an image here<br><span style="font-size:12px">JPG, PNG, WEBP up to 10MB</span></div>
+      <div id="imgDropZone" style="border:2px dashed rgba(255,255,255,.1);border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:14px;transition:.15s;background:rgba(255,255,255,.02)" onclick="document.getElementById('imgFile').click()" ondragover="event.preventDefault();this.style.borderColor='var(--g)'" ondragleave="this.style.borderColor='rgba(255,255,255,.1)'" ondrop="handleImgDrop(event)">
+        <div id="imgPreview" style="font-size:13px;color:var(--muted)">📷 Click or drag an image here<br><span style="font-size:12px;color:#334155">JPG, PNG, WEBP up to 10MB</span></div>
       </div>
       <input type="file" id="imgFile" accept="image/*" style="display:none" onchange="previewImg(this)">
       <div class="fg">
@@ -170,7 +186,7 @@
         <input type="text" id="imgPrompt" placeholder="Describe what you want analyzed..." value="Analyze this medical image and describe key findings.">
       </div>
       <button onclick="analyzeImage()" class="btn btn-p" style="width:100%;justify-content:center" id="analyzeBtn">🔬 Analyze with AI</button>
-      <div id="analysisResult" style="margin-top:14px;background:#f0fdf4;border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;display:none"></div>
+      <div id="analysisResult" style="margin-top:14px;background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;display:none;color:var(--text)"></div>
     </div>
   </div>
 
@@ -206,11 +222,11 @@
       <!-- Medications -->
       <div style="margin-top:8px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <label style="font-size:13px;font-weight:600">Medications</label>
+          <label style="font-size:13px;font-weight:600;color:var(--muted2)">Medications</label>
           <button @click="form.medications.push({name:'',dose:'',time:''})" class="btn btn-o btn-xs">+ Add Medication</button>
         </div>
         <template x-if="form.medications.length === 0">
-          <div style="text-align:center;padding:20px;background:#f8fafc;border-radius:10px;color:var(--muted);font-size:13px">
+          <div style="text-align:center;padding:20px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px">
             Click "Add Medication" to add medicines for this patient
           </div>
         </template>
@@ -341,7 +357,7 @@ function previewImg(input) {
 }
 function handleImgDrop(e) {
   e.preventDefault();
-  document.getElementById('imgDropZone').style.borderColor='var(--border)';
+  document.getElementById('imgDropZone').style.borderColor='rgba(255,255,255,.1)';
   const f = e.dataTransfer.files[0];
   if (f && f.type.startsWith('image/')) {
     _imgFile = f;

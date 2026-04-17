@@ -1,15 +1,67 @@
 {% extends "base.html" %}
 {% block title %}Invoice Agent{% endblock %}
-{% block page_title %}🧾 Invoice Agent — Billing & Payments{% endblock %}
+{% block page_title %}Invoice Agent{% endblock %}
+
+{% block extra_head %}
+<style>
+.inv-input {
+  padding:6px 10px;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);
+  border-radius:7px;font-size:13px;outline:none;color:var(--text);font-family:inherit;
+  transition:.15s;
+}
+.inv-input:focus { border-color:var(--g);background:rgba(255,255,255,.07); }
+.inv-input::placeholder { color:rgba(255,255,255,.2); }
+
+/* Shop Profile card */
+.profile-setup {
+  display:grid; grid-template-columns:200px 1fr; gap:24px; align-items:start;
+}
+@media(max-width:700px){
+  .profile-setup{grid-template-columns:1fr}
+  .logo-zone{aspect-ratio:unset;height:120px}
+}
+@media(max-width:480px){
+  .inv-preview-img{border-radius:7px}
+}
+
+.logo-zone {
+  aspect-ratio:1; border-radius:16px;
+  border:2px dashed rgba(255,255,255,.15);
+  background:rgba(255,255,255,.03);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; transition:.2s; position:relative; overflow:hidden;
+}
+.logo-zone:hover { border-color:var(--g); background:rgba(37,211,102,.04); }
+.logo-zone img { width:100%; height:100%; object-fit:contain; border-radius:14px; }
+.logo-overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,.6);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; opacity:0; transition:.2s; border-radius:14px;
+}
+.logo-zone:hover .logo-overlay { opacity:1; }
+.logo-overlay span { font-size:12px; color:#fff; font-weight:600; }
+
+.logo-placeholder { text-align:center; }
+.logo-placeholder svg { opacity:.3; margin-bottom:8px; }
+.logo-placeholder p { font-size:12px; color:var(--muted); line-height:1.5; }
+
+/* Invoice preview modal */
+.inv-preview-img { width:100%; border-radius:10px; border:1px solid var(--border); }
+
+/* Status dot */
+.inv-status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+</style>
+{% endblock %}
 
 {% block content %}
 <div x-data="invoiceApp()" x-init="init()">
 
-  <!-- Config Banner -->
+  <!-- ── Agent Config Banner ── -->
   <div class="card mb-4">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px">
-        <div style="font-size:28px">🧾</div>
+        <div style="width:42px;height:42px;border-radius:11px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🧾</div>
         <div>
           <div style="font-weight:700;font-size:15px">Invoice Agent</div>
           <div class="text-sm text-muted">Auto-generate & send professional invoices via WhatsApp</div>
@@ -24,28 +76,97 @@
     </div>
   </div>
 
-  <!-- Stats -->
+  <!-- ── Shop Profile Setup ── -->
+  <div class="card mb-4">
+    <div class="section-header mb-3">
+      <h3>Shop Profile</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <template x-if="profile.has_logo || profile.shop_name">
+          <span class="badge bg">
+            <span class="inv-status-dot" style="background:#25D366"></span>
+            Profile set
+          </span>
+        </template>
+        <template x-if="!profile.has_logo && !profile.shop_name">
+          <span class="badge ba">Setup required</span>
+        </template>
+        <button @click="saveProfile()" class="btn btn-p btn-sm">Save Profile</button>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Your shop logo and details will appear on every invoice image sent via WhatsApp.</p>
+
+    <div class="profile-setup">
+      <!-- Logo uploader -->
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Shop Logo</div>
+        <div class="logo-zone" @click="document.getElementById('logoInput').click()" id="logoZone">
+          <template x-if="logoPreview">
+            <img :src="logoPreview" alt="Shop logo">
+          </template>
+          <template x-if="!logoPreview">
+            <div class="logo-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Click to upload<br>logo</p>
+            </div>
+          </template>
+          <div class="logo-overlay">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Change Logo</span>
+          </div>
+        </div>
+        <input type="file" id="logoInput" accept="image/*" style="display:none" @change="uploadLogo($event)">
+        <template x-if="profile.has_logo || logoPreview">
+          <button @click="removeLogo()" class="btn btn-d btn-xs" style="width:100%;justify-content:center;margin-top:8px">Remove Logo</button>
+        </template>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">PNG, JPG · Max 2MB</p>
+      </div>
+
+      <!-- Shop details -->
+      <div>
+        <div class="form-row">
+          <div class="fg">
+            <label>Shop / Business Name *</label>
+            <input x-model="profile.shop_name" placeholder="e.g. Sri Balaji Traders">
+          </div>
+          <div class="fg">
+            <label>Phone Number</label>
+            <input x-model="profile.shop_phone" placeholder="+91 9876543210">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Address</label>
+          <input x-model="profile.shop_address" placeholder="Shop No. 12, Market Street, Chennai">
+        </div>
+        <div class="fg">
+          <label>Email</label>
+          <input x-model="profile.shop_email" placeholder="shop@example.com">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats ── -->
   <div class="grid g4 mb-4">
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f8fafc">📋</div>
+      <div class="stat-icon" style="background:rgba(255,255,255,.06);border:1px solid var(--border)">📋</div>
       <div><div class="stat-val" x-text="invoices.length">{{ invoices|length }}</div><div class="stat-lbl">Total Invoices</div></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4">✅</div>
+      <div class="stat-icon" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.15)">✅</div>
       <div>
         <div class="stat-val" style="color:#22c55e" x-text="invoices.filter(i=>i.status==='sent').length">{{ invoices|selectattr('status','eq','sent')|list|length }}</div>
         <div class="stat-lbl">Sent</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef9c3">📝</div>
+      <div class="stat-icon" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.15)">📝</div>
       <div>
         <div class="stat-val" style="color:var(--amber)" x-text="invoices.filter(i=>i.status==='draft').length">{{ invoices|selectattr('status','eq','draft')|list|length }}</div>
         <div class="stat-lbl">Drafts</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon" style="background:#eff6ff">💰</div>
+      <div class="stat-icon" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.15)">💰</div>
       <div>
         <div class="stat-val" style="font-size:18px" x-text="'₹'+totalRevenue">₹0</div>
         <div class="stat-lbl">Total Revenue</div>
@@ -53,14 +174,14 @@
     </div>
   </div>
 
-  <!-- Invoice Table -->
+  <!-- ── Invoice Table ── -->
   <div class="card">
     <div class="section-header">
       <h3>Invoices</h3>
-      <select x-model="filter" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none">
-        <option value="all">All</option>
-        <option value="draft">Drafts</option>
-        <option value="sent">Sent</option>
+      <select x-model="filter" style="padding:7px 12px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;color:var(--text)">
+        <option value="all" style="background:#1a2332">All</option>
+        <option value="draft" style="background:#1a2332">Drafts</option>
+        <option value="sent" style="background:#1a2332">Sent</option>
       </select>
     </div>
     <div class="tbl-wrap">
@@ -72,19 +193,19 @@
           <template x-for="inv in filteredInvoices" :key="inv.id">
             <tr>
               <td style="font-weight:700;color:var(--blue)" x-text="inv.inv_no"></td>
-              <td style="font-weight:600" x-text="inv.cust_name"></td>
+              <td style="font-weight:600;color:var(--text)" x-text="inv.cust_name"></td>
               <td class="text-muted text-sm" x-text="inv.cust_phone"></td>
               <td class="text-muted text-sm" x-text="inv.items.length + ' item(s)'"></td>
-              <td style="font-weight:700" x-text="'₹' + inv.total.toFixed(2)"></td>
+              <td style="font-weight:700;color:var(--text)" x-text="'₹' + inv.total.toFixed(2)"></td>
               <td>
-                <span class="badge" :class="inv.status==='sent'?'bg':'ba'" x-text="inv.status==='sent'?'✓ Sent':'Draft'"></span>
+                <span class="badge" :class="inv.status==='sent'?'bg':'ba'" x-text="inv.status==='sent'?'Sent':'Draft'"></span>
               </td>
               <td class="text-muted text-sm" x-text="inv.date"></td>
               <td>
-                <div style="display:flex;gap:6px">
-                  <button @click="viewInv(inv)" class="btn btn-o btn-xs">View</button>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button @click="previewInv(inv)" class="btn btn-o btn-xs">Preview</button>
                   <template x-if="inv.status==='draft'">
-                    <button @click="sendInv(inv)" class="btn btn-p btn-xs">📤 Send</button>
+                    <button @click="sendInv(inv)" class="btn btn-p btn-xs">Send</button>
                   </template>
                   <template x-if="inv.status==='sent'">
                     <button @click="sendInv(inv)" class="btn btn-b btn-xs">Resend</button>
@@ -102,7 +223,7 @@
     </div>
   </div>
 
-  <!-- Create Invoice Modal -->
+  <!-- ── Create Invoice Modal ── -->
   <div class="overlay" x-show="showCreate" x-transition @click.self="showCreate=false">
     <div class="modal modal-lg" @click.stop>
       <div class="modal-hd">
@@ -124,7 +245,7 @@
       <!-- Line Items -->
       <div style="margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <label style="font-size:13px;font-weight:600">Items *</label>
+          <label style="font-size:13px;font-weight:600;color:var(--muted2)">Items *</label>
           <button @click="addLine()" class="btn btn-o btn-xs">+ Add Line</button>
         </div>
         <div class="tbl-wrap">
@@ -133,10 +254,10 @@
             <tbody>
               <template x-for="(line,idx) in form.items" :key="idx">
                 <tr>
-                  <td><input x-model="line.name" placeholder="Item description" style="width:100%;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
-                  <td><input type="number" x-model.number="line.qty" min="1" step="1" style="width:70px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
-                  <td><input type="number" x-model.number="line.price" min="0" step="0.01" style="width:90px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;outline:none"></td>
-                  <td style="font-weight:600" x-text="'₹'+(line.qty*line.price).toFixed(2)"></td>
+                  <td><input x-model="line.name" placeholder="Item description" class="inv-input" style="width:100%"></td>
+                  <td><input type="number" x-model.number="line.qty" min="1" step="1" class="inv-input" style="width:70px"></td>
+                  <td><input type="number" x-model.number="line.price" min="0" step="0.01" class="inv-input" style="width:90px"></td>
+                  <td style="font-weight:600;color:var(--text)" x-text="'₹'+(line.qty*line.price).toFixed(2)"></td>
                   <td><button @click="form.items.splice(idx,1)" class="btn btn-d btn-xs">✕</button></td>
                 </tr>
               </template>
@@ -151,47 +272,42 @@
       <div class="form-actions">
         <button @click="showCreate=false" class="btn btn-o">Cancel</button>
         <button @click="createInv(false)" class="btn btn-o">Save as Draft</button>
-        <button @click="createInv(true)" class="btn btn-p">💾 Save & Send via WhatsApp</button>
+        <button @click="createInv(true)" class="btn btn-p">Save & Send via WhatsApp</button>
       </div>
     </div>
   </div>
 
-  <!-- View Invoice Modal -->
-  <div class="overlay" x-show="viewTarget" x-transition @click.self="viewTarget=null">
-    <div class="modal modal-lg" @click.stop x-show="viewTarget">
+  <!-- ── Invoice Preview Modal ── -->
+  <div class="overlay" x-show="previewTarget" x-transition @click.self="previewTarget=null">
+    <div class="modal modal-lg" @click.stop style="max-width:780px">
       <div class="modal-hd">
-        <h3 x-text="'Invoice #' + viewTarget?.inv_no"></h3>
-        <button class="modal-close" @click="viewTarget=null">✕</button>
+        <h3 x-text="'Invoice #' + previewTarget?.inv_no"></h3>
+        <button class="modal-close" @click="previewTarget=null">✕</button>
       </div>
-      <template x-if="viewTarget">
+      <template x-if="previewTarget">
         <div>
-          <div class="form-row" style="margin-bottom:16px">
-            <div><div class="text-xs text-muted" style="margin-bottom:4px">Customer</div><div style="font-weight:700" x-text="viewTarget.cust_name"></div></div>
-            <div><div class="text-xs text-muted" style="margin-bottom:4px">Phone</div><div x-text="viewTarget.cust_phone"></div></div>
-            <div><div class="text-xs text-muted" style="margin-bottom:4px">Date</div><div x-text="viewTarget.date"></div></div>
-            <div><div class="text-xs text-muted" style="margin-bottom:4px">Status</div><span class="badge" :class="viewTarget.status==='sent'?'bg':'ba'" x-text="viewTarget.status"></span></div>
+          <!-- Invoice image preview -->
+          <div style="background:#0d1117;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;text-align:center">
+            <template x-if="previewLoading">
+              <div style="padding:60px;color:var(--muted);font-size:13px">
+                <div style="font-size:28px;margin-bottom:10px;opacity:.4">🧾</div>
+                Generating invoice preview…
+              </div>
+            </template>
+            <template x-if="!previewLoading && previewImg">
+              <img :src="previewImg" class="inv-preview-img" alt="Invoice preview">
+            </template>
           </div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
-              <tbody>
-                <template x-for="line in viewTarget.items" :key="line.name">
-                  <tr>
-                    <td x-text="line.name"></td>
-                    <td x-text="line.qty"></td>
-                    <td x-text="'₹'+line.price"></td>
-                    <td style="font-weight:600" x-text="'₹'+(line.qty*line.price).toFixed(2)"></td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-          </div>
-          <div style="text-align:right;padding:14px 16px;font-size:16px;font-weight:800;border-top:2px solid var(--g);margin-top:4px">
-            Total: ₹<span x-text="viewTarget.total.toFixed(2)"></span>
+          <!-- Info row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px">
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Customer</div><div style="font-weight:700;color:var(--text)" x-text="previewTarget.cust_name"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Phone</div><div style="color:var(--muted2)" x-text="previewTarget.cust_phone"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Date</div><div style="color:var(--muted2)" x-text="previewTarget.date"></div></div>
+            <div><div class="text-xs text-muted" style="margin-bottom:4px">Status</div><span class="badge" :class="previewTarget.status==='sent'?'bg':'ba'" x-text="previewTarget.status"></span></div>
           </div>
           <div class="form-actions">
-            <button @click="viewTarget=null" class="btn btn-o">Close</button>
-            <button @click="sendInv(viewTarget);viewTarget=null" class="btn btn-p">📤 Send via WhatsApp</button>
+            <button @click="previewTarget=null" class="btn btn-o">Close</button>
+            <button @click="sendInv(previewTarget);previewTarget=null" class="btn btn-p">Send via WhatsApp</button>
           </div>
         </div>
       </template>
@@ -207,12 +323,31 @@ function invoiceApp() {
   return {
     invoices: {{ invoices|tojson }},
     cfg: {{ cfg|tojson }},
-    showCreate: false,
-    viewTarget: null,
+    profile: {
+      shop_name:    {{ profile.shop_name | tojson }},
+      shop_phone:   {{ profile.shop_phone | tojson }},
+      shop_address: {{ profile.shop_address | tojson }},
+      shop_email:   {{ profile.shop_email | tojson }},
+      has_logo:     {{ 'true' if profile.has_logo else 'false' }},
+    },
+    logoPreview: null,
+    showCreate:   false,
+    previewTarget: null,
+    previewImg:    null,
+    previewLoading: false,
     filter: 'all',
     form: { cust_name:'', cust_phone:'', items:[{name:'',qty:1,price:0}] },
 
-    init() {},
+    async init() {
+      // Load logo async — keeps initial page render fast
+      if (this.profile.has_logo) {
+        try {
+          const r = await fetch('/api/invoice/logo');
+          const d = await r.json();
+          if (d.logo_data) this.logoPreview = d.logo_data;
+        } catch(e) {}
+      }
+    },
 
     get filteredInvoices() {
       if (this.filter==='all') return this.invoices;
@@ -227,10 +362,68 @@ function invoiceApp() {
 
     addLine() { this.form.items.push({name:'',qty:1,price:0}); },
 
-    viewInv(inv) { this.viewTarget = inv; },
+    // ── Shop profile ──────────────────────────────────────────────────────────
+    async saveProfile() {
+      const data = await api('POST', '/api/invoice/shop-profile', {
+        shop_name:    this.profile.shop_name,
+        shop_phone:   this.profile.shop_phone,
+        shop_address: this.profile.shop_address,
+        shop_email:   this.profile.shop_email,
+      });
+      if (data.status === 'saved') toast('Shop profile saved');
+      else toast(data.error || 'Error', false);
+    },
 
+    async uploadLogo(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { toast('Image too large (max 2MB)', false); return; }
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onload = ev => { this.logoPreview = ev.target.result; };
+      reader.readAsDataURL(file);
+      // Upload
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/api/invoice/logo', { method:'POST', body:fd });
+      const d = await r.json();
+      if (d.status === 'saved') {
+        this.profile.has_logo = true;
+        this.logoPreview = d.preview;
+        toast('Logo uploaded');
+      } else toast(d.error || 'Upload failed', false);
+      // Reset input so same file can be re-selected
+      e.target.value = '';
+    },
+
+    async removeLogo() {
+      if (!confirm('Remove the shop logo?')) return;
+      const d = await api('DELETE', '/api/invoice/logo');
+      if (d.status === 'deleted') {
+        this.logoPreview = null;
+        this.profile.has_logo = false;
+        toast('Logo removed');
+      }
+    },
+
+    // ── Invoices ──────────────────────────────────────────────────────────────
     async saveCfg() {
       await api('POST','/api/agent/invoice',{enabled:this.cfg.enabled?1:0,wa_number:this.cfg.wa_number||'',notes:''});
+    },
+
+    async previewInv(inv) {
+      this.previewTarget = inv;
+      this.previewImg    = null;
+      this.previewLoading = true;
+      // Load invoice image from server
+      const r = await fetch(`/api/invoice/preview/${inv.id}`);
+      if (r.ok) {
+        const blob = await r.blob();
+        this.previewImg = URL.createObjectURL(blob);
+      } else {
+        this.previewImg = null;
+      }
+      this.previewLoading = false;
     },
 
     async createInv(sendNow) {
@@ -249,7 +442,11 @@ function invoiceApp() {
     },
 
     async sendInv(inv) {
-      toast('Sending invoice via WhatsApp...');
+      if (!this.profile.shop_name) {
+        toast('Fill in your Shop Profile first so the invoice looks professional!', false);
+        return;
+      }
+      toast('Generating & sending invoice via WhatsApp...');
       const data = await api('POST',`/api/invoices/${inv.id}/send`);
       if (!data.error) {
         const idx = this.invoices.findIndex(i=>i.id===inv.id);
