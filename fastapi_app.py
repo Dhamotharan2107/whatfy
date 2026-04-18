@@ -82,7 +82,7 @@ SMTP_PORT  = int(os.environ.get("SMTP_PORT", "465"))   # 465=SSL, 587=STARTTLS
 SMTP_USER  = os.environ.get("SMTP_USER",  "info@opendrap.website")
 SMTP_PASS  = os.environ.get("SMTP_PASS",  "h0LBrxNA4u4G")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "info@opendrap.website")
-APP_URL    = os.environ.get("APP_URL",    "http://localhost:5000")
+APP_URL    = os.environ.get("APP_URL",    "http://whatfy.opendrap.website")
 
 # token -> {uid, wa_verified, code, code_sent}
 _sessions: dict = {}
