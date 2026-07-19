@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Automations - Whatfy{% endblock %}
+{% block page_title %}Automations{% endblock %}
+
+{% block extra_head %}
+<style>
+.auto-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.panel-bd{padding:18px}
+.flow-list{display:grid;gap:12px}
+.flow{padding:16px;border-radius:16px;background:#0c1320;border:1px solid rgba(255,255,255,.05)}
+.flow-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.flow h4{font-size:14px}
+.flow p{font-size:12px;color:var(--sub);margin-top:8px}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.preset{padding:16px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01))}
+.preset strong{display:block;margin-bottom:6px}
+.preset p{font-size:12px;color:var(--sub);line-height:1.6;min-height:56px}
+@media(max-width:980px){.auto-grid,.preset-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ctr">
+<div class="shc" style="margin-bottom:28px">
+  <div class="slbl">Automation Builder</div>
+  <div class="stl">Design intelligent workflows for your WhatsApp.</div>
+  <div class="sdsc">Create keyword-triggered flows, auto-replies, follow-ups and AI-powered sequences — no coding required.</div>
+</div>
+<div class="auto-grid">
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>Live Flows</h3>
+        <div class="card-sub">ForgeChat-style automation layer adapted to your WhatsMeow stack</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="resetForm()">New Flow</button>
+    </div>
+    <div class="panel-bd">
+      <div class="flow-list" id="flowList">
+        {% for flow in flows %}
+        <article class="flow">
+          <div class="flow-top">
+            <div>
+              <h4>{{ flow.name }}</h4>
+              <div class="card-sub">{{ flow.trigger_type }} -> {{ flow.action_type }}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn {% if flow.enabled %}btn-p{% else %}btn-o{% endif %} btn-xs" onclick="toggleFlow({{ flow.id }})">{{ "Enabled" if flow.enabled else "Disabled" }}</button>
+              <button class="btn btn-o btn-xs" onclick='editFlow({{ flow|tojson }})'>Edit</button>
+            </div>
+          </div>
+          <p><b>Trigger:</b> {{ flow.trigger_value or "Any inbound message" }}</p>
+          <p><b>Action:</b> {{ flow.action_payload or "Reply / handoff action not set" }}</p>
+        </article>
+        {% else %}
+        <div class="flow">No flows yet. Create your first inbound automation on the right.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>Flow Builder</h3>
+        <div class="card-sub">Keyword replies, escalations, and operator handoffs</div>
+      </div>
+      <a class="btn btn-o btn-sm" href="/chat">Test in chat</a>
+    </div>
+    <div class="panel-bd">
+      <div class="preset-grid" style="margin-bottom:16px">
+        <div class="preset">
+          <strong>Lead Capture</strong>
+          <p>Trigger on "price", "demo", or "quote" and push the chat into the Qualified stage with an instant reply.</p>
+          <button class="btn btn-o btn-xs" onclick="applyPreset('Lead capture','keyword','price','reply','Thanks - an operator will share pricing shortly.')">Use preset</button>
+        </div>
+        <div class="preset">
+          <strong>After-hours Reply</strong>
+          <p>Answer all new chats outside office hours and queue a human follow-up for the next shift.</p>
+          <button class="btn btn-o btn-xs" onclick="applyPreset('After-hours','new_message','','reply','We received your message. Our team will reply at the next business window.')">Use preset</button>
+        </div>
+      </div>
+
+      <input type="hidden" id="flowId">
+      <div class="fg"><label>Name</label><input id="flowName" placeholder="Lead capture flow"></div>
+      <div class="fg"><label>Trigger Type</label><select id="triggerType"><option value="keyword">keyword</option><option value="new_message">new_message</option><option value="follow_up">follow_up</option></select></div>
+      <div class="fg"><label>Trigger Value</label><input id="triggerValue" placeholder="price, quote, demo"></div>
+      <div class="fg"><label>Action Type</label><select id="actionType"><option value="reply">reply</option><option value="tag_contact">tag_contact</option><option value="handoff">handoff</option></select></div>
+      <div class="fg"><label>Action Payload</label><textarea id="actionPayload" placeholder="Reply text, tag name, or handoff note"></textarea></div>
+      <div class="fg"><label><input type="checkbox" id="flowEnabled" checked> Enabled</label></div>
+      <div class="form-actions">
+        <button class="btn btn-o" onclick="resetForm()">Clear</button>
+        <button class="btn btn-p" onclick="saveFlow()">Save Flow</button>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyPreset(name,triggerType,triggerValue,actionType,actionPayload){
+  flowId.value='';
+  flowName.value=name;
+  window.triggerType.value=triggerType;
+  window.triggerValue.value=triggerValue;
+  window.actionType.value=actionType;
+  window.actionPayload.value=actionPayload;
+  flowEnabled.checked=true;
+}
+function editFlow(flow){
+  flowId.value=flow.id||'';
+  flowName.value=flow.name||'';
+  triggerType.value=flow.trigger_type||'keyword';
+  triggerValue.value=flow.trigger_value||'';
+  actionType.value=flow.action_type||'reply';
+  actionPayload.value=flow.action_payload||'';
+  flowEnabled.checked=!!flow.enabled;
+}
+function resetForm(){
+  flowId.value='';
+  flowName.value='';
+  triggerType.value='keyword';
+  triggerValue.value='';
+  actionType.value='reply';
+  actionPayload.value='';
+  flowEnabled.checked=true;
+}
+async function saveFlow(){
+  const body={
+    id:flowId.value||null,
+    name:flowName.value.trim(),
+    trigger_type:triggerType.value,
+    trigger_value:triggerValue.value.trim(),
+    action_type:actionType.value,
+    action_payload:actionPayload.value.trim(),
+    enabled:flowEnabled.checked
+  };
+  const res=await fetch('/api/automations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(data.error){toast(data.error,false);return;}
+  toast('Flow saved');
+  location.reload();
+}
+async function toggleFlow(id){
+  const res=await fetch('/api/automations/'+id+'/toggle',{method:'POST'});
+  const data=await res.json();
+  if(data.error){toast(data.error,false);return;}
+  location.reload();
+}
+</script>
+{% endblock %}

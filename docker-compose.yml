@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # FastAPI Application with Multi-Tenancy
+  whatfy-fastapi:
+    image: tertwer/whatfy:latest
+    container_name: whatfy-fastapi
+    ports:
+      - "5000:5000"
+    environment:
+      - GO_SERVER_URL=http://whatfy-gowhatsmeow:8080
+      - SMTP_HOST=smtp.zoho.in
+      - SMTP_PORT=465
+      - SMTP_USER=info@opendrap.website
+      - SMTP_PASS=h0LBrxNA4u4G
+      - FROM_EMAIL=info@opendrap.website
+      - APP_URL=http://localhost:5000
+    volumes:
+      - whatsmeow_data:/app/whatsmeow_server
+    depends_on:
+      - whatfy-gowhatsmeow
+    networks:
+      - whatfy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Multi-Session Go WhatsMeow Server
+  whatfy-gowhatsmeow:
+    image: tertwer/whatfy:latest
+    container_name: whatfy-gowhatsmeow
+    ports:
+      - "8080:8080"
+    environment:
+      - FASTAPI_URL=http://whatfy-fastapi:5000
+    volumes:
+      - whatsmeow_data:/app/whatsmeow_server
+    networks:
+      - whatfy-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Nginx Reverse Proxy (Optional)
+  whatfy-nginx:
+    image: nginx:alpine
+    container_name: whatfy-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - whatfy-fastapi
+    networks:
+      - whatfy-network
+    restart: unless-stopped
+
+volumes:
+  whatsmeow_data:
+    driver: local
+
+networks:
+  whatfy-network:
+    driver: bridge

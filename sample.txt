@@ -1,0 +1,186 @@
+<div class="ctr"><div class="shc"><div class="slbl">Why WhatsApp Automation?</div><div class="stl">Your customers are already there.<br>Your business should be too.</div><div style="display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; padding: 8px 0px 20px;"><div style="text-align: center;"><div style="font-size: 28px; font-weight: 700; font-family: &quot;JetBrains Mono&quot;, monospace; color: var(--wa);">2B+</div><div style="font-size: 11px; color: var(--t3); margin-top: 2px;">WhatsApp users globally</div></div><div style="text-align: center;"><div style="font-size: 28px; font-weight: 700; font-family: &quot;JetBrains Mono&quot;, monospace; color: var(--wa);">98%</div><div style="font-size: 11px; color: var(--t3); margin-top: 2px;">Message open rate</div></div><div style="text-align: center;"><div style="font-size: 28px; font-weight: 700; font-family: &quot;JetBrains Mono&quot;, monospace; color: var(--wa);">75%</div><div style="font-size: 11px; color: var(--t3); margin-top: 2px;">Customers prefer chat</div></div></div><div class="sdsc" style="margin: 0px auto; font-size: 16px;">Every industry is moving to WhatsApp for sales, support, and operations. Here's what you'll be able to automate</div></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: flex-start; margin-top: 40px;"><div style="position: relative; padding: 0px 110px;"><div style="position: relative; max-width: 240px; margin: 0px auto;"><div style="position: absolute; top: -14px; right: -14px; background: var(--wa); color: rgb(255, 255, 255); border-radius: 12px; padding: 6px 10px; font-size: 10px; font-weight: 600; display: flex; align-items: center; gap: 4px; box-shadow: rgba(37, 211, 102, 0.3) 0px 4px 20px; animation: 3s ease-in-out 0s infinite normal none running floatBadge; z-index: 2; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;">New Lead Qualified!</div><div style="background: rgb(26, 26, 30); border-radius: 36px; padding: 10px; box-shadow: rgba(0, 0, 0, 0.6) 0px 32px 80px, rgba(255, 255, 255, 0.06) 0px 0px 0px 1px;"><div style="border-radius: 26px; overflow: hidden; aspect-ratio: 9 / 18; background: rgb(11, 20, 26); display: flex; flex-direction: column;"><div style="background: rgb(31, 44, 52); padding: 36px 12px 10px; display: flex; align-items: center; gap: 8px;"><span style="color: rgb(0, 168, 132); font-size: 14px;">‹</span><div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgb(18, 140, 126), rgb(37, 211, 102)); color: rgb(255, 255, 255);"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></div><div><div style="font-size: 12px; font-weight: 600; color: rgb(233, 237, 239);">Sales Bot</div><div style="font-size: 9px; color: rgb(134, 150, 160);">online</div></div></div><div style="background: rgb(11, 20, 26); padding: 10px 8px; flex: 1 1 0%; display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; opacity: 0; transition: opacity 0.2s;"><div style="max-width: 85%; padding: 8px 11px; border-radius: 8px 2px 8px 8px; font-size: 11px; line-height: 1.5; color: rgb(233, 237, 239); background: rgb(0, 92, 75); align-self: flex-end;">My order is wrong!<div style="font-size: 8px; color: rgb(134, 150, 160); text-align: right; margin-top: 3px;">✓✓ 10:10 AM</div></div><div style="max-width: 85%; padding: 8px 11px; border-radius: 2px 8px 8px; font-size: 11px; line-height: 1.5; color: rgb(233, 237, 239); background: rgb(31, 44, 52); align-self: flex-start;">Sorry about that! Can you share your order ID?<div style="font-size: 8px; color: rgb(134, 150, 160); text-align: right; margin-top: 3px;">11:11 AM</div></div><div style="max-width: 85%; padding: 8px 11px; border-radius: 8px 2px 8px 8px; font-size: 11px; line-height: 1.5; color: rgb(233, 237, 239); background: rgb(0, 92, 75); align-self: flex-end;">#5678<div style="font-size: 8px; color: rgb(134, 150, 160); text-align: right; margin-top: 3px;">✓✓ 12:12 AM</div></div><div style="max-width: 85%; padding: 8px 11px; border-radius: 2px 8px 8px; font-size: 11px; line-height: 1.5; color: rgb(233, 237, 239); background: rgb(31, 44, 52); align-self: flex-start;">Got it, raising a replacement request now.<div style="font-size: 8px; color: rgb(134, 150, 160); text-align: right; margin-top: 3px;">13:13 AM</div></div><div style="align-self: flex-start; background: rgb(31, 44, 52); padding: 10px 14px; border-radius: 8px; display: flex; gap: 4px; align-items: center;"><span style="width: 6px; height: 6px; background: rgb(134, 150, 160); border-radius: 50%; animation: 1.4s ease 0ms infinite normal none running typingDot;"></span><span style="width: 6px; height: 6px; background: rgb(134, 150, 160); border-radius: 50%; animation: 1.4s ease 200ms infinite normal none running typingDot;"></span><span style="width: 6px; height: 6px; background: rgb(134, 150, 160); border-radius: 50%; animation: 1.4s ease 400ms infinite normal none running typingDot;"></span></div></div></div></div></div><div style="position: absolute; left: 0px; top: 25%; display: flex; flex-direction: column; gap: 8px;"><div style="background: rgba(37, 211, 102, 0.12); border: 1px solid rgba(37, 211, 102, 0.3); color: var(--wa); border-radius: 100px; padding: 6px 12px; font-size: 11px; font-weight: 600; white-space: nowrap; max-width: none; line-height: 1.3; display: flex; align-items: center; gap: 4px; animation: 0.4s ease 0s 1 normal both running badgeEnter, 5s ease-in-out 0.4s infinite normal none running floatBadge; box-shadow: rgba(37, 211, 102, 0.15) 0px 4px 16px;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>Leads auto-qualified</div><div style="background: rgba(250, 204, 21, 0.12); border: 1px solid rgba(250, 204, 21, 0.3); color: rgb(252, 211, 77); border-radius: 100px; padding: 6px 12px; font-size: 11px; font-weight: 600; white-space: nowrap; max-width: none; line-height: 1.3; display: flex; align-items: center; gap: 4px; animation: 0.4s ease 0.28s 1 normal both running badgeEnter, 5.8s ease-in-out 0.68s infinite normal none running floatBadge; box-shadow: rgba(250, 204, 21, 0.15) 0px 4px 16px;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>4+ hrs/week saved</div></div><div style="position: absolute; right: 0px; top: 40%; display: flex; flex-direction: column; gap: 8px;"><div style="background: rgba(37, 211, 102, 0.12); border: 1px solid rgba(37, 211, 102, 0.3); color: var(--wa); border-radius: 100px; padding: 6px 12px; font-size: 11px; font-weight: 600; white-space: nowrap; max-width: none; line-height: 1.3; display: flex; align-items: center; gap: 4px; animation: 0.4s ease 0.14s 1 normal both running badgeEnter, 5.5s ease-in-out 0.54s infinite normal none running floatBadge; box-shadow: rgba(37, 211, 102, 0.15) 0px 4px 16px;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Sell ₹3,000–₹8,000</div><div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--t2); border-radius: 100px; padding: 6px 12px; font-size: 11px; font-weight: 600; white-space: nowrap; max-width: none; line-height: 1.3; display: flex; align-items: center; gap: 4px; animation: 0.4s ease 0.42s 1 normal both running badgeEnter, 6.3s ease-in-out 0.82s infinite normal none running floatBadge; box-shadow: none;"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>Sales teams</div></div></div><div style="display: flex; flex-direction: column; gap: 0px;"><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"></path></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Order Updates</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Appointment Booking</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Customer Support Bot</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid var(--wa); background: var(--bg3);"><div style="position: absolute; left: 0px; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--wa); border-radius: 2px;"></div><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--wag); color: var(--wa); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Sales Agent</div></div><div style="font-size: 12px; color: var(--t2); line-height: 1.5; padding-left: 42px;">Qualify leads, send catalogs, follow up, and close sales — all automated.</div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 100%; transition: width 4000ms linear;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Follow-ups &amp; Reminders</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"></path></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Bulk Campaigns</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">Lead Scraping</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div><div style="padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 2px; position: relative; border: 1px solid transparent; background: transparent;"><div style="display: flex; align-items: center; gap: 10px; margin-bottom: 0px;"><div style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--bg); color: var(--t3); transition: background 0.3s, color 0.3s;"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg></div><div style="font-size: 13px; font-weight: 600; color: var(--t);">AI-Assisted Chat</div></div><div style="width: 100%; height: 2px; background: var(--bdr); border-radius: 2px; margin-top: 6px;"><div style="height: 100%; background: var(--wa); border-radius: 2px; width: 0%; transition: none;"></div></div></div></div></div><div style="display: flex; gap: 6px; justify-content: center; margin-top: 20px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 20px; height: 6px; border-radius: 3px; background: var(--wa); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div><div style="width: 6px; height: 6px; border-radius: 50%; background: var(--bdr); cursor: pointer; transition: 0.2s;"></div></div></div>
+
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))
+INFO:     127.0.0.1:58105 - "GET /api/events HTTP/1.1" 200 OK
+ERROR:    Exception in ASGI application
+  + Exception Group Traceback (most recent call last):
+  |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_utils.py", line 81, in collapse_excgroups
+  |     yield
+  |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 274, in __call__
+  |     async with anyio.create_task_group() as task_group:
+  |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 799, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 415, in run_asgi
+    |     result = await app(  # type: ignore[func-returns-value]
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    |     return await self.app(scope, receive, send)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    |     await super().__call__(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    |     raise exc
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\base.py", line 198, in __call__
+    |     raise app_exc
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 680, in app
+    |     await route.handle(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 276, in handle
+    |     await self.app(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\routing.py", line 134, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\routing.py", line 121, in app
+    |     await response(scope, receive, send)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 273, in __call__
+    |     with collapse_excgroups():
+    |   File "C:\Program Files\Python312\Lib\contextlib.py", line 158, in __exit__
+    |     self.gen.throw(value)
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+    |     raise exc
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 277, in wrap
+    |     await func()
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 250, in stream_response
+    |     async for chunk in self.body_iterator:
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\concurrency.py", line 55, in iterate_in_threadpool
+    |     yield await anyio.to_thread.run_sync(_next, as_iterator)
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    |     return await get_async_backend().run_sync_in_worker_thread(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2518, in run_sync_in_worker_thread
+    |     return await future
+    |            ^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1002, in run
+    |     result = context.run(func, *args)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\concurrency.py", line 44, in _next
+    |     return next(iterator)
+    |            ^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\fastapi_app.py", line 2988, in event_generator
+    |     with requests.get(f"{API_BASE}/events", stream=True, timeout=None) as r:
+    |          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\api.py", line 73, in get
+    |     return request("get", url, params=params, **kwargs)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\api.py", line 59, in request
+    |     return session.request(method=method, url=url, **kwargs)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\sessions.py", line 589, in request
+    |     resp = self.send(prep, **send_kwargs)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\sessions.py", line 703, in send
+    |     r = adapter.send(request, **kwargs)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\adapters.py", line 519, in send
+    |     raise ConnectionError(e, request=request)
+    | requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\uvicorn\protocols\http\h11_impl.py", line 415, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
+    raise exc
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\base.py", line 198, in __call__
+    raise app_exc
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\fastapi\routing.py", line 121, in app
+    await response(scope, receive, send)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 273, in __call__
+    with collapse_excgroups():
+  File "C:\Program Files\Python312\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 277, in wrap
+    await func()
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\responses.py", line 250, in stream_response
+    async for chunk in self.body_iterator:
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\concurrency.py", line 55, in iterate_in_threadpool
+    yield await anyio.to_thread.run_sync(_next, as_iterator)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2518, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1002, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\starlette\concurrency.py", line 44, in _next
+    return next(iterator)
+           ^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\fastapi_app.py", line 2988, in event_generator
+    with requests.get(f"{API_BASE}/events", stream=True, timeout=None) as r:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\New folder (2)\New folder\thagam_smartwhatsapp\whatfy\venv\Lib\site-packages\requests\adapters.py", line 519, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=8080): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it"))

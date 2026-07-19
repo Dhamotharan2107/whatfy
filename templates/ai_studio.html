@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}AI Studio - Whatfy{% endblock %}
+{% block page_title %}AI Studio{% endblock %}
+
+{% block extra_head %}
+<style>
+.studio{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.panel-bd{padding:18px}
+.hint{padding:14px;border-radius:14px;background:#0c1320;border:1px solid rgba(255,255,255,.05);font-size:12px;color:var(--sub);line-height:1.7}
+.tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool{padding:12px;border-radius:14px;background:#0c1320;border:1px solid rgba(255,255,255,.05)}
+.tool label{display:flex;gap:8px;align-items:flex-start}
+@media(max-width:980px){.studio,.tool-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ctr">
+
+<div class="shc" style="margin-bottom:28px">
+  <div class="slbl">AI Studio</div>
+  <div class="stl">Configure your AI agent's brain.</div>
+  <div class="sdsc">Define the system prompt, memory window, handoff style, and tool set for the AI operator working inside your inbox.</div>
+</div>
+
+<div class="studio">
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>Agent Configuration</h3>
+        <div class="card-sub">Operator assist or auto-reply behavior inside the inbox</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="saveWorkspace()">Save AI Setup</button>
+    </div>
+    <div class="panel-bd">
+      <div class="fg"><label>Model</label><input id="model" value="{{ workspace.model }}"></div>
+      <div class="form-row">
+        <div class="fg"><label>Handoff Mode</label><select id="handoff"><option value="assist" {% if workspace.handoff_mode=='assist' %}selected{% endif %}>assist</option><option value="copilot" {% if workspace.handoff_mode=='copilot' %}selected{% endif %}>copilot</option><option value="autonomous" {% if workspace.handoff_mode=='autonomous' %}selected{% endif %}>autonomous</option></select></div>
+        <div class="fg"><label>Memory Turns</label><input id="memory" type="number" min="2" max="30" value="{{ workspace.memory_turns }}"></div>
+      </div>
+      <div class="fg"><label><input type="checkbox" id="autoReply" {% if workspace.auto_reply %}checked{% endif %}> Enable auto reply</label></div>
+      <div class="fg"><label>System Prompt</label><textarea id="systemPrompt" style="min-height:220px">{{ workspace.system_prompt }}</textarea></div>
+      <div class="fg">
+        <label>Allowed Tools</label>
+        <div class="tool-grid">
+          {% for tool in ['contacts','campaigns','inventory','appointments','invoices','mcp'] %}
+          <div class="tool"><label><input type="checkbox" class="toolCheck" value="{{ tool }}" {% if tool in workspace.tools %}checked{% endif %}> <span>{{ tool }}</span></label></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-hd"><h3>Guidance</h3></div>
+    <div class="panel-bd" style="display:grid;gap:12px">
+      <div class="hint">Use <b>assist</b> when a human should approve replies, <b>copilot</b> when the AI drafts while operators stay in control, and <b>autonomous</b> only after your flows and prompts are stable.</div>
+      <div class="hint">If you want this to feel closer to ForgeChat, keep the AI prompt focused on sales qualification, FAQ routing, and structured handoff notes rather than generic chat.</div>
+      <div class="hint">The inbox now exposes a chat-side AI assist action that uses this prompt. If the external AI endpoint is unavailable, the UI will surface that directly.</div>
+    </div>
+  </aside>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function saveWorkspace(){
+  const tools=[...document.querySelectorAll('.toolCheck:checked')].map(x=>x.value);
+  const body={
+    model:model.value.trim(),
+    handoff_mode:handoff.value,
+    memory_turns:Number(memory.value||12),
+    auto_reply:autoReply.checked,
+    system_prompt:systemPrompt.value,
+    tools
+  };
+  const res=await fetch('/api/ai-workspace',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(data.error){toast(data.error,false);return;}
+  toast('AI workspace saved');
+}
+</script>
+{% endblock %}

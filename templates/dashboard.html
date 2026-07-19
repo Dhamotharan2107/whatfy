@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Whatfy{% endblock %}
+{% block page_title %}Home{% endblock %}
+
+{% block extra_head %}
+<style>
+@keyframes fadeUp{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
+
+.dash-wrap{max-width:1000px}
+
+/* ─── GREETING ─── */
+.greet-card{
+  background:var(--ink);
+  border:1px solid var(--border);border-radius:16px;padding:28px 30px;
+  margin-bottom:22px;position:relative;overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.08);
+}
+.greet-card::before{
+  content:'';position:absolute;top:-100px;right:-80px;width:300px;height:300px;
+  border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.12),transparent 60%);
+  pointer-events:none;
+}
+.greet-row{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;position:relative;z-index:1}
+.greet-txt{}
+.greet-txt h1{font-size:22px;font-weight:800;margin-bottom:5px;color:#fff}
+.greet-txt h1 span{color:#22c55e}
+.greet-txt p{font-size:13.5px;color:rgba(255,255,255,.5);max-width:460px;line-height:1.7}
+.greet-acts{display:flex;gap:10px;flex-wrap:wrap}
+.greet-acts .btn{padding:10px 22px;font-size:13.5px}
+
+.greet-status{
+  display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+  padding:6px 16px 6px 12px;border-radius:50px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;font-weight:500;color:rgba(255,255,255,.7);
+}
+.greet-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 10px #22c55e;animation:pulse 2s infinite}
+
+/* ─── QUICK STATS ─── */
+.qs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.qs-item{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:18px 20px;transition:all .2s;animation:fadeUp .4s ease both;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
+}
+.qs-item:nth-child(1){animation-delay:.02s}
+.qs-item:nth-child(2){animation-delay:.08s}
+.qs-item:nth-child(3){animation-delay:.14s}
+.qs-item:nth-child(4){animation-delay:.2s}
+.qs-item:hover{transform:translateY(-2px);border-color:var(--gray4);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.qs-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.qs-icon{
+  width:38px;height:38px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.qs-num{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--text)}
+.qs-lbl{font-size:12px;color:var(--muted);margin-top:3px}
+.qs-tag{font-size:10.5px;color:var(--muted);opacity:.6;margin-top:2px}
+.qs-item.qsg .qs-num{color:var(--gl)}.qsg .qs-icon{background:rgba(22,163,74,.1)}
+.qs-item.qsb .qs-num{color:#2563eb}.qsb .qs-icon{background:rgba(37,99,235,.1)}
+.qs-item.qsa .qs-num{color:#b45309}.qsa .qs-icon{background:rgba(217,119,6,.1)}
+.qs-item.qsp .qs-num{color:#9333ea}.qsp .qs-icon{background:rgba(147,51,234,.1)}
+
+/* ─── MAIN CARDS ROW ─── */
+.dash-row{display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:18px}
+.dash-col{display:grid;gap:14px;align-content:start}
+
+/* ─── SALES FUNNEL ─── */
+.funnel-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:20px;animation:fadeUp .4s ease .2s both;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
+}
+.funnel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.funnel-hd h3{font-size:14px;font-weight:700;color:var(--text)}
+.funnel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.funnel-item{text-align:center;padding:14px 6px 12px;border-radius:10px;background:var(--gray1);border:1px solid var(--border);transition:.15s}
+.funnel-item:hover{background:var(--gray2)}
+.funnel-num{font-size:24px;font-weight:800;line-height:1;margin-bottom:2px}
+.funnel-lbl{font-size:11px;color:var(--muted)}
+.funnel-bar{height:3px;border-radius:3px;margin-top:10px;background:var(--gray3);overflow:hidden}
+.funnel-bar-in{height:100%;border-radius:3px}
+.fg .funnel-num{color:var(--gl)}.fg .funnel-bar-in{background:var(--g)}
+.fb .funnel-num{color:#2563eb}.fb .funnel-bar-in{background:var(--blue)}
+.fa .funnel-num{color:#b45309}.fa .funnel-bar-in{background:var(--amber)}
+.fp .funnel-num{color:#9333ea}.fp .funnel-bar-in{background:var(--purple)}
+
+/* ─── CHAT PREVIEW ─── */
+.chat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:20px;animation:fadeUp .4s ease .25s both;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
+}
+.chat-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.chat-hd h3{font-size:14px;font-weight:700;color:var(--text)}
+.chat-list{display:grid;gap:6px}
+.chat-item{
+  display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;
+  transition:.12s;cursor:pointer;text-decoration:none;color:inherit;
+}
+.chat-item:hover{background:var(--gray1)}
+.chat-av{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--g),var(--blue));
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;
+}
+.chat-info{flex:1;min-width:0}
+.chat-name{font-size:13px;font-weight:600;color:var(--text)}
+.chat-msg{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-tag{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600;flex-shrink:0}
+.chat-empty{padding:30px 16px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ─── QUICK LINKS ─── */
+.ql-list{display:grid;gap:8px}
+.ql-item{
+  padding:14px 16px;border-radius:12px;
+  background:var(--surface);border:1px solid var(--border);transition:all .18s;
+  display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none;color:inherit;
+  animation:fadeUp .4s ease both;
+  box-shadow:0 1px 3px rgba(0,0,0,.03);
+}
+.ql-item:nth-child(1){animation-delay:.1s}
+.ql-item:nth-child(2){animation-delay:.16s}
+.ql-item:nth-child(3){animation-delay:.22s}
+.ql-item:nth-child(4){animation-delay:.28s}
+.ql-item:nth-child(5){animation-delay:.34s}
+.ql-item:nth-child(6){animation-delay:.4s}
+.ql-item:hover{border-color:rgba(22,163,74,.2);background:var(--gray1);transform:translateX(3px)}
+.ql-icon{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;transition:.2s;
+}
+.ql-item:hover .ql-icon{transform:scale(1.08)}
+.ql-icon.g{background:rgba(22,163,74,.1)}.ql-icon.b{background:rgba(37,99,235,.1)}
+.ql-icon.a{background:rgba(217,119,6,.1)}.ql-icon.p{background:rgba(147,51,234,.1)}
+.ql-body{flex:1;min-width:0}
+.ql-body strong{font-size:13.5px;display:block;margin-bottom:2px;color:var(--text)}
+.ql-body p{font-size:11.5px;color:var(--sub);line-height:1.5}
+.ql-foot{flex-shrink:0}
+
+/* ─── QUICK BTNS ─── */
+.qbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.qbtns .btn{padding:11px;justify-content:center;font-size:13px;border-radius:10px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:960px){
+  .qs-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-row{grid-template-columns:1fr}
+  .funnel-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:500px){
+  .qs-grid{grid-template-columns:1fr}
+  .greet-row{flex-direction:column;align-items:stretch}
+  .greet-acts .btn{flex:1;justify-content:center}
+  .content{padding:16px 14px}
+  .greet-card{padding:20px}
+  .qbtns{grid-template-columns:1fr}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-wrap ctr">
+
+<!-- GREETING -->
+<section class="greet-card">
+  <div class="greet-row">
+    <div class="greet-txt">
+      <h1>Welcome back, <span>{{ user.name or 'there' }}</span> 👋</h1>
+      <p>Your WhatsApp workspace is ready. Messages, contacts, automations, and tools — all in one place.</p>
+    </div>
+    <div class="greet-acts">
+      <a class="btn btn-p" href="/chat">💬 Open Inbox</a>
+      <a class="btn btn-o" href="/mcp-console">🔌 Tools</a>
+    </div>
+  </div>
+  <div class="greet-status">
+    <span class="greet-dot"></span>
+    Phone <strong>{{ wa_phone if wa_ok else 'not connected' }}</strong>
+    {% if overview.mcp.online %} · MCP <strong>Online</strong> v{{ overview.mcp.version }}{% endif %}
+  </div>
+</section>
+
+<!-- QUICK STATS -->
+<section class="qs-grid">
+  <div class="qs-item qsg">
+    <div class="qs-top"><div class="qs-icon">👥</div><div class="qs-num" id="m-contacts">{{ overview.contacts_total }}</div></div>
+    <div class="qs-lbl">Contacts</div>
+    <div class="qs-tag">{{ overview.hot_leads }} need attention</div>
+  </div>
+  <div class="qs-item qsb">
+    <div class="qs-top"><div class="qs-icon">⚡</div><div class="qs-num" id="m-flows">{{ overview.automations_live }}</div></div>
+    <div class="qs-lbl">Active Automations</div>
+    <div class="qs-tag">{{ overview.automations_total }} total set up</div>
+  </div>
+  <div class="qs-item qsa">
+    <div class="qs-top"><div class="qs-icon">📢</div><div class="qs-num" id="m-campaigns">{{ overview.campaigns_total }}</div></div>
+    <div class="qs-lbl">Broadcasts</div>
+    <div class="qs-tag">{{ overview.campaigns_running }} running now</div>
+  </div>
+  <div class="qs-item qsp">
+    <div class="qs-top"><div class="qs-icon">📅</div><div class="qs-num" id="m-appts">{{ overview.appt_today }}</div></div>
+    <div class="qs-lbl">Appointments Today</div>
+    <div class="qs-tag">{{ overview.g_low }} low stock alerts</div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<section class="dash-row">
+  <div class="dash-col">
+
+    <!-- Sales Funnel -->
+    <div class="funnel-card">
+      <div class="funnel-hd">
+        <h3>📊 Sales Funnel</h3>
+        <a class="btn btn-o btn-xs" href="/contacts">View Contacts</a>
+      </div>
+      <div class="funnel-grid">
+        <div class="funnel-item fg">
+          <div class="funnel-num" id="p-lead">{{ overview.pipeline.get('Lead', 0) }}</div>
+          <div class="funnel-lbl">Lead</div>
+          <div class="funnel-bar"><div class="funnel-bar-in" style="width:60%"></div></div>
+        </div>
+        <div class="funnel-item fb">
+          <div class="funnel-num" id="p-qualified">{{ overview.pipeline.get('Qualified', 0) }}</div>
+          <div class="funnel-lbl">Qualified</div>
+          <div class="funnel-bar"><div class="funnel-bar-in" style="width:40%"></div></div>
+        </div>
+        <div class="funnel-item fa">
+          <div class="funnel-num" id="p-proposal">{{ overview.pipeline.get('Proposal', 0) }}</div>
+          <div class="funnel-lbl">Proposal</div>
+          <div class="funnel-bar"><div class="funnel-bar-in" style="width:25%"></div></div>
+        </div>
+        <div class="funnel-item fp">
+          <div class="funnel-num" id="p-won">{{ overview.pipeline.get('Won', 0) }}</div>
+          <div class="funnel-lbl">Won</div>
+          <div class="funnel-bar"><div class="funnel-bar-in" style="width:15%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Chats -->
+    <div class="chat-card">
+      <div class="chat-hd">
+        <h3>💬 Recent Conversations</h3>
+        <a class="btn btn-o btn-xs" href="/chat">View All</a>
+      </div>
+      {% if overview.recent_contacts %}
+      <div class="chat-list">
+        {% for contact in overview.recent_contacts[:5] %}
+        <a class="chat-item" href="/chat">
+          <div class="chat-av">{{ (contact.display_name or "?")[0].upper() }}</div>
+          <div class="chat-info">
+            <div class="chat-name">{{ contact.display_name }}</div>
+            <div class="chat-msg">{{ contact.last_message or "No messages yet" }}</div>
+          </div>
+          <span class="chat-tag badge bg">{{ contact.stage }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="chat-empty">No conversations yet. <a href="/chat" style="color:var(--gl)">Start one now</a>.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <div class="dash-col">
+
+    <!-- Quick Links -->
+    <div class="ql-list">
+      <a class="ql-item" href="/chat">
+        <div class="ql-icon g">💬</div>
+        <div class="ql-body">
+          <strong>Inbox</strong>
+          <p>Read and reply to messages, manage contacts.</p>
+        </div>
+        <div class="ql-foot"><span class="badge bg">{{ overview.hot_leads }} hot</span></div>
+      </a>
+      <a class="ql-item" href="/automations">
+        <div class="ql-icon b">⚙️</div>
+        <div class="ql-body">
+          <strong>Automations</strong>
+          <p>Auto-replies, keyword flows, follow-ups.</p>
+        </div>
+        <div class="ql-foot"><span class="badge bg">{{ overview.automations_live }} live</span></div>
+      </a>
+      <a class="ql-item" href="/ai-studio">
+        <div class="ql-icon a">🧠</div>
+        <div class="ql-body">
+          <strong>AI Assistant</strong>
+          <p>Configure your AI operator's behavior.</p>
+        </div>
+        <div class="ql-foot"><span class="badge {{ 'bg' if overview.ai_auto_reply else 'bk' }}">{{ "Auto" if overview.ai_auto_reply else "Assist" }}</span></div>
+      </a>
+      <a class="ql-item" href="/bot-rules">
+        <div class="ql-icon p">🤖</div>
+        <div class="ql-body">
+          <strong>Bot Rules</strong>
+          <p>Keyword-triggered auto-replies with smart matching.</p>
+        </div>
+        <div class="ql-foot"><span class="badge bg">Rules</span></div>
+      </a>
+      <a class="ql-item" href="/campaign">
+        <div class="ql-icon a">📢</div>
+        <div class="ql-body">
+          <strong>Broadcasts</strong>
+          <p>Send bulk messages with templates and scheduling.</p>
+        </div>
+        <div class="ql-foot"><span class="badge bg">{{ overview.campaigns_running }} active</span></div>
+      </a>
+      <a class="ql-item" href="/mcp-console" style="border-color:rgba(37,211,102,.08)">
+        <div class="ql-icon g">🔌</div>
+        <div class="ql-body">
+          <strong>MCP Tools</strong>
+          <p>Connect your WhatsApp to external AI tools.</p>
+        </div>
+        <div class="ql-foot"><span class="badge bg">v{{ overview.mcp.version }}</span></div>
+      </a>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="qbtns">
+      <a class="btn btn-p" href="/chat">💬 Inbox</a>
+      <a class="btn btn-b" href="/mcp-console">🔌 MCP Tools</a>
+      <a class="btn btn-o" href="/contacts">👥 Contacts</a>
+      <a class="btn btn-o" href="/settings">⚙️ Settings</a>
+    </div>
+
+  </div>
+</section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshDash(){
+  try{
+    const data=await(await fetch('/api/workspace/overview')).json();
+    if(data.error)return;
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+    set('m-contacts',data.contacts_total);
+    set('m-flows',data.automations_live);
+    set('m-campaigns',data.campaigns_total);
+    set('m-appts',data.appt_today);
+    set('p-lead',data.pipeline?.Lead||0);
+    set('p-qualified',data.pipeline?.Qualified||0);
+    set('p-proposal',data.pipeline?.Proposal||0);
+    set('p-won',data.pipeline?.Won||0);
+  }catch(_){}
+}
+setInterval(refreshDash,30000);
+</script>
+{% endblock %}

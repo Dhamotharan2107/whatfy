@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whatfy — AI-Powered WhatsApp Business Automation Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+
+:root{--g:#16a34a;--gd:#15803d;--gl:#16a34a;--green:#16a34a;--green2:#22c55e;--green3:#dcfce7;--green4:#15803d;
+--bg:#ffffff;--sb:#f9fafb;--surface:#ffffff;--card:#f9fafb;--card2:#f3f4f6;
+--border:#e5e7eb;--border2:#d1d5db;--border3:rgba(22,163,74,.15);
+--text:#111827;--sub:#6b7280;--muted:#9ca3af;
+--red:#dc2626;--amber:#d97706;--blue:#2563eb;--purple:#9333ea;--cyan:#0891b2;
+--r:12px;--sw:240px;--glow:rgba(22,163,74,.12);--radius:16px;
+--shadow:0 1px 3px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);--shadow-lg:0 4px 24px rgba(0,0,0,.06),0 12px 48px rgba(0,0,0,.04);
+--ink:#111827;--gray1:#f9fafb;--gray2:#f3f4f6;--gray3:#e5e7eb;--gray4:#9ca3af;--gray5:#6b7280;--gray6:#374151}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.7)}70%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes blink{0%,96%,100%{opacity:1}98%{opacity:0}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes scrollLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes smile{0%,100%{d:path('M16 32 Q24 40 32 32')}50%{d:path('M16 32 Q24 42 32 32')}}
+@keyframes wave{0%,100%{transform:rotate(0deg)}25%{transform:rotate(15deg)}75%{transform:rotate(-10deg)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-12px)}50%{transform:translateY(-6px)}70%{transform:translateY(-10px)}}
+
+.anim-up{opacity:0;transform:translateY(32px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.anim-up.show{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}.d5{transition-delay:.5s}.d6{transition-delay:.6s}
+
+.cursor-dot{position:fixed;width:10px;height:10px;background:var(--green);border-radius:50%;pointer-events:none;z-index:99999;mix-blend-mode:multiply;transition:transform .08s;transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(22,163,74,.4)}
+.cursor-ring{position:fixed;width:40px;height:40px;border:2.5px solid rgba(22,163,74,.35);border-radius:50%;pointer-events:none;z-index:99998;transition:width .3s,height .3s,border-color .3s,transform .15s,opacity .3s;transform:translate(-50%,-50%);backdrop-filter:blur(4px)}
+.cursor-ring.hover{width:56px;height:56px;border-color:rgba(22,163,74,.5);background:rgba(22,163,74,.06)}
+
+/* ─── MASCOT ─── */
+.mascot{position:fixed;pointer-events:none;z-index:99997;transition:transform .25s ease-out;transform:translate(-50%,-50%)}
+.mascot-svg{display:block;filter:drop-shadow(0 4px 16px rgba(22,163,74,.2))}
+.mascot-svg .body{animation:float 3s ease-in-out infinite;transform-origin:center}
+.mascot-svg .eye{animation:blink 3.5s infinite;transform-origin:center}
+.mascot-svg .mouth{animation:smile 2s ease-in-out infinite}
+.mascot-svg .arm{animation:wave 1.5s ease-in-out infinite;transform-origin:16px 30px}
+.mascot-svg .cheek{opacity:.6}
+
+/* ─── NAV ─── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,.9);border-bottom:1px solid var(--border);backdrop-filter:blur(20px) saturate(1.5);transition:.3s}
+.nav.scrolled{background:rgba(255,255,255,.95);box-shadow:0 1px 16px rgba(0,0,0,.06)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--text)}
+.logo span{color:var(--gl)}
+.logo-icon{width:34px;height:34px;background:var(--ink);border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.logo-icon svg{width:17px;height:17px;fill:var(--gl)}
+
+.nav-links{display:flex;align-items:center;gap:2px;list-style:none}
+.nav-links a{font-size:13.5px;font-weight:500;color:var(--sub);padding:8px 16px;border-radius:8px;transition:.2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:4px;left:16px;right:16px;height:2px;background:var(--g);border-radius:2px;transform:scaleX(0);transition:transform .2s}
+.nav-links a:hover{color:var(--text);background:rgba(0,0,0,.04)}
+.nav-links a:hover::after{transform:scaleX(1)}
+.nav-btns{display:flex;align-items:center;gap:8px}
+.btn-ghost{font-size:13.5px;font-weight:600;color:var(--sub);padding:9px 20px;border-radius:10px;border:1.5px solid var(--border2);transition:.2s;cursor:pointer;background:transparent}
+.btn-ghost:hover{border-color:rgba(22,163,74,.4);color:var(--gl);transform:translateY(-1px)}
+.btn-primary{font-size:13.5px;font-weight:600;color:#fff;padding:9px 20px;border-radius:10px;background:var(--ink);transition:.2s;border:none;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);background-size:200% 100%;animation:shimmer 3s infinite}
+.btn-primary:hover{transform:translateY(-2px);background:var(--gray6);box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.btn-xl{padding:14px 28px;font-size:14px}
+
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:6px}
+.burger span{display:block;width:20px;height:2.5px;background:var(--text);border-radius:2px;transition:.3s}
+.burger.x span:nth-child(1){transform:translateY(7.5px) rotate(45deg)}
+.burger.x span:nth-child(2){opacity:0}
+.burger.x span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg)}
+.mob-nav{display:none;position:fixed;top:68px;left:0;right:0;background:rgba(255,255,255,.98);border-bottom:1px solid var(--border);padding:8px 24px 20px;flex-direction:column;gap:2px;z-index:999;backdrop-filter:blur(20px)}
+.mob-nav.show{display:flex;animation:fadeUp .25s ease}
+.mob-nav a{padding:12px 14px;border-radius:10px;font-size:14px;font-weight:500;color:var(--sub)}
+.mob-nav a:hover{background:rgba(0,0,0,.04);color:var(--text)}
+.mob-div{height:1px;background:var(--border);margin:8px 0}
+.mob-cta{display:block;padding:13px;border-radius:10px;text-align:center;font-weight:600;background:var(--ink);color:#fff;margin-top:4px}
+
+/* ─── HERO ─── */
+.hero{min-height:100vh;display:flex;align-items:center;padding:120px 24px 80px;position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(22,163,74,.03),rgba(249,250,251,.5),var(--bg))}
+.hero-grid{max-width:1200px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;z-index:1}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);border-radius:50px;padding:5px 14px 5px 8px;margin-bottom:20px;font-size:12px;font-weight:600;color:var(--gl);animation:fadeUp .6s ease both}
+.hero-tag-dot{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+h1{font-size:clamp(34px,4.5vw,56px);font-weight:900;line-height:1.08;letter-spacing:-1.2px;color:var(--text);margin-bottom:16px;animation:fadeUp .6s .1s ease both}
+h1 .accent{color:var(--gl)}
+h1 .dim{color:var(--muted)}
+.hero-sub{font-size:15.5px;color:var(--sub);line-height:1.8;max-width:520px;margin-bottom:28px;animation:fadeUp .6s .2s ease both}
+.hero-sub strong{color:var(--text)}
+.hero-btns{display:flex;gap:10px;flex-wrap:wrap;animation:fadeUp .6s .3s ease both}
+
+.hero-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:40px;animation:fadeUp .6s .4s ease both}
+.hero-metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:.3s;box-shadow:var(--shadow)}
+.hero-metric:hover{border-color:var(--g);box-shadow:var(--shadow-lg)}
+.hero-metric-label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
+.hero-metric-val{font-size:28px;font-weight:800;color:var(--text);line-height:1}
+.hero-metric-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.hero-metric-change{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--gl);margin-left:8px}
+
+.hero-dash{position:relative;animation:fadeUp .6s .25s ease both;perspective:800px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow-lg);transition:transform .3s}
+.dash-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.dash-hd-l{display:flex;align-items:center;gap:10px}
+.dash-av{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--g),var(--blue));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.dash-name{font-size:13px;font-weight:700;color:var(--text)}
+.dash-status{font-size:10.5px;color:var(--gl);display:flex;align-items:center;gap:4px}
+.dash-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+.dash-time{font-size:10.5px;color:var(--muted)}
+.dash-chat{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.dash-msg{max-width:88%;padding:9px 13px;border-radius:12px;font-size:12.5px;line-height:1.5}
+.dash-in{background:var(--gray2);color:var(--gray6);align-self:flex-start;border-radius:12px 12px 12px 3px}
+.dash-out{background:rgba(22,163,74,.1);color:var(--gl);align-self:flex-end;border-radius:12px 12px 3px 12px;font-weight:600}
+.dash-bot{background:rgba(37,99,235,.1);color:var(--blue);align-self:flex-start;border-radius:12px 12px 12px 3px}
+.dash-actions{display:flex;gap:6px;padding-top:12px;border-top:1px solid var(--border)}
+.dash-btn{flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--gray1);font-size:10.5px;font-weight:600;color:var(--sub);text-align:center;transition:.2s}
+.dash-btn:hover{border-color:var(--g);color:var(--gl);background:rgba(22,163,74,.05)}
+
+.dash-float{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg)}
+.df1{top:-16px;right:-12px;animation:float 3s ease-in-out infinite}
+.df2{bottom:24px;left:-28px;animation:float 3.5s ease-in-out infinite;animation-delay:1.2s}
+.df-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.df-icon.g{background:rgba(22,163,74,.1);color:var(--gl)}
+.df-icon.b{background:rgba(37,99,235,.1);color:var(--blue)}
+.df-text{font-size:11.5px;font-weight:700;color:var(--text);white-space:nowrap}
+.df-sub{font-size:10px;color:var(--muted)}
+
+/* ─── TRUST ─── */
+.trust-bar{padding:40px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;background:var(--gray1)}
+.trust-inner{max-width:1200px;margin:0 auto}
+.trust-label{text-align:center;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:20px}
+.trust-track{overflow:hidden;position:relative}
+.trust-track::before,.trust-track::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
+.trust-track::before{left:0;background:linear-gradient(90deg,rgba(249,250,251,1),transparent)}
+.trust-track::after{right:0;background:linear-gradient(-90deg,rgba(249,250,251,1),transparent)}
+.trust-logos{display:flex;gap:32px;width:max-content;animation:scrollLeft 40s linear infinite}
+.trust-item{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12.5px;font-weight:500;color:var(--sub);white-space:nowrap}
+
+/* ─── SECTION ─── */
+.section{padding:100px 24px}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-header{text-align:center;max-width:600px;margin:0 auto 56px}
+.section-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gl);background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);padding:5px 14px;border-radius:50px;margin-bottom:14px}
+.section-h{font-size:clamp(26px,3vw,40px);font-weight:800;line-height:1.15;letter-spacing:-.8px;color:var(--text);margin-bottom:12px}
+.section-p{font-size:15px;color:var(--sub);line-height:1.7}
+
+/* ─── SOLUTIONS ─── */
+.solutions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.solution-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;transition:.3s;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.solution-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g),var(--gd));transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.solution-card:hover{box-shadow:var(--shadow-lg);border-color:var(--g);transform:translateY(-4px)}
+.solution-card:hover::before{transform:scaleX(1)}
+.sol-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px}
+.sol-icon.g{background:rgba(22,163,74,.1)}.sol-icon.b{background:rgba(37,99,235,.1)}.sol-icon.a{background:rgba(217,119,6,.1)}.sol-icon.p{background:rgba(147,51,234,.1)}
+.sol-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.sol-desc{font-size:12.5px;color:var(--sub);line-height:1.6}
+.sol-feats{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.sol-feats li{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sol-feats li::before{content:'\203A';color:var(--g);font-weight:700}
+
+/* ─── WHY ─── */
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.why-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;transition:.3s;position:relative;box-shadow:var(--shadow)}
+.why-card:hover{box-shadow:var(--shadow-lg);border-color:var(--g);transform:translateY(-4px)}
+.why-num{font-size:32px;font-weight:900;color:rgba(0,0,0,.04);position:absolute;top:12px;right:16px;line-height:1;transition:.3s}
+.why-card:hover .why-num{color:rgba(22,163,74,.1)}
+.why-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px}
+.why-icon.g{background:rgba(22,163,74,.1)}.why-icon.b{background:rgba(37,99,235,.1)}.why-icon.a{background:rgba(217,119,6,.1)}.why-icon.p{background:rgba(147,51,234,.1)}.why-icon.o{background:rgba(255,167,38,.1)}.why-icon.r{background:rgba(244,114,182,.1)}
+.why-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.why-desc{font-size:12.5px;color:var(--sub);line-height:1.65}
+
+/* ─── WORKFLOW ─── */
+.workflow-section{padding:100px 24px;background:linear-gradient(180deg,rgba(22,163,74,.03),var(--gray1))}
+.wf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:56px}
+.wf-step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;position:relative;transition:.3s;box-shadow:var(--shadow)}
+.wf-step:hover{box-shadow:var(--shadow-lg);border-color:var(--g);transform:translateY(-4px)}
+.wf-step-num{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gl);margin-bottom:12px}
+.wf-step-num::before{content:'';width:16px;height:1.5px;background:var(--g)}
+.wf-step-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.wf-step-desc{font-size:12.5px;color:var(--sub);line-height:1.65}
+
+/* ─── MCP ─── */
+.mcp-section{padding:100px 24px;background:var(--bg);position:relative;overflow:hidden}
+.mcp-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(22,163,74,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(37,99,235,.06) 0%,transparent 60%)}
+.mcp-inner{max-width:1200px;margin:0 auto;position:relative;z-index:1}
+.mcp-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.mcp-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.25);border-radius:50px;padding:4px 12px;margin-bottom:16px;font-size:10.5px;font-weight:700;color:var(--gl);text-transform:uppercase}
+.mcp-h{font-size:clamp(24px,3vw,38px);font-weight:800;line-height:1.15;letter-spacing:-.8px;color:var(--text);margin-bottom:14px}
+.mcp-h span{color:var(--gl)}
+.mcp-p{font-size:14.5px;color:var(--sub);line-height:1.8;margin-bottom:20px}
+.mcp-list{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.mcp-item{display:flex;align-items:flex-start;gap:12px}
+.mcp-item-icon{width:22px;height:22px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+.mcp-item-icon.g{background:rgba(22,163,74,.15);color:var(--gl)}
+.mcp-item-icon.b{background:rgba(37,99,235,.15);color:var(--blue)}
+.mcp-item-icon.p{background:rgba(147,51,234,.15);color:var(--purple)}
+.mcp-item-text{font-size:13px;color:var(--sub);line-height:1.6}
+.mcp-item-text strong{color:var(--text)}
+.mcp-diagram{background:var(--gray1);border:1px solid var(--border);border-radius:16px;padding:28px}
+.mcp-node{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:.2s}
+.mcp-node:hover{border-color:rgba(22,163,74,.25);background:rgba(22,163,74,.04)}
+.mcp-node.highlight{border-color:rgba(22,163,74,.3);background:rgba(22,163,74,.06)}
+.mcp-node-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.mcp-node-icon.w{background:rgba(22,163,74,.15)}.mcp-node-icon.m{background:rgba(37,99,235,.15)}.mcp-node-icon.a{background:rgba(147,51,234,.15)}.mcp-node-icon.u{background:rgba(217,119,6,.15)}
+.mcp-node-name{font-size:13px;font-weight:600;color:var(--text)}
+.mcp-node-desc{font-size:11px;color:var(--muted)}
+.mcp-arrow{text-align:center;color:var(--gray4);font-size:14px;margin:4px 0;animation:float 2s ease-in-out infinite}
+
+/* ─── TOOLS ─── */
+.tools-section{padding:60px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--gray1)}
+.tools-inner{max-width:1200px;margin:0 auto}
+.tools-label{text-align:center;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:20px}
+.tools-track{overflow:hidden;position:relative}
+.tools-track::before,.tools-track::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2;pointer-events:none}
+.tools-track::before{left:0;background:linear-gradient(90deg,rgba(249,250,251,1),transparent)}
+.tools-track::after{right:0;background:linear-gradient(-90deg,rgba(249,250,251,1),transparent)}
+.tools-logos{display:flex;gap:24px;width:max-content;animation:scrollLeft 30s linear infinite}
+.tool-item{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:500;color:var(--sub);white-space:nowrap}
+
+/* ─── CLIENTS ─── */
+.clients-section{padding:60px 24px;background:var(--gray2)}
+.clients-inner{max-width:1200px;margin:0 auto}
+.clients-label{text-align:center;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:20px}
+.clients-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:.3s;box-shadow:var(--shadow)}
+.client-card:hover{box-shadow:var(--shadow-lg);border-color:var(--g);transform:translateY(-3px)}
+.client-icon{font-size:28px;margin-bottom:8px;display:block}
+.client-name{font-size:11px;font-weight:600;color:var(--sub)}
+
+/* ─── PRICING ─── */
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;max-width:960px;margin:0 auto}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 24px;position:relative;transition:.3s;box-shadow:var(--shadow)}
+.pc:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px);border-color:var(--gray4)}
+.pc.hot{border-color:var(--g);box-shadow:0 4px 24px rgba(22,163,74,.15)}
+.pc.hot:hover{border-color:var(--gd);box-shadow:0 8px 32px rgba(22,163,74,.25)}
+.pc-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:10px;font-weight:700;padding:3px 14px;border-radius:50px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.pc-plan{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.pc-name{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px}
+.pc-tagline{font-size:12px;color:var(--sub);margin-bottom:16px;line-height:1.5}
+.pc-price{margin-bottom:4px}
+.pc-rs{font-size:16px;font-weight:700;color:var(--sub);vertical-align:top}
+.pc-amt{font-size:40px;font-weight:900;color:var(--text);line-height:1;letter-spacing:-1.5px}
+.pc-mo{font-size:12px;color:var(--muted);margin-left:3px}
+.pc.hot .pc-amt{color:var(--gl)}
+.pc-div{height:1px;background:var(--border);margin:16px 0}
+.pc-feats{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.pc-feats li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub)}
+.pc-feats li.dim{color:var(--muted)}
+.pc-feats li .ck{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}
+.ck-yes{background:rgba(22,163,74,.15);color:var(--gl)}
+.ck-no{background:rgba(0,0,0,.04);color:var(--muted)}
+.pc-btn{display:block;text-align:center;padding:11px;border-radius:9px;font-size:13px;font-weight:600;transition:.2s;border:none;cursor:pointer;width:100%}
+.pc-btn-dark{background:var(--ink);color:#fff}
+.pc-btn-dark:hover{background:var(--gray6);transform:translateY(-1px)}
+.pc-btn-green{background:var(--g);color:#fff}
+.pc-btn-green:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(22,163,74,.3)}
+.pricing-note{text-align:center;margin-top:20px;font-size:12px;color:var(--muted)}
+
+/* ─── CTA ─── */
+.cta-section{padding:80px 24px;background:var(--ink);position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(22,163,74,.15) 0%,transparent 60%)}
+.cta-inner{max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1}
+.cta-title{font-size:clamp(28px,3.5vw,44px);font-weight:800;line-height:1.1;letter-spacing:-1px;color:#fff;margin-bottom:12px}
+.cta-title span{color:#22c55e}
+.cta-sub{font-size:14.5px;color:rgba(255,255,255,.5);line-height:1.8;margin-bottom:28px}
+.cta-btns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.cta-btns .btn-primary{padding:14px 28px;font-size:14px}
+.cta-btns .btn-ghost{padding:14px 28px;font-size:14px;border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7);background:transparent}
+.cta-btns .btn-ghost:hover{border-color:rgba(22,163,74,.4);color:#22c55e}
+.cta-features{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:28px;padding-top:24px;border-top:1px solid rgba(255,255,255,.1)}
+.cta-feat{font-size:12.5px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:6px}
+.cta-feat::before{content:'\2713';color:#22c55e;font-weight:700}
+
+/* ─── FOOTER ─── */
+footer{background:var(--bg);border-top:1px solid var(--border);padding:48px 24px 28px}
+.foot-inner{max-width:1200px;margin:0 auto}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:40px}
+.foot-brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.foot-icon{width:28px;height:28px;background:var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.foot-icon svg{width:14px;height:14px;fill:var(--gl)}
+.foot-name{font-size:16px;font-weight:800;color:var(--text)}
+.foot-desc{font-size:12.5px;color:var(--sub);line-height:1.7;max-width:320px;margin-bottom:12px}
+.foot-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--gl)}
+.foot-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--g);animation:pulse 2s infinite}
+.foot-col-h{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.foot-links{list-style:none;display:flex;flex-direction:column;gap:6px}
+.foot-links a{font-size:12.5px;color:var(--sub);transition:.2s}
+.foot-links a:hover{color:var(--text)}
+.foot-bottom{padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.foot-copy{font-size:11.5px;color:var(--muted)}
+
+@media(max-width:1024px){
+  .solutions-grid,.why-grid{grid-template-columns:repeat(2,1fr)}
+  .wf-grid{grid-template-columns:repeat(2,1fr)}
+  .clients-grid{grid-template-columns:repeat(3,1fr)}
+  .pricing-grid{grid-template-columns:1fr;max-width:400px}
+  .foot-grid{grid-template-columns:1fr 1fr;gap:32px}
+  .mascot{display:none}
+}
+@media(max-width:820px){
+  .hero-grid{grid-template-columns:1fr;gap:40px;text-align:center}
+  .hero-sub{margin:0 auto 28px}.hero-btns{justify-content:center}
+  .hero-metrics{max-width:400px;margin:40px auto 0}
+  .hero-dash{order:-1;max-width:480px;margin:0 auto}
+  .df2{display:none}.mcp-grid{grid-template-columns:1fr;gap:40px}
+}
+@media(max-width:680px){
+  .nav-links,.nav-btns{display:none}.burger{display:flex}
+  .hero{padding:100px 20px 60px}
+  .solutions-grid,.why-grid,.wf-grid{grid-template-columns:1fr}
+  .clients-grid{grid-template-columns:repeat(2,1fr)}
+  .section,.mcp-section,.workflow-section,.tools-section,.clients-section,.cta-section{padding:60px 20px}
+  .hero-metrics{grid-template-columns:1fr}
+  .cursor-dot,.cursor-ring{display:none}
+}
+@media(max-width:420px){
+  .nav-inner{height:60px}.mob-nav{top:60px}
+  .clients-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<div class="mascot" id="mascot" style="display:none">
+  <svg class="mascot-svg" width="72" height="72" viewBox="0 0 72 72">
+    <g class="body">
+      <circle cx="36" cy="40" r="30" fill="rgba(22,163,74,.1)" stroke="#16a34a" stroke-width="2.5"/>
+      <circle cx="36" cy="40" r="26" fill="rgba(255,255,255,.9)" stroke="none"/>
+      <circle cx="36" cy="34" r="14" fill="#dcfce7" stroke="none"/>
+      <text x="36" y="40" text-anchor="middle" font-size="16" fill="#16a34a">&#128172;</text>
+      <g class="eye"><ellipse cx="28" cy="28" rx="3.5" ry="4" fill="#374151"/><circle cx="29" cy="27" r="1.5" fill="#fff"/></g>
+      <g class="eye"><ellipse cx="44" cy="28" rx="3.5" ry="4" fill="#374151"/><circle cx="45" cy="27" r="1.5" fill="#fff"/></g>
+      <path class="mouth" d="M30 38 Q36 44 42 38" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle class="cheek" cx="24" cy="33" r="4" fill="rgba(22,163,74,.12)"/>
+      <circle class="cheek" cx="48" cy="33" r="4" fill="rgba(22,163,74,.12)"/>
+      <g class="arm"><path d="M12 32 Q6 26 10 22" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="10" cy="22" r="3" fill="#16a34a"/></g>
+      <g class="arm"><path d="M60 32 Q66 26 62 22" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="62" cy="22" r="3" fill="#16a34a"/></g>
+    </g>
+  </svg>
+</div>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div>
+      What<span>fy</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#solutions">AI Agents</a></li>
+      <li><a href="#workflow">How It Works</a></li>
+      <li><a href="#mcp">MCP</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/docs-api">API</a></li>
+    </ul>
+    <div class="nav-btns">
+      <a href="/auth" class="btn-ghost">Sign In</a>
+      <a href="/auth" class="btn-primary">Get Started</a>
+    </div>
+    <button class="burger" id="burger"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<div class="mob-nav" id="mobNav">
+  <a href="#solutions" onclick="closeMob()">AI Agents</a>
+  <a href="#workflow" onclick="closeMob()">How It Works</a>
+  <a href="#mcp" onclick="closeMob()">MCP Server</a>
+  <a href="#pricing" onclick="closeMob()">Pricing</a>
+  <a href="/docs-api" onclick="closeMob()">API Docs</a>
+  <div class="mob-div"></div>
+  <a href="/auth">Sign In</a>
+  <a href="/auth" class="mob-cta">Get Started</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-tag"><span class="hero-tag-dot"></span>Powered by GLM-4.7 Flash &middot; WhatsMeow Protocol</div>
+      <h1>Your WhatsApp.<br><span class="accent">Automated</span> with<br><span class="dim">Context-Aware AI.</span></h1>
+      <p class="hero-sub">Whatfy connects <strong>your real WhatsApp number</strong> to an AI brain that knows your inventory, reads your invoices, books appointments, and replies to customers — all through WhatsApp. Built on <strong>Go + FastAPI</strong> with the Model Context Protocol for universal AI assistant integration.</p>
+      <div class="hero-btns">
+        <a href="/auth" class="btn-primary btn-xl">Connect Your WhatsApp</a>
+        <a href="#solutions" class="btn-ghost btn-xl">Explore Solutions</a>
+      </div>
+      <div class="hero-metrics">
+        <div class="hero-metric tilt-card">
+          <div class="hero-metric-label">AI Model</div>
+          <div class="hero-metric-val">GLM-4.7</div>
+          <div class="hero-metric-sub">Flash inference engine</div>
+        </div>
+        <div class="hero-metric tilt-card">
+          <div class="hero-metric-label">Memory Window</div>
+          <div class="hero-metric-val">20</div>
+          <div class="hero-metric-sub">Messages per contact</div>
+        </div>
+        <div class="hero-metric tilt-card">
+          <div class="hero-metric-label">Setup Time</div>
+          <div class="hero-metric-val">5 min</div>
+          <div class="hero-metric-sub">QR scan to live</div>
+        </div>
+        <div class="hero-metric tilt-card">
+          <div class="hero-metric-label">AI Agents</div>
+          <div class="hero-metric-val">4+</div>
+          <div class="hero-metric-sub">Shop, Invoice, Health, Appt</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-dash">
+      <div class="dash-card tilt-card">
+        <div class="dash-hd">
+          <div class="dash-hd-l"><div class="dash-av">RK</div><div><div class="dash-name">Ravi Kumar</div><div class="dash-status">AI Assistant Active</div></div></div>
+          <div class="dash-time">10:32 AM</div>
+        </div>
+        <div class="dash-chat">
+          <div class="dash-msg dash-in">Do you have basmati rice in stock?</div>
+          <div class="dash-msg dash-out">Yes! 5kg basmati in stock. &#8377;420. Same-day delivery available.</div>
+          <div class="dash-msg dash-in">Book me an appointment for tomorrow 3pm</div>
+          <div class="dash-msg dash-bot">&#10003; Appointment booked! Mar 15, 3:00 PM. I'll send a reminder on WhatsApp.</div>
+        </div>
+        <div class="dash-actions">
+          <div class="dash-btn">Inbox</div>
+          <div class="dash-btn">Agents</div>
+          <div class="dash-btn">Campaigns</div>
+          <div class="dash-btn">MCP</div>
+        </div>
+      </div>
+      <div class="dash-float df1 tilt-card"><div class="df-icon g">&#9889;</div><div><div class="df-text">Context-Aware</div><div class="df-sub">Live inventory &amp; invoices</div></div></div>
+      <div class="dash-float df2 tilt-card"><div class="df-icon b">MCP</div><div><div class="df-text">MCP Server</div><div class="df-sub">Any AI assistant</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<div class="trust-bar">
+  <div class="trust-inner">
+    <div class="trust-label">Built for every WhatsApp-first business</div>
+    <div class="trust-track"><div class="trust-logos">
+      <span class="trust-item">&#128722; Grocery Shops</span><span class="trust-item">&#127973; Clinics</span><span class="trust-item">&#127860; Restaurants</span><span class="trust-item">&#128138; Pharmacies</span><span class="trust-item">&#128100; Consultants</span><span class="trust-item">&#128188; Agencies</span><span class="trust-item">&#128218; Tutoring</span><span class="trust-item">&#127963; Real Estate</span><span class="trust-item">&#128132; Salons</span><span class="trust-item">&#9878; Legal Advisors</span>
+      <span class="trust-item">&#128722; Grocery Shops</span><span class="trust-item">&#127973; Clinics</span><span class="trust-item">&#127860; Restaurants</span><span class="trust-item">&#128138; Pharmacies</span><span class="trust-item">&#128100; Consultants</span><span class="trust-item">&#128188; Agencies</span><span class="trust-item">&#128218; Tutoring</span><span class="trust-item">&#127963; Real Estate</span><span class="trust-item">&#128132; Salons</span><span class="trust-item">&#9878; Legal Advisors</span>
+    </div></div>
+  </div>
+</div>
+
+<!-- SOLUTIONS -->
+<section class="section" id="solutions">
+  <div class="section-inner">
+    <div class="section-header anim-up"><div class="section-tag">AI Agents</div><h2 class="section-h">Four specialized agents. One WhatsApp number.</h2><p class="section-p">Each agent reads your live business data and responds to customers autonomously. Toggle them on or off — the AI only uses what you enable.</p></div>
+    <div class="solutions-grid">
+      <div class="solution-card anim-up d1 tilt-card"><div class="sol-icon g">&#128722;</div><div class="sol-title">Shop Agent</div><div class="sol-desc">AI that knows your inventory in real-time.</div><ul class="sol-feats"><li>Stock queries &amp; pricing</li><li>Low-stock WhatsApp alerts</li><li>Reorder suggestions</li></ul></div>
+      <div class="solution-card anim-up d2 tilt-card"><div class="sol-icon b">&#129534;</div><div class="sol-title">Invoice Agent</div><div class="sol-desc">Generate branded invoice images &amp; send via WhatsApp.</div><ul class="sol-feats"><li>Auto-calculated line items</li><li>Logo-branded PDF images</li><li>One-tap WhatsApp delivery</li></ul></div>
+      <div class="solution-card anim-up d3 tilt-card"><div class="sol-icon a">&#128138;</div><div class="sol-title">Health Agent</div><div class="sol-desc">Patient monitoring with medical image analysis.</div><ul class="sol-feats"><li>Medication reminders</li><li>GLM-4.6V vision analysis</li><li>Patient condition tracking</li></ul></div>
+      <div class="solution-card anim-up d4 tilt-card"><div class="sol-icon p">&#128197;</div><div class="sol-title">Appointment Agent</div><div class="sol-desc">AI books appointments directly from WhatsApp chat.</div><ul class="sol-feats"><li>Autonomous booking via AI</li><li>WhatsApp reminder delivery</li><li>Doctor &amp; schedule management</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="section" style="padding-top:0">
+  <div class="section-inner">
+    <div class="section-header anim-up"><div class="section-tag">Why Whatfy</div><h2 class="section-h">Engineered for real WhatsApp business.</h2><p class="section-p">Not a chatbot wrapper. A full-stack platform with Go-powered WhatsApp protocol, FastAPI AI orchestration, and the Model Context Protocol for universal AI integration.</p></div>
+    <div class="why-grid">
+      <div class="why-card anim-up d1 tilt-card"><div class="why-num">01</div><div class="why-icon g">&#128274;</div><div class="why-title">Your Real WhatsApp Number</div><div class="why-desc">WhatsMeow protocol connects your actual number — no virtual proxies, no shared lines. QR or phone pairing. Your contacts, your data, full control.</div></div>
+      <div class="why-card anim-up d2 tilt-card"><div class="why-num">02</div><div class="why-icon b">&#129504;</div><div class="why-title">Context-Aware AI</div><div class="why-desc">GLM-4.7 Flash doesn't just chat — it reads your live inventory, recent invoices, patient records, and appointment slots before replying. It knows your business.</div></div>
+      <div class="why-card anim-up d3 tilt-card"><div class="why-num">03</div><div class="why-icon a">&#9881;</div><div class="why-title">No-Code Rule Engine</div><div class="why-desc">5 match types (exact, prefix, suffix, contains, regex) &times; 5 action types (reply, run AI, webhook, module, forward). Build auto-reply flows without code.</div></div>
+      <div class="why-card anim-up d4 tilt-card"><div class="why-num">04</div><div class="why-icon p">&#128279;</div><div class="why-title">MCP Protocol Built-In</div><div class="why-desc">Model Context Protocol server lets Claude, Cursor, Copilot, or any MCP-compatible AI connect directly to your WhatsApp. OAuth secured, rate-limited, production-ready.</div></div>
+      <div class="why-card anim-up d5 tilt-card"><div class="why-num">05</div><div class="why-icon o">&#9889;</div><div class="why-title">Real-Time SSE + Memory</div><div class="why-desc">Server-Sent Events stream messages live to your dashboard. 20-message conversation memory per contact means the AI remembers context across sessions.</div></div>
+      <div class="why-card anim-up d6 tilt-card"><div class="why-num">06</div><div class="why-icon r">&#128737;</div><div class="why-title">Anti-Ban Engineering</div><div class="why-desc">Campaigns send with random 20&ndash;60 second delays. Per-sender rate limiting prevents duplicate replies. Exponential backoff on 429s. Built to scale safely.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section class="workflow-section" id="workflow">
+  <div class="section-inner">
+    <div class="section-header anim-up"><div class="section-tag">How It Works</div><h2 class="section-h">From QR scan to autonomous AI in 4 steps.</h2><p class="section-p">No code. No developers. Just scan, configure, and your WhatsApp starts replying with business context.</p></div>
+    <div class="wf-grid">
+      <div class="wf-step anim-up d1 tilt-card"><div class="wf-step-num">Step 01</div><div class="wf-step-title">Connect WhatsApp</div><div class="wf-step-desc">Scan the QR code with WhatsApp &rarr; Linked Devices, or use phone number pairing. WhatsMeow handles the multi-device protocol. You're live in minutes.</div></div>
+      <div class="wf-step anim-up d2 tilt-card"><div class="wf-step-num">Step 02</div><div class="wf-step-title">Enable Agents</div><div class="wf-step-desc">Toggle Shop, Invoice, Health, and Appointment agents. Add your inventory, shop profile, patients, or schedules. The AI reads only what you enable.</div></div>
+      <div class="wf-step anim-up d3 tilt-card"><div class="wf-step-num">Step 03</div><div class="wf-step-title">AI Takes Over</div><div class="wf-step-desc">Incoming messages hit FastAPI, which builds a context prompt from your live data, calls GLM-4.7 Flash, and replies via Go. Autonomous appointment booking included.</div></div>
+      <div class="wf-step anim-up d4 tilt-card"><div class="wf-step-num">Step 04</div><div class="wf-step-title">Scale with MCP</div><div class="wf-step-desc">Connect Claude, Cursor, or any MCP-compatible AI. Run bulk campaigns with Excel upload. Use the full REST API. Your WhatsApp is now a platform.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MCP -->
+<section class="mcp-section" id="mcp">
+  <div class="mcp-inner">
+    <div class="mcp-grid">
+      <div>
+        <div class="mcp-tag anim-up">&#128268; Model Context Protocol</div>
+        <h2 class="mcp-h anim-up d1">Connect any <span>MCP-compatible AI</span> to your WhatsApp.</h2>
+        <p class="mcp-p anim-up d2">Whatfy runs a standalone MCP server with OAuth authentication, Excel batch processing, and rate limiting. Claude, Cursor, Copilot, or your custom agent can read contacts, send messages, and run campaigns — all through the open Model Context Protocol.</p>
+        <div class="mcp-list">
+          <div class="mcp-item anim-up d3"><div class="mcp-item-icon g">&#10003;</div><div class="mcp-item-text"><strong>OAuth-secured server</strong> — client credentials flow with per-user API keys. 10 req/min, burst-protected, 429-safe.</div></div>
+          <div class="mcp-item anim-up d4"><div class="mcp-item-icon b">&#10003;</div><div class="mcp-item-text"><strong>Excel batch upload</strong> — import up to 5,000 contacts per file. Send personalized template campaigns to 1,000+ numbers at once.</div></div>
+          <div class="mcp-item anim-up d5"><div class="mcp-item-icon p">&#10003;</div><div class="mcp-item-text"><strong>Universal AI access</strong> — any MCP-compatible assistant can query inventory, book appointments, and send WhatsApp messages.</div></div>
+        </div>
+        <div class="anim-up d5"><a href="/mcp-console" class="btn-primary btn-xl">Open MCP Console &#8594;</a></div>
+      </div>
+      <div class="anim-up d2">
+        <div class="mcp-diagram tilt-card">
+          <div class="mcp-node"><div class="mcp-node-icon w">&#128172;</div><div><div class="mcp-node-name">Your WhatsApp Number</div><div class="mcp-node-desc">WhatsMeow multi-device protocol</div></div></div>
+          <div class="mcp-arrow">&#8595; &#8593;</div>
+          <div class="mcp-node highlight"><div class="mcp-node-icon m">&#128268;</div><div><div class="mcp-node-name" style="color:var(--gl)">Whatfy MCP Server</div><div class="mcp-node-desc">OAuth &middot; Rate-limited &middot; Excel batch</div></div></div>
+          <div class="mcp-arrow">&#8595; &#8593;</div>
+          <div class="mcp-node"><div class="mcp-node-icon a">&#129302;</div><div><div class="mcp-node-name">Any AI Assistant</div><div class="mcp-node-desc">Claude &middot; Cursor &middot; Copilot &middot; Custom</div></div></div>
+          <div class="mcp-arrow">&#8595; &#8593;</div>
+          <div class="mcp-node"><div class="mcp-node-icon u">&#128100;</div><div><div class="mcp-node-name">Your Customers</div><div class="mcp-node-desc">Orders &middot; Support &middot; Appointments</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<div class="tools-section">
+  <div class="tools-inner">
+    <div class="tools-label">Powered by a production-grade tech stack</div>
+    <div class="tools-track"><div class="tools-logos">
+      <span class="tool-item">&#9881; Go 1.25</span><span class="tool-item">&#9889; FastAPI</span><span class="tool-item">&#129302; GLM-4.7 Flash</span><span class="tool-item">&#128268; WhatsMeow</span><span class="tool-item">&#128230; Docker</span><span class="tool-item">&#128279; MCP Protocol</span><span class="tool-item">&#128202; SQLite</span><span class="tool-item">&#128241; WhatsApp MD</span><span class="tool-item">&#127919; Alpine.js</span><span class="tool-item">&#128274; OAuth 2.0</span><span class="tool-item">&#128640; SSE Streaming</span><span class="tool-item">&#128196; Jinja2</span>
+      <span class="tool-item">&#9881; Go 1.25</span><span class="tool-item">&#9889; FastAPI</span><span class="tool-item">&#129302; GLM-4.7 Flash</span><span class="tool-item">&#128268; WhatsMeow</span><span class="tool-item">&#128230; Docker</span><span class="tool-item">&#128279; MCP Protocol</span><span class="tool-item">&#128202; SQLite</span><span class="tool-item">&#128241; WhatsApp MD</span><span class="tool-item">&#127919; Alpine.js</span><span class="tool-item">&#128274; OAuth 2.0</span><span class="tool-item">&#128640; SSE Streaming</span><span class="tool-item">&#128196; Jinja2</span>
+    </div></div>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div class="clients-section">
+  <div class="clients-inner">
+    <div class="clients-label">Trusted By</div>
+    <div class="clients-grid">
+      <div class="client-card tilt-card"><span class="client-icon">&#127758;</span><div class="client-name">English Partner</div></div>
+      <div class="client-card tilt-card"><span class="client-icon">&#127912;</span><div class="client-name">The Pixel Co</div></div>
+      <div class="client-card tilt-card"><span class="client-icon">&#127891;</span><div class="client-name">Skill Rain</div></div>
+      <div class="client-card tilt-card"><span class="client-icon">&#127758;</span><div class="client-name">English Mithra</div></div>
+      <div class="client-card tilt-card"><span class="client-icon">&#128241;</span><div class="client-name">iMobiles</div></div>
+      <div class="client-card tilt-card"><span class="client-icon">&#128214;</span><div class="client-name">Serene Paathshala</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="section-inner">
+    <div class="section-header anim-up"><div class="section-tag">Simple Pricing</div><h2 class="section-h">Plans for every scale. No hidden fees.</h2><p class="section-p">From solo users to agencies managing dozens of clients — Whatfy grows with you.</p></div>
+    <div class="pricing-grid">
+      <div class="pc anim-up d1 tilt-card">
+        <div class="pc-plan">Free</div><div class="pc-name">Starter</div><div class="pc-tagline">Connect WhatsApp &amp; explore the AI workspace.</div>
+        <div class="pc-price"><span class="pc-rs">&#8377;</span><span class="pc-amt">0</span></div>
+        <div class="pc-div"></div>
+        <ul class="pc-feats">
+          <li><span class="ck ck-yes">&#10003;</span> 1 WhatsApp Number (QR/Pair)</li>
+          <li><span class="ck ck-yes">&#10003;</span> GLM-4.7 Flash AI Chat</li>
+          <li><span class="ck ck-yes">&#10003;</span> Contact CRM &amp; Inbox</li>
+          <li><span class="ck ck-yes">&#10003;</span> Bot Rule Engine</li>
+          <li class="dim"><span class="ck ck-no">&#10007;</span> AI Agents (Shop/Invoice/Health)</li>
+          <li class="dim"><span class="ck ck-no">&#10007;</span> Bulk Campaigns + Excel</li>
+          <li class="dim"><span class="ck ck-no">&#10007;</span> MCP Server Access</li>
+        </ul>
+        <a href="/auth" class="pc-btn pc-btn-dark">Get Started Free</a>
+      </div>
+      <div class="pc hot anim-up d2 tilt-card">
+        <div class="pc-badge">Most Popular</div>
+        <div class="pc-plan">Business</div><div class="pc-name">Business Pro</div><div class="pc-tagline">All 4 AI agents, invoicing, inventory, campaigns, MCP.</div>
+        <div class="pc-price"><span class="pc-rs">&#8377;</span><span class="pc-amt">2,499</span><span class="pc-mo">/month</span></div>
+        <div class="pc-div"></div>
+        <ul class="pc-feats">
+          <li><span class="ck ck-yes">&#10003;</span> 1 WhatsApp Number</li>
+          <li><span class="ck ck-yes">&#10003;</span> All 4 AI Agents (Shop/Invoice/Health/Appt)</li>
+          <li><span class="ck ck-yes">&#10003;</span> Context-Aware AI with Live Data</li>
+          <li><span class="ck ck-yes">&#10003;</span> Branded Invoice Image Generation</li>
+          <li><span class="ck ck-yes">&#10003;</span> GLM-4.6V Medical Vision Analysis</li>
+          <li><span class="ck ck-yes">&#10003;</span> Autonomous Appointment Booking</li>
+          <li><span class="ck ck-yes">&#10003;</span> Bulk Campaigns + Excel Upload</li>
+          <li><span class="ck ck-yes">&#10003;</span> Full REST API + MCP Server</li>
+          <li><span class="ck ck-yes">&#10003;</span> Live Dashboard + SSE Chat</li>
+        </ul>
+        <a href="/auth" class="pc-btn pc-btn-green">Start Free Trial</a>
+      </div>
+      <div class="pc anim-up d3 tilt-card">
+        <div class="pc-plan">Agency</div><div class="pc-name">Agency Plan</div><div class="pc-tagline">Multi-tenant deployment across all client accounts.</div>
+        <div class="pc-price"><span class="pc-rs">&#8377;</span><span class="pc-amt">999</span><span class="pc-mo">/mo per client</span></div>
+        <div class="pc-div"></div>
+        <ul class="pc-feats">
+          <li><span class="ck ck-yes">&#10003;</span> 1 WhatsApp per client</li>
+          <li><span class="ck ck-yes">&#10003;</span> Multi-Tenant Architecture</li>
+          <li><span class="ck ck-yes">&#10003;</span> All AI Agents per Client</li>
+          <li><span class="ck ck-yes">&#10003;</span> Per-Tenant AI Config</li>
+          <li><span class="ck ck-yes">&#10003;</span> Bulk Campaigns + Excel</li>
+          <li><span class="ck ck-yes">&#10003;</span> Full API &amp; MCP Server</li>
+        </ul>
+        <a href="/auth" class="pc-btn pc-btn-dark">Get Agency Access</a>
+      </div>
+    </div>
+    <p class="pricing-note anim-up">All plans include &#8377;2,999 one-time setup fee. Docker self-host available. Cancel anytime.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title anim-up">Ready to <span>automate</span> your WhatsApp?</h2>
+    <p class="cta-sub anim-up d2">Scan the QR code, enable your AI agents, and your WhatsApp starts replying with full business context. No credit card, no commitment.</p>
+    <div class="cta-btns anim-up d3">
+      <a href="/auth" class="btn-primary btn-xl">Connect Your WhatsApp Free &#8594;</a>
+      <a href="/docs-api" class="btn-ghost btn-xl">&#128221; Read API Docs</a>
+    </div>
+    <div class="cta-features anim-up d4">
+      <span class="cta-feat">QR setup in 5 minutes</span>
+      <span class="cta-feat">Your own number</span>
+      <span class="cta-feat">GLM-4.7 Flash AI</span>
+      <span class="cta-feat">MCP protocol built-in</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand"><div class="foot-icon"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg></div><span class="foot-name">Whatfy</span></div>
+        <p class="foot-desc">AI-powered WhatsApp automation with context-aware agents, MCP server integration, and bulk campaigns. Built on Go + FastAPI + GLM-4.7 Flash.</p>
+        <div class="foot-status">WhatsMeow &middot; MCP Protocol &middot; GLM-4.7 Flash</div>
+      </div>
+      <div><div class="foot-col-h">Platform</div><ul class="foot-links"><li><a href="#solutions">AI Agents</a></li><li><a href="#workflow">How It Works</a></li><li><a href="#mcp">MCP Server</a></li><li><a href="#pricing">Pricing</a></li><li><a href="/docs-api">API Docs</a></li></ul></div>
+      <div><div class="foot-col-h">Agents</div><ul class="foot-links"><li><a href="/auth">Shop Agent</a></li><li><a href="/auth">Invoice Agent</a></li><li><a href="/auth">Health Agent</a></li><li><a href="/auth">Appointment Agent</a></li></ul></div>
+      <div><div class="foot-col-h">Developers</div><ul class="foot-links"><li><a href="/mcp-console">MCP Console</a></li><li><a href="/docs-api">REST API Reference</a></li><li><a href="/auth">Get Started</a></li><li><a href="/terms">Terms</a></li></ul></div>
+    </div>
+    <div class="foot-bottom"><div class="foot-copy">&copy; 2026 Whatfy by Opendrap.</div><div class="foot-copy">Unofficial tool — use responsibly.</div></div>
+  </div>
+</footer>
+
+<script>
+const burger=document.getElementById('burger'),mobNav=document.getElementById('mobNav');
+burger.addEventListener('click',()=>{burger.classList.toggle('x');mobNav.classList.toggle('show');});
+function closeMob(){burger.classList.remove('x');mobNav.classList.remove('show');}
+document.querySelectorAll('.mob-nav a').forEach(a=>a.addEventListener('click',closeMob));
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>20));
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');observer.unobserve(e.target);}})},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.anim-up').forEach(el=>observer.observe(el));
+
+// Mouse
+const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing'),mascot=document.getElementById('mascot');
+let mx=0,my=0,targetX=0,targetY=0,mascotX=0,mascotY=0,isDesktop=window.innerWidth>1024;
+document.addEventListener('mousemove',function(e){
+  mx=e.clientX;my=e.clientY;
+  dot.style.left=mx+'px';dot.style.top=my+'px';
+  targetX+=(mx-targetX)*.15;targetY+=(my-targetY)*.15;
+  ring.style.left=targetX+'px';ring.style.top=targetY+'px';
+  if(isDesktop){mascot.style.display='block';mascotX+=(mx-mascotX)*.1;mascotY+=(my-mascotY)*.1;mascot.style.left=(mascotX+70)+'px';mascot.style.top=(mascotY-35)+'px';}
+});
+document.querySelectorAll('a,button,.tilt-card,.dash-btn,.pc-btn').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('hover'));el.addEventListener('mouseleave',()=>ring.classList.remove('hover'));});
+document.addEventListener('mouseleave',()=>{mascot.style.display='none';ring.style.opacity='0';dot.style.opacity='0';});
+document.addEventListener('mouseenter',()=>{if(isDesktop)mascot.style.display='block';ring.style.opacity='1';dot.style.opacity='1';});
+window.addEventListener('resize',()=>{isDesktop=window.innerWidth>1024;if(!isDesktop)mascot.style.display='none';});
+
+// 3D Tilt
+document.querySelectorAll('.tilt-card').forEach(card=>{
+  card.addEventListener('mousemove',function(e){
+    const r=this.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,rx=(y-r.height/2)/15,ry=(r.width/2-x)/15;
+    this.style.transform=`perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+  });
+  card.addEventListener('mouseleave',function(){this.style.transform='';});
+});
+</script>
+</body>
+</html>

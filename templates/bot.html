@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Report Bot – M7 WhatSmart</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#00e676;--gd:#00c853;--gx:#00a040;
+  --gg:rgba(0,230,118,0.15);--gg2:rgba(0,230,118,0.07);
+  --bg:#040a0c;--s1:#091214;--s2:#0f1e21;--s3:#162829;
+  --bd:rgba(0,230,118,0.12);--bd2:rgba(0,230,118,0.25);
+  --text:#e0f2e9;--sub:#8aab93;--muted:#3d6347;
+  --red:#ff4444;--redd:rgba(255,68,68,0.12);
+  --yellow:#ffc107;--blue:#4fc3f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:28px 16px 60px;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,230,118,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,230,118,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+
+.page{position:relative;z-index:1;max-width:900px;margin:0 auto;}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:32px;}
+.back{color:var(--sub);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;transition:color .2s;}
+.back:hover{color:var(--g);}
+.back svg{width:15px;height:15px;}
+h1{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;color:var(--g);margin-left:auto;}
+
+/* status bar */
+.status-bar{display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);margin-bottom:20px;}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .3s;}
+.dot.on{background:var(--g);box-shadow:0 0 8px var(--g);animation:pulse 1.4s ease-in-out infinite;}
+.dot.off{background:var(--muted);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#statusText{font-size:14px;font-weight:500;}
+#nextRun{font-size:12px;color:var(--sub);margin-left:10px;}
+
+/* cards */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:24px;margin-bottom:18px;}
+.card-hd{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--g);margin-bottom:18px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px;}
+.card-hd svg{width:16px;height:16px;flex-shrink:0;}
+
+/* api checkboxes */
+.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0;}
+.api-card{border:1.5px solid var(--bd);border-radius:12px;padding:16px;cursor:pointer;transition:border-color .2s,background .2s;display:flex;flex-direction:column;gap:10px;}
+.api-card:hover{border-color:var(--bd2);}
+.api-card.active{border-color:var(--g);background:var(--gg2);}
+.api-top{display:flex;align-items:center;gap:10px;}
+.api-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.api-card.active .api-check{background:var(--g);border-color:var(--g);}
+.api-check svg{width:11px;height:11px;color:#000;display:none;}
+.api-card.active .api-check svg{display:block;}
+.api-name{font-size:14px;font-weight:600;color:var(--text);}
+.api-desc{font-size:12px;color:var(--sub);}
+.api-group{margin-top:6px;display:none;}
+.api-card.active .api-group{display:block;}
+
+label.lbl{display:block;font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+select{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;appearance:none;transition:border-color .2s;}
+select:focus{border-color:var(--g);}
+select:disabled{opacity:.4;cursor:not-allowed;}
+select option{background:var(--s2);}
+
+/* interval */
+.interval-row{display:flex;align-items:center;gap:12px;margin-top:16px;}
+.interval-row label.lbl{margin-bottom:0;white-space:nowrap;}
+input[type=number]{width:90px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;transition:border-color .2s;}
+input[type=number]:focus{border-color:var(--g);}
+input[type=number]:disabled{opacity:.4;}
+.interval-row span{font-size:12px;color:var(--sub);}
+
+/* buttons */
+.btn-row{display:flex;gap:12px;margin-top:20px;}
+.btn{padding:11px 30px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;}
+.btn-start{background:var(--g);color:#000;}
+.btn-start:hover:not(:disabled){background:var(--gd);}
+.btn-stop{background:transparent;border:1.5px solid var(--red);color:var(--red);}
+.btn-stop:hover:not(:disabled){background:var(--redd);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+#errMsg{font-size:13px;color:var(--red);margin-top:10px;display:none;}
+
+/* report table */
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--bd);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--s2);}
+thead th{padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-bottom:1px solid var(--bd);}
+tbody tr{border-bottom:1px solid var(--bd);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--gg2);}
+tbody td{padding:10px 14px;color:var(--text);vertical-align:middle;}
+td.mono{font-family:'DM Mono',monospace;font-size:12px;color:var(--sub);}
+.tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;}
+.tag.sent{background:rgba(0,230,118,0.12);color:var(--g);}
+.tag.failed{background:var(--redd);color:var(--red);}
+.reason{font-size:11px;color:var(--red);margin-top:3px;}
+.total-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--yellow);}
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+/* log */
+.log-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.log-hd span{font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;}
+.log-hd button{background:none;border:none;color:var(--sub);font-size:12px;cursor:pointer;padding:2px 8px;border-radius:6px;}
+.log-hd button:hover{color:var(--g);}
+.log-box{background:var(--s2);border:1px solid var(--bd);border-radius:10px;height:240px;overflow-y:auto;padding:12px;}
+.log-box::-webkit-scrollbar{width:5px;}
+.log-box::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px;}
+.log-line{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--sub);line-height:1.75;white-space:pre-wrap;word-break:break-all;}
+.log-line.ok{color:var(--g);}
+.log-line.err{color:var(--red);}
+.log-line.sep{color:var(--muted);}
+.log-empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0;}
+
+/* interval presets */
+.interval-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.ivbtn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid var(--bd);background:var(--s2);color:var(--sub);transition:all .2s;font-family:'Inter',sans-serif;}
+.ivbtn:hover:not(:disabled){border-color:var(--g);color:var(--g);}
+.ivbtn.active{background:var(--gg);border-color:var(--g);color:var(--g);font-weight:600;}
+.ivbtn:disabled{opacity:.35;cursor:not-allowed;}
+.ivbtn.custom{border-style:dashed;}
+
+/* tabs */
+.tabs{display:flex;gap:4px;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:16px;}
+.tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;border-radius:7px;cursor:pointer;transition:all .2s;border:none;background:transparent;color:var(--sub);}
+.tab.active{background:var(--s3);color:var(--g);border:1px solid var(--bd);}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <a class="back" href="/"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</a>
+    <h1>🤖 Auto Report Bot</h1>
+  </div>
+
+  <!-- WhatsApp connection banner -->
+  <div id="waBanner" style="display:none;align-items:center;gap:10px;padding:12px 18px;border-radius:12px;margin-bottom:14px;font-size:13px;font-weight:500;">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="waBannerText"></span>
+    <a href="/" style="margin-left:auto;color:inherit;font-size:12px;text-decoration:underline;">Go to Dashboard →</a>
+  </div>
+
+  <!-- Bot status -->
+  <div class="status-bar">
+    <div class="dot off" id="dot"></div>
+    <span id="statusText">Not started</span>
+    <span id="nextRun"></span>
+  </div>
+
+  <!-- Config card -->
+  <div class="card">
+    <div class="card-hd">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+      Select API &amp; Group
+    </div>
+
+    <div class="api-grid">
+
+      <!-- Thaagam -->
+      <div class="api-card" id="cardThaagam" onclick="toggleApi('thaagam')">
+        <div class="api-top">
+          <div class="api-check" id="chkThaagam">
+            <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="api-name">Thaagam API</div>
+            <div class="api-desc">Every cycle — source &amp; category images</div>
+          </div>
+        </div>
+        <div class="api-group" onclick="event.stopPropagation()">
+          <label class="lbl">Send to Group</label>
+          <select id="grpThaagam">
+            <option value="">— Select group —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- M7 -->
+      <div class="api-card" id="cardM7" onclick="toggleApi('m7')">
+        <div class="api-top">
+          <div class="api-check" id="chkM7">
+            <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="api-name">M7 Corporation API</div>
+            <div class="api-desc">Every 60 min — today &amp; month images</div>
+          </div>
+        </div>
+        <div class="api-group" onclick="event.stopPropagation()">
+          <label class="lbl">Send to Group</label>
+          <select id="grpM7">
+            <option value="">— Select group —</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:16px;">
+      <label class="lbl">Run every</label>
+      <div class="interval-grid" id="intervalGrid">
+        <button class="ivbtn active" data-min="15"  onclick="setInterval_(this)">15 min</button>
+        <button class="ivbtn"        data-min="30"  onclick="setInterval_(this)">30 min</button>
+        <button class="ivbtn"        data-min="45"  onclick="setInterval_(this)">45 min</button>
+        <button class="ivbtn"        data-min="60"  onclick="setInterval_(this)">1 hour</button>
+        <button class="ivbtn"        data-min="120" onclick="setInterval_(this)">2 hours</button>
+        <button class="ivbtn custom" data-min=""    onclick="setInterval_(this)">Custom…</button>
+      </div>
+      <div id="customRow" style="display:none;margin-top:10px;display:none;align-items:center;gap:10px;">
+        <input type="number" id="customMin" min="1" max="1440" placeholder="Enter minutes" style="width:160px;">
+        <span style="font-size:13px;color:var(--sub);">minutes</span>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--muted);">M7 Corporation runs automatically every ~60 min regardless of cycle interval.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-start" id="btnStart" onclick="startBot()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Bot
+      </button>
+      <button class="btn btn-stop" id="btnStop" onclick="stopBot()" disabled>
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        Stop Bot
+      </button>
+    </div>
+    <div id="errMsg"></div>
+  </div>
+
+  <!-- Report + Log tabs -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabReport" onclick="showTab('report')">📋 Send Report</button>
+      <button class="tab" id="tabLog" onclick="showTab('log')">📟 Activity Log</button>
+    </div>
+
+    <!-- Report table -->
+    <div id="panelReport">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--sub);" id="reportSummary"></span>
+        <button onclick="clearReport()" style="background:none;border:none;color:var(--sub);font-size:12px;cursor:pointer;padding:2px 8px;border-radius:6px;">Clear</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Cycle</th>
+              <th>API</th>
+              <th>Item Sent</th>
+              <th>Status</th>
+              <th>Total (₹)</th>
+              <th>Reason / Error</th>
+            </tr>
+          </thead>
+          <tbody id="reportBody">
+            <tr><td colspan="7" class="empty-state">No reports yet. Start the bot to begin.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div id="panelLog" style="display:none;">
+      <div class="log-hd">
+        <span>Activity Log</span>
+        <button onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-box" id="logBox">
+        <div class="log-empty">No activity yet.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const apis = { thaagam: false, m7: false };
+let polling = null;
+let selectedMin = 15;  // default 15 minutes
+
+function setInterval_(btn) {
+  if (btn.disabled) return;
+  document.querySelectorAll('.ivbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const customRow = document.getElementById('customRow');
+  if (btn.dataset.min === '') {
+    customRow.style.display = 'flex';
+    document.getElementById('customMin').focus();
+  } else {
+    customRow.style.display = 'none';
+    selectedMin = parseInt(btn.dataset.min);
+  }
+}
+
+function getIntervalMin() {
+  const active = document.querySelector('.ivbtn.active');
+  if (active && active.dataset.min === '') {
+    return parseInt(document.getElementById('customMin').value) || 15;
+  }
+  return selectedMin;
+}
+
+// ── Tab switch ────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.getElementById('panelReport').style.display = name === 'report' ? '' : 'none';
+  document.getElementById('panelLog').style.display    = name === 'log'    ? '' : 'none';
+  document.getElementById('tabReport').className = 'tab' + (name === 'report' ? ' active' : '');
+  document.getElementById('tabLog').className    = 'tab' + (name === 'log'    ? ' active' : '');
+}
+
+// ── API card toggle ───────────────────────────────────────────────────────────
+function toggleApi(key) {
+  if (document.getElementById('btnStop').disabled === false) return; // locked while running
+  apis[key] = !apis[key];
+  const card = document.getElementById(key === 'thaagam' ? 'cardThaagam' : 'cardM7');
+  card.classList.toggle('active', apis[key]);
+}
+
+// ── Load groups ───────────────────────────────────────────────────────────────
+async function loadGroups() {
+  try {
+    const r = await fetch('/api/groups');
+    const d = await r.json();
+    const groups = d.groups || [];
+    ['grpThaagam','grpM7'].forEach(id => {
+      const sel = document.getElementById(id);
+      while (sel.options.length > 1) sel.remove(1);
+      groups.forEach(g => sel.add(new Option(g.name, g.jid)));
+    });
+  } catch(e) { console.warn('groups load failed', e); }
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+async function startBot() {
+  showErr('');
+  const thaagamJid = apis.thaagam ? document.getElementById('grpThaagam').value : null;
+  const m7Jid      = apis.m7      ? document.getElementById('grpM7').value      : null;
+
+  if (!apis.thaagam && !apis.m7) { showErr('Select at least one API.'); return; }
+  if (apis.thaagam && !thaagamJid) { showErr('Select a group for Thaagam API.'); return; }
+  if (apis.m7      && !m7Jid)      { showErr('Select a group for M7 Corporation API.'); return; }
+
+  const interval = getIntervalMin() * 60;
+  const r = await fetch('/api/bot/start', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ thaagam_jid: thaagamJid, m7_jid: m7Jid, interval_sec: interval })
+  });
+  const d = await r.json();
+  if (d.error) { showErr(d.error); return; }
+  setRunning(true);
+  startPolling();
+}
+
+// ── Stop ──────────────────────────────────────────────────────────────────────
+async function stopBot() {
+  await fetch('/api/bot/stop', { method: 'POST' });
+  setRunning(false);
+  stopPolling();
+  await pollStatus();
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+function startPolling() { if (!polling) polling = setInterval(pollStatus, 3000); }
+function stopPolling()  { clearInterval(polling); polling = null; }
+
+async function pollStatus() {
+  try {
+    const [waRes, botRes] = await Promise.all([
+      fetch('/api/status'),
+      fetch('/api/bot/status'),
+    ]);
+    const wa  = await waRes.json();
+    const bot = await botRes.json();
+
+    // Update WA connection banner live
+    updateWABanner(wa);
+
+    if (bot.running && !polling) startPolling();
+    if (!bot.running && polling) stopPolling();
+    setRunning(bot.running, bot.cycle, bot.next_run);
+    renderReport(bot.reports || []);
+    renderLog(bot.logs || []);
+  } catch(e) {}
+}
+
+function updateWABanner(d) {
+  const banner = document.getElementById('waBanner');
+  const text   = document.getElementById('waBannerText');
+  if (!d || (!d.connected && !d.loggedIn)) {
+    banner.style.display    = 'flex';
+    banner.style.background = 'rgba(255,68,68,0.10)';
+    banner.style.border     = '1px solid rgba(255,68,68,0.3)';
+    banner.style.color      = '#ff4444';
+    text.textContent        = 'WhatsApp is not connected — please login from the Dashboard first.';
+  } else if (d.connected && d.loggedIn) {
+    banner.style.display    = 'flex';
+    banner.style.background = 'rgba(0,230,118,0.08)';
+    banner.style.border     = '1px solid rgba(0,230,118,0.2)';
+    banner.style.color      = '#00e676';
+    text.textContent        = 'WhatsApp connected ✓';
+    setTimeout(() => { banner.style.display = 'none'; }, 2000);
+  }
+}
+
+// ── Report table ──────────────────────────────────────────────────────────────
+let localReports = [];
+
+function renderReport(reports) {
+  localReports = reports;
+  const tbody = document.getElementById('reportBody');
+  if (!reports.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No reports yet. Start the bot to begin.</td></tr>';
+    document.getElementById('reportSummary').textContent = '';
+    return;
+  }
+
+  const sent   = reports.filter(r => r.status === 'sent').length;
+  const failed = reports.filter(r => r.status === 'failed').length;
+  document.getElementById('reportSummary').innerHTML =
+    `<span style="color:var(--g)">✓ ${sent} sent</span>&nbsp;&nbsp;<span style="color:var(--red)">✗ ${failed} failed</span>&nbsp;&nbsp;<span style="color:var(--sub)">${reports.length} total</span>`;
+
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td class="mono">${r.time}</td>
+      <td class="mono">#${r.cycle}</td>
+      <td>${r.api}</td>
+      <td>${r.item}</td>
+      <td>
+        <span class="tag ${r.status}">${r.status === 'sent' ? '✓ Sent' : '✗ Failed'}</span>
+      </td>
+      <td>${r.total ? `<span class="total-val">${r.total}</span>` : '—'}</td>
+      <td>${r.reason ? `<span class="reason">${escHtml(r.reason)}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+function clearReport() {
+  localReports = [];
+  renderReport([]);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────────
+function renderLog(logs) {
+  const box = document.getElementById('logBox');
+  if (!logs.length) { box.innerHTML = '<div class="log-empty">No activity yet.</div>'; return; }
+  const atBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 40;
+  box.innerHTML = logs.map(line => {
+    const cls = line.includes('sent') || line.includes('started') ? ' ok'
+              : line.includes('error') || line.includes('failed') || line.includes('exception') ? ' err'
+              : line.includes('───') ? ' sep' : '';
+    return `<div class="log-line${cls}">${escHtml(line)}</div>`;
+  }).join('');
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('logBox').innerHTML = '<div class="log-empty">Log cleared.</div>';
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function setRunning(running, cycle, nextRun) {
+  const dot   = document.getElementById('dot');
+  const start = document.getElementById('btnStart');
+  const stop  = document.getElementById('btnStop');
+
+  dot.className = 'dot ' + (running ? 'on' : 'off');
+  start.disabled = running;
+  stop.disabled  = !running;
+
+  // lock/unlock inputs
+  ['grpThaagam','grpM7'].forEach(id => {
+    document.getElementById(id).disabled = running;
+  });
+  document.querySelectorAll('.ivbtn').forEach(b => b.disabled = running);
+  const custMin = document.getElementById('customMin');
+  if (custMin) custMin.disabled = running;
+
+  // status text
+  const st = document.getElementById('statusText');
+  const nr = document.getElementById('nextRun');
+  if (running) {
+    st.textContent = `Running — Cycle #${cycle || 0}`;
+    nr.textContent = nextRun ? `· Next: ${nextRun}` : '';
+  } else {
+    st.textContent = cycle > 0 ? `Stopped after ${cycle} cycle(s)` : 'Not started';
+    nr.textContent = '';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ── WhatsApp connection check ─────────────────────────────────────────────────
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadGroups();
+pollStatus();          // checks both WA status + bot status immediately
+startPolling();        // keep polling every 3s
+</script>
+</body>
+</html>

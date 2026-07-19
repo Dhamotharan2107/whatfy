@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1772456244257,
+    "name": "test",
+    "headerType": "text",
+    "headerVal": "Hello",
+    "body": "hello",
+    "footer": "",
+    "buttons": [
+      {
+        "type": "quick_reply",
+        "text": "tets",
+        "url": ""
+      }
+    ],
+    "updatedAt": 1772456244
+  },
+  {
+    "id": 1772517619552,
+    "name": "hello",
+    "headerType": "text",
+    "headerVal": "Testing",
+    "body": "testing with this temp",
+    "footer": "",
+    "buttons": [
+      {
+        "type": "visit_site",
+        "text": "hello",
+        "url": "https://thaagam.org/"
+      }
+    ],
+    "updatedAt": 1772517619
+  }
+]

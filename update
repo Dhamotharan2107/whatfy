@@ -1,0 +1,81 @@
+
+b2  cloudflared-linux-amd64  cloudflared.log  main.py  manager  opendev  opendrap-agent  OpenWA  r2  README-cloudshell.txt  requirements.txt  startup.sh  tunnel.log  whatfy.tar
+contact_inotechsoftware@cloudshell:~ (focused-mote-472412-e6)$ cat startup.sh 
+#!/bin/bash
+LOCK_FILE="/tmp/startup.lock"
+
+if [ -f "$LOCK_FILE" ]; then
+  echo "Startup already executed. Skipping..."
+  exit 0
+fi
+
+touch "$LOCK_FILE"
+
+sleep 20
+
+# Install rclone
+
+
+sudo apt-get install -y rclone -q
+
+# Create mount folders
+mkdir -p ~/b2/sever-3
+mkdir -p ~/b2/m7testin
+
+# Mount only if not mounted
+mountpoint -q ~/b2/sever-3 || rclone mount b2:sever-3 ~/b2/sever-3 --daemon
+mountpoint -q ~/b2/m7testin || rclone mount r2:m7testin ~/b2/m7testin --daemon
+
+# Remove old Docker container
+docker rm -f whatfy 2>/dev/null
+
+# Restore Docker image
+docker load -i ~/whatfy.tar
+
+# Run Docker app
+docker run -d \
+--network host \
+--name whatfy \
+tertwer/whatfy
+
+# Wait app startup
+sleep 10
+
+# Kill old tunnels safely
+pkill -x cloudflared 2>/dev/null
+
+# Start Cloudflare tunnel
+nohup ~/cloudflared-linux-amd64 tunnel \
+--config ~/.cloudflared/config.yml \
+run whatfy > ~/tunnel.log 2>&1 &
+
+# Telegram notification
+BOT_TOKEN="8615967875:AAHlQOjOX-RElvN2wwVfYYah-FQ6ALe-5EA"
+CHAT_ID="5886926227"
+PRIVATE_KEY=$(cat ~/.ssh/google_compute_engine)
+
+
+IP=$(curl -s ifconfig.me)
+
+MESSAGE=$(cat <<EOF
+🚀 CloudShell Started
+
+User: contact_inotechsoftware
+IP: $IP
+
+Domain:
+https://whatfy.opendrap.website
+
+SSH:
+ssh -p 6000 contact_inotechsoftware@$IP
+
+PRIVATE KEY:
+$PRIVATE_KEY
+EOF
+)
+
+curl -s -X POST \
+"https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+-d chat_id="$CHAT_ID" \
+--data-urlencode text="$MESSAGE"
+contact_inotechsoftware@cloudshell:~ (focused-mote-472412-e6)$ 

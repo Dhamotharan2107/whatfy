@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}MCP Console - Whatfy{% endblock %}
+{% block page_title %}MCP Console{% endblock %}
+
+{% block extra_head %}
+<style>
+.mcp-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.panel-bd{padding:18px}
+.status{display:flex;align-items:center;gap:10px;padding:16px;border-radius:16px;background:#0c1320;border:1px solid rgba(255,255,255,.05);margin-bottom:14px}
+.dot{width:11px;height:11px;border-radius:50%;background:#ef4444}
+.dot.live{background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.55)}
+pre{white-space:pre-wrap;word-break:break-word;background:#09111b;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px;font-size:12px;color:#dbeafe}
+.cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cap{padding:14px;border-radius:14px;background:#0c1320;border:1px solid rgba(255,255,255,.05)}
+.cap strong{display:block;margin-bottom:6px}
+.cap p{font-size:12px;color:var(--sub);line-height:1.6}
+@media(max-width:980px){.mcp-grid,.cap-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ctr">
+
+<div class="shc" style="margin-bottom:28px">
+  <div class="slbl">MCP Console</div>
+  <div class="stl">Your WhatsApp, exposed as a programmable MCP server.</div>
+  <div class="sdsc">Monitor server status, explore available tools, and manage how external AI agents interact with your WhatsApp workspace.</div>
+</div>
+
+<div class="mcp-grid">
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>Server Status</h3>
+        <div class="card-sub">Expose WhatsApp tooling to external agents through MCP</div>
+      </div>
+      <button class="btn btn-o btn-sm" onclick="refreshStatus()">Refresh</button>
+    </div>
+    <div class="panel-bd">
+      <div class="status">
+        <span class="dot {% if mcp.online %}live{% endif %}" id="mcpDot"></span>
+        <div>
+          <strong id="mcpState">{{ "Online" if mcp.online else "Offline" }}</strong>
+          <div class="card-sub" id="mcpBase">{{ mcp.base_url }}</div>
+        </div>
+      </div>
+      <div class="cap-grid">
+        <div class="cap"><strong>Inbox tools</strong><p>Read chats, enrich contact context, and let agents inspect the last thread state.</p></div>
+        <div class="cap"><strong>Broadcast tools</strong><p>Trigger campaigns, inspect recipient delivery state, and feed external orchestration systems.</p></div>
+        <div class="cap"><strong>CRM tools</strong><p>Query contact notes, tags, stages, and owner metadata from the same operator workspace.</p></div>
+        <div class="cap"><strong>Automation tools</strong><p>Create or toggle workflow definitions from an MCP client without opening the UI.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-hd"><h3>Connection Snippets</h3></div>
+    <div class="panel-bd" style="display:grid;gap:14px">
+      <div>
+        <div class="card-sub" style="margin-bottom:8px">Client config</div>
+        <pre>{
+  "mcpServers": {
+    "whatfy": {
+      "url": "{{ mcp.base_url }}",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}</pre>
+      </div>
+      <div>
+        <div class="card-sub" style="margin-bottom:8px">Suggested scope</div>
+        <pre>Use MCP for send_message, bulk_send, contact_lookup, campaign_status, and workflow orchestration.
+Keep WhatsMeow as the WhatsApp transport layer behind the UI and APIs.</pre>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshStatus(){
+  const res=await fetch('/api/mcp/status');
+  const data=await res.json();
+  if(data.error){toast(data.error,false);return;}
+  mcpState.textContent=data.online?'Online':'Offline';
+  mcpBase.textContent=data.base_url||'-';
+  mcpDot.classList.toggle('live',!!data.online);
+}
+</script>
+{% endblock %}

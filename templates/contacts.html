@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Contacts - Whatfy{% endblock %}
+{% block page_title %}Contacts{% endblock %}
+
+{% block extra_head %}
+<style>
+.contacts-shell{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.panel-bd{padding:18px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.search{flex:1;min-width:220px;padding:11px 13px;border-radius:12px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--text)}
+.list{display:grid;gap:10px}
+.row{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:14px;background:#0c1320;border:1px solid rgba(255,255,255,.05);cursor:pointer}
+.row.active{border-color:rgba(37,211,102,.35);box-shadow:0 0 0 1px rgba(37,211,102,.18) inset}
+.avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#25D366,#0ea5e9);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+.meta{flex:1;min-width:0}
+.meta strong,.detail h2{display:block;font-size:14px}
+.meta span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.18);color:#86efac}
+.detail-grid{display:grid;gap:14px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{padding:12px;border-radius:14px;background:#0c1320;border:1px solid rgba(255,255,255,.05)}
+.stat b{display:block;font-size:20px}
+.stat span{font-size:11.5px;color:var(--sub)}
+.fg{margin-bottom:12px}
+.fg textarea{min-height:100px}
+@media(max-width:980px){.contacts-shell{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ctr">
+<div class="shc" style="margin-bottom:28px">
+  <div class="slbl">Contact Management</div>
+  <div class="stl">Your CRM, inside WhatsApp.</div>
+  <div class="sdsc">Every contact enriched with tags, stage, notes, and conversation history — all synced with your inbox.</div>
+</div>
+<div class="contacts-shell">
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>CRM Contacts</h3>
+        <div class="card-sub">Merged from WhatsMeow chats and saved workspace profiles</div>
+      </div>
+      <a class="btn btn-o btn-sm" href="/chat">Open Inbox</a>
+    </div>
+    <div class="panel-bd">
+      <div class="toolbar" style="margin-bottom:14px">
+        <input id="contactSearch" class="search" placeholder="Search name, phone, tag, or stage">
+      </div>
+      <div class="list" id="contactList">
+        {% for contact in contacts %}
+        <article class="row" data-jid="{{ contact.jid }}" onclick="selectContact('{{ contact.jid }}')">
+          <div class="avatar">{{ (contact.display_name or "?")[0].upper() }}</div>
+          <div class="meta">
+            <strong>{{ contact.display_name }}</strong>
+            <span>{{ contact.phone }} · {{ contact.stage }}</span>
+            <span>{{ contact.last_message or "No recent messages" }}</span>
+            <div class="chips">
+              {% for tag in contact.tags[:3] %}<span class="chip">{{ tag }}</span>{% endfor %}
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-hd">
+      <div>
+        <h3>Contact Workspace</h3>
+        <div class="card-sub">Tags, owner, notes, and pipeline stage</div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="saveContact()">Save</button>
+    </div>
+    <div class="panel-bd">
+      <div class="detail-grid" id="detailEmpty">
+        <div class="stat">Select a contact to edit CRM context.</div>
+      </div>
+      <div class="detail-grid" id="detailForm" style="display:none">
+        <div class="detail">
+          <h2 id="dName">-</h2>
+          <div class="card-sub" id="dPhone">-</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><b id="dStage">Lead</b><span>Pipeline Stage</span></div>
+          <div class="stat"><b id="dOwner">Unassigned</b><span>Owner</span></div>
+        </div>
+        <div class="fg"><label>Name</label><input id="fName"></div>
+        <div class="fg"><label>Phone</label><input id="fPhone"></div>
+        <div class="fg"><label>Stage</label><select id="fStage"><option>Lead</option><option>Qualified</option><option>Proposal</option><option>Won</option></select></div>
+        <div class="fg"><label>Owner</label><input id="fOwner" placeholder="Operator name"></div>
+        <div class="fg"><label>City</label><input id="fCity" placeholder="City or region"></div>
+        <div class="fg"><label>Tags</label><input id="fTags" placeholder="vip, repeat, hot"></div>
+        <div class="fg"><label>Summary</label><textarea id="fSummary" placeholder="Conversation summary, purchase intent, next step"></textarea></div>
+        <div class="fg"><label>Notes</label><textarea id="fNotes" placeholder="Internal notes"></textarea></div>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const contacts={{ contacts|tojson }};
+let currentJid=null;
+
+function renderFiltered(){
+  const q=(document.getElementById('contactSearch').value||'').toLowerCase();
+  document.querySelectorAll('#contactList .row').forEach(row=>{
+    const item=contacts.find(c=>c.jid===row.dataset.jid);
+    const hay=[item.display_name,item.phone,item.stage,(item.tags||[]).join(' '),item.last_message].join(' ').toLowerCase();
+    row.style.display=hay.includes(q)?'flex':'none';
+  });
+}
+
+function selectContact(jid){
+  currentJid=jid;
+  document.querySelectorAll('#contactList .row').forEach(r=>r.classList.toggle('active',r.dataset.jid===jid));
+  const c=contacts.find(item=>item.jid===jid);
+  if(!c)return;
+  detailEmpty.style.display='none';
+  detailForm.style.display='grid';
+  dName.textContent=c.display_name||'-';
+  dPhone.textContent=c.phone||'-';
+  dStage.textContent=c.stage||'Lead';
+  dOwner.textContent=c.owner||'Unassigned';
+  fName.value=c.display_name||'';
+  fPhone.value=c.phone||'';
+  fStage.value=c.stage||'Lead';
+  fOwner.value=c.owner||'Unassigned';
+  fCity.value=c.city||'';
+  fTags.value=(c.tags||[]).join(', ');
+  fSummary.value=c.last_summary||'';
+  fNotes.value=c.notes||'';
+}
+
+async function saveContact(){
+  if(!currentJid){toast('Select a contact first',false);return;}
+  const body={
+    display_name:fName.value.trim(),
+    phone:fPhone.value.trim(),
+    stage:fStage.value,
+    owner:fOwner.value.trim(),
+    city:fCity.value.trim(),
+    tags:fTags.value.trim(),
+    last_summary:fSummary.value.trim(),
+    notes:fNotes.value.trim()
+  };
+  const res=await fetch('/api/contacts/'+encodeURIComponent(currentJid),{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+  });
+  const data=await res.json();
+  if(data.error){toast(data.error,false);return;}
+  toast('Contact saved');
+  location.reload();
+}
+
+contactSearch.addEventListener('input',renderFiltered);
+if(contacts.length)selectContact(contacts[0].jid);
+</script>
+{% endblock %}
