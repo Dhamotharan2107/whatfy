@@ -1,7 +1,7 @@
 # Whatfy - Multi-Tenant WhatsApp SaaS Platform
 
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
-[![Go](https://img.shields.io/badge/Go-1.25-green)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.24-green)](https://go.dev/)
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-red)](https://fastapi.tiangolo.com/)
 
@@ -125,7 +125,7 @@ docker compose ps
 
 ### Backend
 - **FastAPI** (Python 3.11) - Main application framework
-- **Go 1.25** - Multi-session WhatsApp server
+- **Go 1.24** - Multi-session WhatsApp server
 - **WhatsMeow** - WhatsApp library
 - **SQLite** - Database (PostgreSQL-ready)
 
