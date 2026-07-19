@@ -1,6 +1,6 @@
 module wm_server
 
-go 1.24.0
+go 1.25.0
 
 require (
 	go.mau.fi/whatsmeow v0.0.0-20260227112304-c9652e4448a2
