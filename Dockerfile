@@ -2,7 +2,7 @@
 FROM golang:1.24-alpine AS go-builder
 WORKDIR /build
 COPY whatsmeow_server/ .
-RUN CGO_ENABLED=0 go build -mod=vendor -o wa_server .
+RUN CGO_ENABLED=0 GOTOOLCHAIN=auto go build -mod=vendor -o wa_server .
 
 # Stage 2 — Python runtime (FastAPI + Multi-Tenancy)
 FROM python:3.11-slim
