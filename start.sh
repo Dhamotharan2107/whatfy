@@ -4,13 +4,6 @@ set -e
 # Create dirs for SQLite and media
 mkdir -p /app/whatsmeow_server
 
-# Build Go server if needed
-cd /app/whatsmeow_server
-if [ ! -f "wa_server" ]; then
-    echo "Building Go server..."
-    go build -o wa_server .
-fi
-
 # Start Go whatsmeow server in background (localhost:8080)
 echo "Starting Multi-Session Go WhatsApp Server..."
 /app/wa_server &
