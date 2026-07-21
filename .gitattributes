@@ -1,0 +1,5 @@
+# Normalize line endings for source files
+* text=auto
+
+# Vendor directory - preserve as-is (no line ending conversion)
+whatsmeow_server/vendor/** -text

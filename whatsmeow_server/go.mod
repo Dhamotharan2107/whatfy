@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	go.mau.fi/whatsmeow v0.0.0-20260227112304-c9652e4448a2
+	google.golang.org/protobuf v1.36.11
 	modernc.org/sqlite v1.46.1
 )
 
@@ -28,7 +29,6 @@ require (
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
